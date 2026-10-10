@@ -15,6 +15,7 @@ dinah no se define por acumular funciones: cada módulo debe tener límites clar
 - **Dependencias justificadas:** limitar superficie de ataque, mantenimiento y complejidad.
 - **CI remota:** compilaciones, pruebas, análisis estático y benchmarks se ejecutan en GitHub Actions. Termux se reserva para edición, Git y control del proyecto.
 - **Checklist auditable:** los IDs de puntos.md son permanentes. No se renumeran ni se reutilizan.
+- **Licencia dual:** el código propio se distribuye bajo MIT o Apache-2.0, a elección del usuario, salvo avisos específicos. Toda dependencia o contribución externa debe conservar sus avisos y cumplir sus propias licencias.
 - **Evolución basada en evidencia:** las versiones posteriores se deciden con datos y necesidades reales, no por ampliar una lista indefinidamente.
 
 ## 3. Qué es y qué no es dinah
@@ -63,7 +64,7 @@ No se marca un punto como completado solo porque exista un archivo o una impleme
 ## 7. Fases
 
 ### Fase 0 — Fundación y reglas
-Definir identidad, propósito, alcance, exclusiones, políticas de lenguaje, dependencias, pruebas, benchmarks, documentación, licencia e identidad visual. Crear README, roadmap y checklist.
+Definir identidad, propósito, alcance, exclusiones, políticas de lenguaje, dependencias, pruebas, benchmarks, documentación, licencia dual MIT/Apache-2.0 e identidad visual. Crear README, roadmap y checklist.
 
 ### Fase 1 — Core
 Construir los tipos, errores, configuración, IDs, estados, abstracciones, traits e invariantes esenciales. Estabilizar la primera API interna y acompañarla con tests y documentación.

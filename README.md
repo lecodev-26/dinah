@@ -17,6 +17,10 @@ dinah is a Rust-first project exploring a high-performance runtime and a modular
 - Point IDs are permanent. Do not renumber completed, pending, or obsolete items.
 - All compilation, tests, linting, and benchmarks run in GitHub Actions—not on the Termux device.
 
+## License
+
+Unless a file states otherwise, `dinah` is dual-licensed under either the MIT License (`LICENSE-MIT`) or Apache License, Version 2.0 (`LICENSE-APACHE`), at your option. Contributions intended for inclusion are offered under the same dual-license terms unless explicitly agreed otherwise.
+
 ## Repository map
 
 - roadmap.md: project purpose, architecture, phases, and sequencing.

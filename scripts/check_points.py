@@ -21,4 +21,20 @@ if ids != expected:
 if not re.search(r"Total de puntos numerados: 287", text):
     print("Declared total does not match the initial checklist.")
     sys.exit(1)
-print("Checklist OK: 287 unique, sequential IDs (001–287).")
+# Ensure the initial status summary agrees with the checklist markers.
+counts = {"x": 0, ">": 0, " ": 0, "~": 0}
+for line in text.splitlines():
+    m = re.match(r"^- \[([ >x~])\] (\d{3}) — ", line)
+    if m:
+        counts[m.group(1)] += 1
+summary = {
+    "Completados": counts["x"],
+    "En progreso": counts[">"],
+    "Pendientes": counts[" "],
+}
+for label, actual in summary.items():
+    match = re.search(rf"^- {re.escape(label)}: (\d+)$", text, re.MULTILINE)
+    if not match or int(match.group(1)) != actual:
+        print(f"Checklist summary mismatch for {label}: expected {actual}.")
+        sys.exit(1)
+print(f"Checklist OK: 287 stable IDs; {counts['x']} complete, {counts['>']} in progress, {counts[' ']} pending, {counts['~']} obsolete.")
