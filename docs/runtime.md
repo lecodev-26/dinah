@@ -169,6 +169,47 @@ The first worker implementation should remain in safe Rust and keep task executi
 
 Acceptance criteria for point 040: the worker's role, separation from tasks and scheduling policy, execution/locking boundary, identity domain, and deferred shutdown/failure semantics are documented. This point defines the contract only; it does not claim a concrete `Worker` type or worker threads exist in code.
 
+## Worker identity contract (point 041)
+
+`WorkerId` is a Runtime-domain identifier for one worker resource. It is a
+different type from `TaskId` and `CoreId`, even if all three use the same
+numeric representation. The type distinction prevents passing a task identifier
+where a worker identifier is expected and keeps Runtime resource identity out of
+Core's more general identity domain.
+
+The initial contract is:
+
+- **Representation:** a dedicated `WorkerId` newtype wrapping a non-zero `u64`.
+  Zero is invalid/reserved, consistent with the existing `CoreId` and planned
+  `TaskId` value contracts.
+- **Construction:** the value type validates a caller-supplied numeric value and
+  returns a specific `WorkerIdError` for zero. It does not allocate IDs or
+  register workers as a side effect.
+- **Uniqueness:** the newtype alone does not guarantee uniqueness. The component
+  creating/owning workers must avoid duplicate IDs among live workers in the
+  relevant Runtime instance. No process-wide, cross-process, or global
+  uniqueness is promised. Allocation, reuse, and persistence policies remain
+  deferred until required by a concrete worker manager.
+- **Stability and scope:** a worker's ID remains stable for that worker resource's
+  lifetime. It identifies neither a task nor a worker's lifecycle state, thread
+  handle, liveness, permissions, or task result. Replacing a failed worker must
+  explicitly define whether the replacement receives a new identity.
+- **Value semantics:** support equality, ordering, hashing, copying, display, and
+  access to the numeric value. Serialization and persistence formats are not
+  specified without a real API or storage requirement.
+- **Separation from registration:** constructing a valid `WorkerId` does not prove
+  that a worker exists, is running, is registered, or is owned by a particular
+  Runtime instance. Those facts belong to the future worker-management API.
+
+The intended implementation is a small safe-Rust value type with exhaustive tests
+for zero rejection, valid boundary values, display, equality/order, and hashing.
+This is a contract only: no `WorkerId` or `WorkerIdError` type is claimed to exist
+in code until a separate implementation point adds it.
+
+Acceptance criteria for point 041: the domain, newtype representation, invalid
+value behavior, construction and allocation boundary, uniqueness limits,
+stability, and value semantics are documented.
+
 ## Initial delivery sequence
 
 1. Define task identity, task state, and outcome contracts with exhaustive tests.
