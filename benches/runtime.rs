@@ -17,11 +17,9 @@ fn report(name: &str, task_count: usize, samples: &[Duration]) {
     let median_ns = nanos[nanos.len() / 2];
     let operations = task_count.max(1) as u128;
     let ns_per_task = median_ns / operations;
-    let tasks_per_second = if median_ns == 0 {
-        0
-    } else {
-        (operations * 1_000_000_000) / median_ns
-    };
+    let tasks_per_second = (operations * 1_000_000_000)
+        .checked_div(median_ns)
+        .unwrap_or(0);
     println!(
         "case={name} tasks={task_count} samples={SAMPLES} median_total_ns={median_ns} ns_per_task={ns_per_task} tasks_per_second={tasks_per_second}"
     );
