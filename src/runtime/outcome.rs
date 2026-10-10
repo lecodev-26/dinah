@@ -76,7 +76,10 @@ mod tests {
         let failure = TaskFailure::returned(String::from("disk unavailable"));
         assert_eq!(failure.kind(), TaskFailureKind::ReturnedError);
         assert_eq!(failure.error(), "disk unavailable");
-        assert_eq!(failure.to_string(), "task returned an error: disk unavailable");
+        assert_eq!(
+            failure.to_string(),
+            "task returned an error: disk unavailable"
+        );
         assert_eq!(failure.into_error(), "disk unavailable");
     }
 
