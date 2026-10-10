@@ -84,6 +84,52 @@ impl Scheduler {
         }
         results
     }
+
+    /// Executes queued tasks in parallel batches bounded by `max_workers`.
+    ///
+    /// Each batch is removed from the queue before its tasks start. Tasks in a
+    /// batch run on scoped threads, and results are collected in FIFO dispatch
+    /// order regardless of completion order. A task-level `Err` is retained and
+    /// does not stop later batches. Task closures and their result types must be
+    /// `Send`; panics are not converted into task errors and propagate to the
+    /// caller. This creates temporary threads per batch, not a persistent pool.
+    pub fn run_parallel<T, E, F>(
+        &self,
+        queue: &mut TaskQueue<F>,
+        max_workers: core::num::NonZeroUsize,
+    ) -> Vec<Result<T, E>>
+    where
+        T: Send,
+        E: Send,
+        F: FnOnce() -> Result<T, E> + Send,
+    {
+        let mut results = Vec::with_capacity(queue.len());
+        while !queue.is_empty() {
+            let batch_size = queue.len().min(max_workers.get());
+            let mut batch = Vec::with_capacity(batch_size);
+            for _ in 0..batch_size {
+                if let Some(task) = queue.pop() {
+                    batch.push(task);
+                }
+            }
+
+            let mut batch_results = std::thread::scope(|scope| {
+                let handles: Vec<_> = batch
+                    .into_iter()
+                    .map(|task| scope.spawn(move || task()))
+                    .collect();
+                handles
+                    .into_iter()
+                    .map(|handle| match handle.join() {
+                        Ok(result) => result,
+                        Err(payload) => std::panic::resume_unwind(payload),
+                    })
+                    .collect::<Vec<_>>()
+            });
+            results.append(&mut batch_results);
+        }
+        results
+    }
 }
 
 #[cfg(test)]
@@ -187,6 +233,51 @@ mod tests {
             core::num::NonZeroUsize::new(1).expect("positive capacity"),
         );
         assert!(scheduler.run_until_empty(&mut queue).is_empty());
+    }
+
+    #[test]
+    fn run_parallel_preserves_fifo_result_order_and_task_errors() {
+        fn first() -> Result<i32, &'static str> {
+            Ok(1)
+        }
+        fn failed() -> Result<i32, &'static str> {
+            Err("failed")
+        }
+        fn third() -> Result<i32, &'static str> {
+            Ok(3)
+        }
+
+        let scheduler = Scheduler::new();
+        let mut queue: super::super::TaskQueue<fn() -> Result<i32, &'static str>> =
+            super::super::TaskQueue::new(
+                core::num::NonZeroUsize::new(3).expect("positive capacity"),
+            );
+        assert!(queue.try_push(first).is_ok());
+        assert!(queue.try_push(failed).is_ok());
+        assert!(queue.try_push(third).is_ok());
+
+        assert_eq!(
+            scheduler.run_parallel(
+                &mut queue,
+                core::num::NonZeroUsize::new(2).expect("positive worker limit"),
+            ),
+            vec![Ok(1), Err("failed"), Ok(3)]
+        );
+        assert!(queue.is_empty());
+    }
+
+    #[test]
+    fn run_parallel_handles_empty_queue() {
+        let scheduler = Scheduler::new();
+        let mut queue = super::super::TaskQueue::<fn() -> Result<(), ()>>::new(
+            core::num::NonZeroUsize::new(1).expect("positive capacity"),
+        );
+        assert!(scheduler
+            .run_parallel(
+                &mut queue,
+                core::num::NonZeroUsize::new(2).expect("positive worker limit"),
+            )
+            .is_empty());
     }
 
     #[test]

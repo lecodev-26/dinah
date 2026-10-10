@@ -285,3 +285,16 @@ errors are retained in the returned vector and do not prevent later queued
 tasks from executing. An empty queue returns an empty vector. This is a
 synchronous drain on the caller's thread; it does not imply parallelism,
 background progress, panic recovery, or a persistent scheduler lifecycle.
+
+
+## Bounded parallel execution (point 047)
+
+`Scheduler::run_parallel` executes queued closures in batches of at most the
+caller-supplied non-zero worker limit. Each batch is removed from the queue
+before its tasks run on scoped threads. Results are returned in FIFO dispatch
+order, not completion order; task-level errors are retained and later batches
+continue. The queue is empty after a normal return. This initial implementation
+creates temporary threads per batch rather than maintaining a worker pool. Tasks
+and result/error values must satisfy `Send`; panics are not caught and propagate
+to the caller. Persistent workers, cancellation, shutdown coordination, and
+recovery from panicking tasks remain out of scope for this point.
