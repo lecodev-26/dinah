@@ -6,6 +6,7 @@
 
 mod cancellation;
 mod executor;
+mod metrics;
 mod outcome;
 mod queue;
 mod scheduler;
@@ -14,6 +15,7 @@ mod task_state;
 
 pub use cancellation::CancellationToken;
 pub use executor::Executor;
+pub use metrics::{MetricsSnapshot, RuntimeMetrics};
 pub use outcome::{TaskFailure, TaskFailureKind};
 pub use queue::{QueuePushError, TaskQueue};
 pub use scheduler::{ScheduleError, Scheduler};

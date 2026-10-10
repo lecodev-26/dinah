@@ -368,3 +368,20 @@ claiming across workers. A transition to `Cancelled` from `Running` is valid
 only after cooperative cancellation is actually acknowledged, not merely
 requested. Task result payloads remain separate from lifecycle state, and panic
 capture remains outside this implementation.
+
+
+## Runtime metrics (point 052)
+
+`RuntimeMetrics` provides opt-in atomic counters for submitted, started,
+completed, failed, cancellation-requested, and cancellation-acknowledged events.
+The API deliberately uses explicit `record_*` methods: the current executor and
+scheduler do not update counters automatically, so callers must instrument the
+corresponding event sites. A cancellation request and cancellation acknowledgement
+are separate counters and must not be conflated.
+
+Counters use relaxed atomic operations because they are statistics, not a
+synchronization mechanism for task data. Increments saturate at `u64::MAX` to
+avoid wraparound. `snapshot()` reads each counter safely, but the group is not a
+globally atomic snapshot while concurrent updates occur. No task labels, timing,
+external exporter, allocation, or dependency is introduced. Tests cover event
+separation and concurrent increments.
