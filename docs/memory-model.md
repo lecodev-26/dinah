@@ -220,7 +220,7 @@ La implementación y las pruebas viven en `src/memory/soa.rs`. Es una primitiva 
 | 070 | Completado: `SoaBuffer<A, B>` con dos columnas contiguas, filas coordinadas y límites explícitos |
 | 071–073 | Sincronización, invariantes y pruebas de seguridad/concurrencia |
 | 074 | Completado: benchmark reproducible `benches/memory.rs` para push preasignado, extensión por lotes, inserción/escaneo SoA y coste de `Shared` con mediana de 7 muestras; resultados de cada ejecución se guardan como artifact de CI |
-| 075 | Añadido `SoaBuffer::try_extend_from_slices` para validar una vez e insertar lotes en las columnas reservadas; benchmark `soa_bulk_extend` añadido. La mejora debe confirmarse en CI y archivarse antes de cerrar el punto |
+| 075 | Completado: `SoaBuffer::try_extend_from_slices` valida el lote y evita checks por fila; comparación con entradas precomputadas en CI (7 muestras): 2.031 vs 6.109 ns/fila (64), 0.548 vs 2.495 (1.024) y 5.837 vs 8.118 (16.384). Raw: `artifacts/benchmarks/memory-soa-batch-2026-10-11.txt`; resultados específicos del runner, no garantía universal |
 | 076 | Documentación integrada y criterios de salida del subsistema |
 
 ## Criterios para aceptar una implementación
