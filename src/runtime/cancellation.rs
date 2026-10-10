@@ -67,4 +67,32 @@ mod tests {
         assert_eq!(first_request_count, 1);
         assert!(token.is_cancellation_requested());
     }
+
+    #[test]
+    fn concurrent_observers_eventually_see_the_request() {
+        let token = CancellationToken::new();
+        let observer_count = 16;
+        let start = std::sync::Arc::new(std::sync::Barrier::new(observer_count + 1));
+        let observers: Vec<_> = (0..observer_count)
+            .map(|_| {
+                let token = token.clone();
+                let start = std::sync::Arc::clone(&start);
+                std::thread::spawn(move || {
+                    start.wait();
+                    while !token.is_cancellation_requested() {
+                        std::hint::spin_loop();
+                    }
+                    token.is_cancellation_requested()
+                })
+            })
+            .collect();
+
+        start.wait();
+        assert!(token.request_cancellation());
+
+        for observer in observers {
+            assert!(observer.join().expect("observer should finish"));
+        }
+        assert!(token.is_cancellation_requested());
+    }
 }

@@ -403,10 +403,19 @@ span nesting, exporters, automatic task IDs, or external dependencies. Tests cov
 ordered recording, overflow preservation, draining, and concurrent recording.
 
 
-## Concurrency regression coverage (point 054, in progress)
+## Concurrency regression coverage (point 054, complete)
 
-The scheduler tests now include a barrier-based regression test that requires two
+The scheduler tests include a barrier-based regression test that requires two
 tasks to reach a synchronization point concurrently, then verifies the results
 remain in FIFO dispatch order and the queue is drained. The barrier avoids relying
-on wall-clock timing to infer overlap. Broader race-condition and scheduler stress
-coverage remains tracked by points 055–057.
+on wall-clock timing to infer overlap.
+
+## Race-condition regression coverage (point 055, in progress)
+
+Cancellation tests cover simultaneous idempotent requests and a separate race
+between one requester and 16 cloned-token observers. A barrier releases the
+observers and requester together; observers use the atomic cancellation flag and
+finish only after observing the request. The test validates eventual visibility
+without sleep-based timing assumptions. These tests validate the cancellation
+signal's concurrency contract, not interruption or task termination. Broader
+scheduler and executor coverage remains tracked by points 056–057.

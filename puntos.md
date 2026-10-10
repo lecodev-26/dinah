@@ -6,8 +6,8 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 
 - Total de puntos numerados: 287
 - Completados: 52
-- En progreso: 2
-- Pendientes: 233
+- En progreso: 3
+- Pendientes: 232
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -73,7 +73,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 052 — Añadir métricas
 - [x] 053 — Añadir tracing
 - [x] 054 — Testear concurrencia
-- [ ] 055 — Testear condiciones de carrera
+- [>] 055 — Testear condiciones de carrera
 - [ ] 056 — Testear scheduler
 - [ ] 057 — Testear executor
 - [ ] 058 — Crear benchmarks
