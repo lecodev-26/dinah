@@ -27,6 +27,20 @@ Estado: diseño inicial; el punto 062 implementa el primer buffer acotado. El su
 - Una reserva inicial puede reducir realocaciones, pero no equivale a una garantía de ausencia de futuras reservas salvo que el contrato y las operaciones lo aseguren.
 - Los tamaños derivados de entradas externas deben validarse antes de reservar y evitar cálculos de capacidad que desborden.
 
+## Abstracción de asignación (punto 064)
+
+**Decisión: no introducir todavía un trait `Allocator` propio ni un allocator global.** El único almacenamiento implementado utiliza `Vec<T>` de la biblioteca estándar y `try_reserve_exact`, que ya permite informar fallos de reserva sin recurrir a una ruta de asignación deliberadamente infalible. Una interfaz propia ahora duplicaría capacidades sin tener un segundo backend que demuestre qué contrato común necesita DINAH.
+
+Contrato inicial:
+
+- Los tipos de Memory solicitan y poseen almacenamiento mediante contenedores estándar seguros; no administran direcciones ni liberación manual.
+- Las operaciones de construcción que necesitan reservar capacidad usan rutas fallibles cuando la biblioteca las ofrece. El error público describe el fallo de la operación, sin exponer detalles internos del allocator del sistema.
+- La capacidad lógica solicitada pertenece al contrato del contenedor; no se interpreta como un presupuesto exacto de bytes ni como garantía de memoria residente.
+- Las abstracciones futuras deberán separar, si la evidencia lo requiere, el mecanismo de reserva de la política del contenedor (límite, crecimiento y recuperación). No se debe añadir un trait que pretenda soportar allocators incompatibles sin un caso de uso y pruebas concretos.
+- Reconsiderar un trait cuando exista al menos un segundo backend real (por ejemplo, un pool explícito) que comparta operaciones y semántica de error con el almacenamiento estándar. Evaluar entonces fallos, alineación, ownership, concurrencia, compatibilidad `no_std` si aplica y coste de abstracción.
+
+`BufferCreateError::AllocationFailed` es la frontera pública actual: evita filtrar el error concreto del allocator y mantiene estable el contrato del buffer. Esta decisión no impide introducir una abstracción más rica en un punto posterior; evita comprometer prematuramente la API.
+
 ## Buffers, pools y reutilización
 
 - Los buffers propios serán dueños de sus elementos; las vistas serán prestadas y no poseerán la memoria.
@@ -65,7 +79,7 @@ La implementación y sus pruebas viven en `src/memory/buffer.rs`. No se expone a
 |---|---|
 | 062 | Completado: primer buffer contiguo y acotado; quedan otros tipos de buffer sujetos a necesidades futuras |
 | 063 | Completado: propiedad única de `Buffer<T>`, préstamos con lifetimes del compilador, transferencia por movimiento, sin clonación implícita ni acceso mutable al contenedor interno |
-| 064 | Si se necesita una abstracción de asignación y cómo mantenerla fallible |
+| 064 | Completado: usar contenedores estándar y reservas fallibles; aplazar un trait propio hasta disponer de un segundo backend real |
 | 065 | Diseño de pools, política de agotamiento y ámbito de sincronización |
 | 066 | Reglas de reinicio, limpieza y reutilización |
 | 067 | Requisitos concretos de alineación |
