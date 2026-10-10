@@ -33,7 +33,7 @@ The Core is not considered stable merely because its crate version is `0.1.0` or
 - [ ] Error types preserve actionable detail at the API where the error originates; conversions to `CoreError` are documented as intentionally coarse.
 - [ ] Tests cover valid and invalid configuration, non-zero IDs, every lifecycle transition, and stable error messages where callers may rely on them.
 - [ ] The public API has been reviewed for unnecessary commitments, misleading names, and unused abstractions.
-- [ ] `cargo fmt`, the full workspace test suite, and Clippy pass in GitHub Actions.
+- [ ] `cargo fmt`, the full workspace test suite, Clippy, and warning-free public documentation build pass in GitHub Actions.
 - [ ] No stability promise, release tag, or benchmark claim is made without separate review and evidence.
 
 `HasCoreId` is currently an extension contract for future resource types; it has no concrete implementor yet. It is retained as a planned integration seam for managed resources, but must be reviewed before the Core API is declared stable rather than treated as proof of a complete resource model.
