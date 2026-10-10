@@ -2,7 +2,9 @@
 //!
 //! The initial API uses standard-library containers and exposes no raw pointers
 //! or custom allocator hooks. Buffers own their elements and lend read-only
-//! slices; synchronization is the caller responsibility.
+//! slices; synchronization is the caller responsibility. Ownership is unique
+//! by default: buffers are moved rather than implicitly cloned, and borrowed
+//! views cannot outlive their owner.
 
 mod buffer;
 

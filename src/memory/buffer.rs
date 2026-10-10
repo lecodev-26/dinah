@@ -9,7 +9,25 @@ use core::fmt;
 ///
 /// This type is not internally synchronized. Mutations require exclusive
 /// access; [`Self::as_slice`] lends read-only access to initialized elements.
-#[derive(Debug, Clone, PartialEq, Eq)]
+///
+/// The buffer intentionally does not implement [`Clone`]: an implicit clone
+/// could duplicate storage without fallibly reserving the configured maximum,
+/// breaking the no-growth guarantee for subsequent pushes. Move the buffer to
+/// transfer ownership; use an explicit element-level copy when duplication is
+/// required.
+///
+/// A slice borrow cannot outlive the buffer or overlap a mutable borrow:
+///
+/// ```compile_fail
+/// use dinah::memory::Buffer;
+///
+/// let mut buffer = Buffer::try_with_capacity(2).unwrap();
+/// buffer.try_push(10).unwrap();
+/// let view = buffer.as_slice();
+/// buffer.try_push(20).unwrap(); // cannot mutably borrow while `view` is live
+/// println!("{view:?}");
+/// ```
+#[derive(Debug, PartialEq, Eq)]
 pub struct Buffer<T> {
     items: Vec<T>,
     max_capacity: usize,
@@ -168,5 +186,29 @@ mod tests {
             Buffer::<u8>::try_with_capacity(usize::MAX).unwrap_err(),
             BufferCreateError::AllocationFailed
         );
+    }
+
+    #[test]
+    fn clear_and_drop_destroy_each_owned_item_once() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        use std::sync::Arc;
+
+        struct Tracked(Arc<AtomicUsize>);
+        impl Drop for Tracked {
+            fn drop(&mut self) {
+                self.0.fetch_add(1, Ordering::SeqCst);
+            }
+        }
+
+        let drops = Arc::new(AtomicUsize::new(0));
+        {
+            let mut buffer = Buffer::try_with_capacity(2).unwrap();
+            buffer.try_push(Tracked(Arc::clone(&drops))).unwrap();
+            buffer.try_push(Tracked(Arc::clone(&drops))).unwrap();
+            buffer.clear();
+            assert_eq!(drops.load(Ordering::SeqCst), 2);
+            buffer.try_push(Tracked(Arc::clone(&drops))).unwrap();
+        }
+        assert_eq!(drops.load(Ordering::SeqCst), 3);
     }
 }

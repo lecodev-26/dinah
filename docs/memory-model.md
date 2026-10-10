@@ -50,8 +50,10 @@ Estado: diseño inicial; el punto 062 implementa el primer buffer acotado. El su
 - La capacidad es el máximo de elementos, no un límite de bytes; `T` puede tener tamaños distintos.
 - Capacidad cero es válida. `is_full()` es verdadero cuando longitud y capacidad son cero.
 - `try_push` devuelve el elemento original en `BufferPushError::Full(T)` si está lleno; nunca sobrescribe ni descarta silenciosamente datos.
-- `as_slice` presta únicamente los elementos inicializados; la propiedad permanece en el buffer.
-- `pop` elimina el último elemento y `clear` destruye los elementos actuales conservando la reserva.
+- `as_slice` presta únicamente los elementos inicializados; la propiedad permanece en el buffer y el compilador impide mutaciones incompatibles mientras la vista siga viva.
+- `Buffer<T>` no implementa `Clone`: evita una duplicación implícita de almacenamiento cuya reserva podría no cubrir el límite lógico. La propiedad se transfiere mediante movimientos; duplicar elementos requiere una decisión explícita del consumidor.
+- `pop` transfiere al llamador la propiedad del último elemento y `clear` destruye los elementos actuales conservando la reserva. Al destruir el buffer se destruyen todos los elementos que aún posee.
+- No se expone el `Vec<T>` interno: el consumidor no puede eludir el límite lógico mediante una mutación externa del almacenamiento.
 - No hay sincronización interna: el acceso mutable requiere `&mut self`.
 - La API no promete un límite de memoria en bytes ni que la reserva física permanezca residente.
 
@@ -62,7 +64,7 @@ La implementación y sus pruebas viven en `src/memory/buffer.rs`. No se expone a
 | Punto | Decisión pendiente |
 |---|---|
 | 062 | Completado: primer buffer contiguo y acotado; quedan otros tipos de buffer sujetos a necesidades futuras |
-| 063 | Tipos propietarios y límites de ownership interno |
+| 063 | Completado: propiedad única de `Buffer<T>`, préstamos con lifetimes del compilador, transferencia por movimiento, sin clonación implícita ni acceso mutable al contenedor interno |
 | 064 | Si se necesita una abstracción de asignación y cómo mantenerla fallible |
 | 065 | Diseño de pools, política de agotamiento y ámbito de sincronización |
 | 066 | Reglas de reinicio, limpieza y reutilización |
