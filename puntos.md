@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 40
+- Completados: 41
 - En progreso: 2
-- Pendientes: 245
+- Pendientes: 244
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -61,7 +61,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 040 — Definir Worker
 - [x] 041 — Definir WorkerId
 - [x] 042 — Crear executor
-- [ ] 043 — Crear scheduler
+- [x] 043 — Crear scheduler
 - [ ] 044 — Crear cola de tareas
 - [ ] 045 — Crear asignación de tareas
 - [ ] 046 — Crear ejecución secuencial
