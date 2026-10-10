@@ -451,8 +451,8 @@ from timing runs to avoid treating noisy measurements as a correctness gate.
 The harness reports seven-sample medians for direct `Executor` no-op calls,
 immediate `Scheduler` submissions, sequential queue draining at 1/16/64/256
 items, and parallel queue draining at 16/64/256 items with 2 or 4 temporary
-workers. It compares sequential and parallel execution of a deterministic CPU
-workload with 1,000,000 integer-mixing iterations per task. A benchmark-only
+workers, including no-op tasks to expose dispatch/thread-startup overhead. It
+compares sequential and parallel execution of a deterministic CPU workload with 1,000,000 integer-mixing iterations per task. A benchmark-only
 persistent-pool prototype also reports pool startup/shutdown separately and
 reuses 2 or 4 workers for no-op and CPU task batches. This prototype is isolated
 to `benches/runtime.rs`; it is not production Runtime code and does not yet

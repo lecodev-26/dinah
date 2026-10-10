@@ -212,6 +212,31 @@ fn main() {
         );
 
         for &worker_count in &[2usize, 4] {
+            let parallel_noop_samples = measure(|| {
+                let capacity = NonZeroUsize::new(task_count).expect("task size is nonzero");
+                let mut queue = TaskQueue::new(capacity);
+                for _ in 0..task_count {
+                    queue
+                        .try_push(noop_task as fn() -> Result<u64, &'static str>)
+                        .expect("queue capacity matches task count");
+                }
+                let workers = NonZeroUsize::new(worker_count).expect("worker count is nonzero");
+                let results = scheduler.run_parallel(&mut queue, workers);
+                black_box(results);
+                assert!(queue.is_empty());
+            });
+            report(
+                if worker_count == 2 {
+                    "scheduler_queue_parallel_noop_2_workers"
+                } else {
+                    "scheduler_queue_parallel_noop_4_workers"
+                },
+                task_count,
+                &parallel_noop_samples,
+            );
+        }
+
+        for &worker_count in &[2usize, 4] {
             let pool = PersistentPool::new(worker_count);
             let noop_pool_samples = measure(|| pool.run_tasks(task_count, noop_task));
             report(
