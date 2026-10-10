@@ -451,14 +451,30 @@ from timing runs to avoid treating noisy measurements as a correctness gate.
 The harness reports seven-sample medians for direct `Executor` no-op calls,
 immediate `Scheduler` submissions, sequential queue draining at 1/16/64/256
 items, and parallel queue draining at 16/64/256 items with 2 or 4 temporary
-workers. It prints total median nanoseconds, integer nanoseconds per task, and
+workers. It prints total median nanoseconds, decimal nanoseconds per task, and
 approximate tasks per second. `black_box` limits dead-code elimination, every
 queue is asserted empty, and all tasks return a checked successful result.
 
 These cases primarily characterize dispatch/queue/thread-creation overhead for a
 trivial deterministic task; they do not model CPU-heavy application workloads,
 prove that parallel dispatch is faster, or establish cross-machine comparisons.
-Results are machine- and runner-specific observations. Point 033 (Core benchmarks)
+Results are machine- and runner-specific observations. A successful reference run
+on GitHub Actions (2026-10-10, [run 38057210199](https://github.com/lecodev-26/dinah/actions/runs/38057210199))
+produced the following medians; the raw log is retained in the run artifact
+`dinah-runtime-benchmarks-b95f75e...` (90-day retention):
+
+| Case | Tasks | Median total | Median per task |
+| --- | ---: | ---: | ---: |
+| Executor no-op | 100,000 | 78.489 µs | 0.785 ns |
+| Immediate scheduler no-op | 100,000 | 78.429 µs | 0.784 ns |
+| Sequential queue drain | 256 | 2.865 µs | 11.191 ns |
+| Parallel queue drain, 2 workers | 256 | 11.541 ms | 45.083 µs |
+| Parallel queue drain, 4 workers | 256 | 10.958 ms | 42.805 µs |
+
+The no-op parallel cases are substantially slower because this scheduler creates
+short-lived threads for each batch; this is evidence against claiming that parallel
+execution is always faster, not a universal performance conclusion. It suggests
+that a persistent worker pool is a future design candidate, but point 059 must
+measure representative workloads before optimizing. Point 033 (Core benchmarks)
 remains open until a representative Core operation and suitable workload are
-identified and measured. Point 058 is not complete until the remote benchmark run
-succeeds and its output artifact is inspected and documented.
+identified and measured.
