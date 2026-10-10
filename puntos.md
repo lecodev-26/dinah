@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 57
+- Completados: 58
 - En progreso: 2
-- Pendientes: 228
+- Pendientes: 227
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -78,7 +78,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 057 — Testear executor
 - [x] 058 — Crear benchmarks
 - [x] 059 — Optimizar scheduler
-- [ ] 060 — Estabilizar Runtime v0.1
+- [x] 060 — Estabilizar Runtime v0.1
 
 ## FASE 3 — Memory
 
