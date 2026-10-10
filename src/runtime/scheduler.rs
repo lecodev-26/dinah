@@ -118,7 +118,12 @@ mod tests {
             core::num::NonZeroUsize::new(2).expect("positive capacity"),
         );
         let calls = Cell::new(0);
-        queue.try_push(|| { calls.set(calls.get() + 1); Ok::<_, ()>(1) }).unwrap();
+        queue
+            .try_push(|| {
+                calls.set(calls.get() + 1);
+                Ok::<_, ()>(1)
+            })
+            .unwrap();
         queue.try_push(|| Ok::<_, ()>(2)).unwrap();
 
         assert_eq!(scheduler.dispatch_next(&mut queue), Some(Ok(1)));
@@ -134,8 +139,13 @@ mod tests {
         let mut queue = super::super::TaskQueue::new(
             core::num::NonZeroUsize::new(1).expect("positive capacity"),
         );
-        queue.try_push(|| Err::<(), _>("queued task failed")).unwrap();
-        assert_eq!(scheduler.dispatch_next(&mut queue), Some(Err("queued task failed")));
+        queue
+            .try_push(|| Err::<(), _>("queued task failed"))
+            .unwrap();
+        assert_eq!(
+            scheduler.dispatch_next(&mut queue),
+            Some(Err("queued task failed"))
+        );
     }
 
     #[test]
