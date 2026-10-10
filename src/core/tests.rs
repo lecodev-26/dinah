@@ -19,11 +19,51 @@ fn config_rejects_zero_limits() {
 }
 
 #[test]
+fn config_reports_worker_error_before_batch_error() {
+    assert_eq!(
+        CoreConfig::new(0, 0),
+        Err(CoreConfigError::ZeroWorkers),
+        "when both limits are invalid, worker validation has precedence"
+    );
+}
+
+#[test]
+fn config_accepts_maximum_usize_limits() {
+    let config = CoreConfig::new(usize::MAX, usize::MAX)
+        .expect("non-zero limits should be accepted without arithmetic");
+    assert_eq!(config.max_workers(), usize::MAX);
+    assert_eq!(config.max_batch_size(), usize::MAX);
+    assert_eq!(config.validate(), Ok(()));
+}
+
+#[test]
 fn ids_reject_zero_and_preserve_nonzero_values() {
     assert_eq!(CoreId::new(0), Err(IdError));
     let id = CoreId::new(42).expect("non-zero ID should be accepted");
     assert_eq!(id.get(), 42);
     assert_eq!(CoreId::new(id.get()), Ok(id));
+}
+
+#[test]
+fn ids_accept_maximum_u64_and_format_as_decimal() {
+    let id = CoreId::new(u64::MAX).expect("maximum non-zero ID should be accepted");
+    assert_eq!(id.get(), u64::MAX);
+    assert_eq!(id.to_string(), u64::MAX.to_string());
+}
+
+#[test]
+fn ids_support_ordering_and_hashing_contracts() {
+    use std::collections::HashSet;
+
+    let lower = CoreId::new(7).expect("non-zero ID");
+    let higher = CoreId::new(8).expect("non-zero ID");
+    assert!(lower < higher);
+
+    let mut ids = HashSet::new();
+    ids.insert(lower);
+    ids.insert(CoreId::new(7).expect("same ID"));
+    ids.insert(higher);
+    assert_eq!(ids.len(), 2);
 }
 
 #[test]
@@ -33,6 +73,20 @@ fn lifecycle_transitions_are_explicit() {
     assert!(LifecycleState::Stopping.can_transition_to(LifecycleState::Stopped));
     assert!(!LifecycleState::Stopped.can_transition_to(LifecycleState::Running));
     assert!(!LifecycleState::Running.can_transition_to(LifecycleState::Ready));
+}
+
+#[test]
+fn every_lifecycle_state_is_copyable_and_hashable() {
+    use std::collections::HashSet;
+    use LifecycleState::{Ready, Running, Stopped, Stopping};
+
+    let original = Running;
+    let copied = original;
+    assert_eq!(original, copied);
+
+    let states = [Ready, Running, Stopping, Stopped];
+    let unique: HashSet<_> = states.into_iter().collect();
+    assert_eq!(unique.len(), 4);
 }
 
 #[test]

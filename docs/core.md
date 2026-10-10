@@ -4,8 +4,10 @@ The `dinah::core` module contains dependency-free primitives intended to be
 shared by future subsystems. It does not start threads, perform I/O, or allocate
 resources as a side effect.
 
-- `CoreConfig` validates that worker and batch limits are non-zero. Its default
-  is intentionally conservative: one worker and batches of 64 items.
+- `CoreConfig` validates that worker and batch limits are non-zero. If both
+  are zero, `CoreConfig::new` reports `ZeroWorkers` first. The type accepts any
+  non-zero `usize`; it does not promise that the requested capacity is feasible
+  for a particular machine. Its default is one worker and batches of 64 items.
 - `CoreId` is a non-zero `u64` newtype. ID allocation and uniqueness across
   processes are deliberately out of scope; callers provide the numeric value.
 - `LifecycleState` describes a small lifecycle contract. It reports permitted
@@ -31,7 +33,7 @@ The Core is not considered stable merely because its crate version is `0.1.0` or
 
 - [ ] Public types and methods have documented contracts, including invalid inputs and state transitions.
 - [ ] Error types preserve actionable detail at the API where the error originates; conversions to `CoreError` are documented as intentionally coarse.
-- [ ] Tests cover valid and invalid configuration, non-zero IDs, every lifecycle transition, and stable error messages where callers may rely on them.
+- [ ] Tests cover valid and invalid configuration (including precedence and numeric boundaries), non-zero IDs, ID trait behavior, every lifecycle transition, and stable error messages where callers may rely on them.
 - [ ] The public API has been reviewed for unnecessary commitments, misleading names, and unused abstractions.
 - [ ] `cargo fmt`, the full workspace test suite, Clippy, and warning-free public documentation build pass in GitHub Actions.
 - [ ] No stability promise, release tag, or benchmark claim is made without separate review and evidence.
