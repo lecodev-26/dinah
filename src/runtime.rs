@@ -10,6 +10,7 @@ mod outcome;
 mod queue;
 mod scheduler;
 mod synchronization;
+mod task_state;
 
 pub use cancellation::CancellationToken;
 pub use executor::Executor;
@@ -17,3 +18,4 @@ pub use outcome::{TaskFailure, TaskFailureKind};
 pub use queue::{QueuePushError, TaskQueue};
 pub use scheduler::{ScheduleError, Scheduler};
 pub use synchronization::{Shared, SynchronizationError};
+pub use task_state::{InvalidTaskTransition, TaskState};

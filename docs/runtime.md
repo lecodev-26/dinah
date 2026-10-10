@@ -350,3 +350,21 @@ request must not be confused with a confirmed `Cancelled` terminal task state;
 that requires task lifecycle bookkeeping and observation of the task's actual
 completion, which are not implemented by this primitive. Tests cover shared
 visibility across clones and idempotent concurrent requests.
+
+
+## Task finalization state transitions (point 051)
+
+`TaskState` implements the documented task lifecycle with a checked transition
+method. Only `Pending -> Running`, `Pending -> Cancelled`, and `Running ->
+Completed`, `Failed`, or `Cancelled` are permitted. Self-transitions and all
+transitions out of terminal states are rejected. `InvalidTaskTransition` keeps
+the source and requested destination for diagnostics, and rejected transitions
+leave the state unchanged. `is_terminal()` identifies `Completed`, `Failed`,
+and `Cancelled`.
+
+This value type is not synchronized; callers sharing state across threads must
+provide synchronization and serialize updates. It does not provide atomic task
+claiming across workers. A transition to `Cancelled` from `Running` is valid
+only after cooperative cancellation is actually acknowledged, not merely
+requested. Task result payloads remain separate from lifecycle state, and panic
+capture remains outside this implementation.
