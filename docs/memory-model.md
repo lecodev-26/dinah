@@ -218,7 +218,8 @@ La implementación y las pruebas viven en `src/memory/soa.rs`. Es una primitiva 
 | 069 | Completado: `Buffer<T>` contiguo con acceso por slices y extensión por lotes acotada; sin crecimiento implícito |
 | 070 | Completado: `SoaBuffer<A, B>` con dos columnas contiguas, filas coordinadas y límites explícitos |
 | 071–073 | Sincronización, invariantes y pruebas de seguridad/concurrencia |
-| 074–075 | Baselines de asignaciones y optimizaciones demostrables |
+| 074 | Completado: benchmark reproducible `benches/memory.rs` para push preasignado, extensión por lotes, inserción/escaneo SoA y coste de `Shared` con mediana de 7 muestras; resultados de cada ejecución se guardan como artifact de CI |
+| 075 | Optimizar solo después de comparar una línea base con la misma carga y configuración; no inferir mejoras entre máquinas distintas |
 | 076 | Documentación integrada y criterios de salida del subsistema |
 
 ## Criterios para aceptar una implementación
