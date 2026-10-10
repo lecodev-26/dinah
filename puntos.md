@@ -6,8 +6,8 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 
 - Total de puntos numerados: 287
 - Completados: 43
-- En progreso: 2
-- Pendientes: 242
+- En progreso: 3
+- Pendientes: 241
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -64,7 +64,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 043 — Crear scheduler
 - [x] 044 — Crear cola de tareas
 - [x] 045 — Crear asignación de tareas
-- [ ] 046 — Crear ejecución secuencial
+- [>] 046 — Crear ejecución secuencial
 - [ ] 047 — Crear ejecución paralela
 - [ ] 048 — Crear sincronización
 - [ ] 049 — Gestionar errores de ejecución

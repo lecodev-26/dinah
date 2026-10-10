@@ -1,7 +1,8 @@
 //! Minimal Runtime execution primitives.
 //!
-//! This module starts with a synchronous executor. It deliberately does not
-//! create threads, schedule multiple tasks, or capture panics.
+//! This module provides synchronous execution, a bounded FIFO queue, and
+//! queue-backed sequential dispatch. It deliberately creates no worker threads
+//! and does not capture panics.
 
 mod executor;
 mod queue;

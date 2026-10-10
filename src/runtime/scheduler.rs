@@ -66,6 +66,24 @@ impl Scheduler {
     {
         queue.pop().map(|task| self.executor.execute(task))
     }
+
+    /// Executes queued tasks sequentially until the queue is empty.
+    ///
+    /// Results are returned in dispatch order, including task-level errors;
+    /// an error does not stop later queued tasks from running. The queue is
+    /// drained one item at a time, and user code runs after each item has been
+    /// removed from the queue. This method does not add concurrency or a worker
+    /// pool.
+    pub fn run_until_empty<T, E, F>(&self, queue: &mut TaskQueue<F>) -> Vec<Result<T, E>>
+    where
+        F: FnOnce() -> Result<T, E>,
+    {
+        let mut results = Vec::with_capacity(queue.len());
+        while let Some(result) = self.dispatch_next(queue) {
+            results.push(result);
+        }
+        results
+    }
 }
 
 #[cfg(test)]
@@ -132,6 +150,43 @@ mod tests {
         assert_eq!(queue.len(), 1);
         assert_eq!(scheduler.dispatch_next(&mut queue), Some(Ok(2)));
         assert_eq!(scheduler.dispatch_next(&mut queue), None);
+    }
+
+    #[test]
+    fn run_until_empty_drains_in_fifo_order_and_preserves_errors() {
+        fn first() -> Result<i32, &'static str> {
+            Ok(1)
+        }
+        fn failed() -> Result<i32, &'static str> {
+            Err("failed")
+        }
+        fn third() -> Result<i32, &'static str> {
+            Ok(3)
+        }
+
+        let scheduler = Scheduler::new();
+        let mut queue: super::super::TaskQueue<fn() -> Result<i32, &'static str>> =
+            super::super::TaskQueue::new(
+                core::num::NonZeroUsize::new(3).expect("positive capacity"),
+            );
+        assert!(queue.try_push(first).is_ok());
+        assert!(queue.try_push(failed).is_ok());
+        assert!(queue.try_push(third).is_ok());
+
+        assert_eq!(
+            scheduler.run_until_empty(&mut queue),
+            vec![Ok(1), Err("failed"), Ok(3)]
+        );
+        assert!(queue.is_empty());
+    }
+
+    #[test]
+    fn run_until_empty_returns_no_results_for_empty_queue() {
+        let scheduler = Scheduler::new();
+        let mut queue = super::super::TaskQueue::<fn() -> Result<(), ()>>::new(
+            core::num::NonZeroUsize::new(1).expect("positive capacity"),
+        );
+        assert!(scheduler.run_until_empty(&mut queue).is_empty());
     }
 
     #[test]

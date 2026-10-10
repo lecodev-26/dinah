@@ -275,3 +275,13 @@ caller when inserting work.
 These decisions require the concrete Task and executor API plus tests. This
 model is the boundary for point 036; the subsequent points cover implementation
 of the individual types and mechanisms.
+
+
+## Sequential queue drain (point 046)
+
+`Scheduler::run_until_empty` repeatedly dispatches the oldest queued closure
+until no work remains, returning each task result in FIFO order. Task-level
+errors are retained in the returned vector and do not prevent later queued
+tasks from executing. An empty queue returns an empty vector. This is a
+synchronous drain on the caller's thread; it does not imply parallelism,
+background progress, panic recovery, or a persistent scheduler lifecycle.
