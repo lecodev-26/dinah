@@ -1,9 +1,16 @@
 use core::fmt;
 
 /// Result type used by Core operations.
+///
+/// Prefer a more specific error type when callers need to distinguish the
+/// precise reason an operation failed.
 pub type CoreResult<T> = Result<T, CoreError>;
 
-/// Errors shared by the foundational Core APIs.
+/// Coarse errors shared by the foundational Core APIs.
+///
+/// This enum intentionally groups detailed configuration errors into
+/// [`CoreError::InvalidConfiguration`]; APIs that need the field-level reason
+/// should return [`super::CoreConfigError`] directly.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CoreError {
     /// A configuration value did not satisfy its documented constraints.

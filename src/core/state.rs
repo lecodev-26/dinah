@@ -13,6 +13,9 @@ pub enum LifecycleState {
 
 impl LifecycleState {
     /// Returns whether a transition is permitted by the Core lifecycle contract.
+    ///
+    /// This is a pure check: it does not change a resource state, coordinate
+    /// concurrent callers, or imply that a resource has completed a transition.
     pub const fn can_transition_to(self, next: Self) -> bool {
         matches!(
             (self, next),

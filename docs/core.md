@@ -36,7 +36,7 @@ The Core is not considered stable merely because its crate version is `0.1.0` or
 - [ ] `cargo fmt`, the full workspace test suite, and Clippy pass in GitHub Actions.
 - [ ] No stability promise, release tag, or benchmark claim is made without separate review and evidence.
 
-`HasCoreId` is currently an extension contract for future resource types; it has no concrete implementor yet. Keep it only while it supports an identified planned use, and revisit it during the API review rather than treating the trait's presence as proof of a complete resource model.
+`HasCoreId` is currently an extension contract for future resource types; it has no concrete implementor yet. It is retained as a planned integration seam for managed resources, but must be reviewed before the Core API is declared stable rather than treated as proof of a complete resource model.
 
 ### Benchmark policy for the initial Core
 

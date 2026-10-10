@@ -15,7 +15,10 @@ pub use id::{CoreId, IdError};
 pub use state::LifecycleState;
 pub use traits::{HasCoreId, Validate};
 
-/// Shared version of the Core API contract.
+/// Version of the currently defined Core API contract.
+///
+/// This is a contract marker, not a promise of semver stability while dinah
+/// remains pre-alpha.
 pub const CORE_API_VERSION: u16 = 1;
 
 #[cfg(test)]
