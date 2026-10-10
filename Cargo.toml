@@ -16,3 +16,9 @@ name = "runtime"
 path = "benches/runtime.rs"
 harness = false
 test = false
+
+[[bench]]
+name = "memory"
+path = "benches/memory.rs"
+harness = false
+test = false

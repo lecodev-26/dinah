@@ -8,6 +8,7 @@ on:
       - 'benches/**'
       - 'src/runtime/**'
       - 'src/runtime.rs'
+      - 'src/memory/**'
       - 'Cargo.toml'
       - '.github/workflows/benchmarks.yml'
 
@@ -28,12 +29,14 @@ jobs:
         uses: actions/checkout@v4
       - name: Install stable Rust
         uses: dtolnay/rust-toolchain@stable
-      - name: Run reproducible benchmark harness
+      - name: Run reproducible runtime benchmark harness
         run: cargo bench --bench runtime | tee runtime-benchmark-results.txt
+      - name: Run reproducible memory benchmark harness
+        run: cargo bench --bench memory | tee memory-benchmark-results.txt
       - name: Upload benchmark results
         uses: actions/upload-artifact@v4
         with:
-          name: dinah-runtime-benchmarks-${{ github.sha }}
-          path: runtime-benchmark-results.txt
+          name: dinah-benchmark-results-${{ github.sha }}
+          path: '*-benchmark-results.txt'
           if-no-files-found: error
           retention-days: 90
