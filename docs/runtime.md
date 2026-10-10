@@ -499,12 +499,29 @@ separately, while no-op and CPU batches reuse workers created before the timed
 samples. The prototype uses standard-library channels and a mutex-protected
 receiver, so its dispatch overhead is not identical to a future production pool;
 results must be interpreted as an exploratory comparison, not a drop-in
-implementation. A persistent pool should be considered only if repeated remote
-measurements show a useful benefit across relevant task sizes and if lifecycle,
-shutdown, panic, backpressure, and regression tests can define its behavior.
+implementation. Two successful remote runs on the same source commit (2026-10-10, [run
+38058048968](https://github.com/lecodev-26/dinah/actions/runs/38058048968) and
+[repeat run 38058161242](https://github.com/lecodev-26/dinah/actions/runs/38058161242))
+showed a consistent direction at 256 tasks. In the repeat run, no-op work took
+11.139 ms with temporary threads (4 workers) versus 75.7 µs with the reused
+4-worker prototype (the 2-worker temporary case took 12.485 ms versus 59.0 µs
+with the 2-worker pool). For the CPU workload, temporary threads took 31.811 ms (2
+workers) and 36.590 ms (4 workers), while the pool prototype took 22.545 ms (2)
+and 21.129 ms (4). The first run's 2-worker pool CPU result was notably slower
+(28.759 ms), so exact speedups are noisy even when the overall pool direction is
+favorable. The pool startup+shutdown medians were 134.9 µs for 2 workers and
+226.4 µs for 4 workers in the repeat run; that one-time cost must be amortized
+across enough batches to pay off.
+
+These measurements justify investigating a persistent pool further, but not
+blindly transplanting the benchmark prototype into the public scheduler. Its
+channel/receiver design differs from a production scheduler, and a production
+implementation needs explicit semantics and regression coverage for shutdown,
+panics, backpressure, queue draining, ordering, and task errors. Raw outputs and
+provenance are archived under `artifacts/benchmarks/runtime-pool-comparison-*`.
 Point 059 remains in progress; no production scheduler optimization is claimed
-until the new remote baseline is green, its results are reviewed, and the
-correctness contract is covered by regression tests.
+until the design is selected, implemented, and validated by remote CI and
+regression tests.
 
 
 ## Durable benchmark artifacts
