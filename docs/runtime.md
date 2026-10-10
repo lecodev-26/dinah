@@ -56,6 +56,42 @@ rule, lifecycle relationship, terminal outcome, and isolation requirement are
 written down. The concrete Rust type and executable payload are separate follow-up
 decisions; this point does not claim that a `Task` type exists in code.
 
+## Task identity contract (point 038)
+
+`TaskId` is a distinct Runtime-domain identifier for one logical task. It must
+not be interchangeable with `CoreId` or a future `WorkerId`, even if those types
+use the same numeric representation. This prevents accidentally passing an ID
+from one resource domain into another API.
+
+The initial contract is:
+
+- **Representation:** a non-zero `u64`, wrapped in a dedicated `TaskId` newtype.
+  Zero is reserved as invalid/uninitialized, matching the Core's sentinel policy.
+- **Construction:** the initial type validates caller-supplied numeric values;
+  it does not allocate IDs. Construction with zero returns a specific
+  `TaskIdError`, rather than a generic `CoreError`.
+- **Uniqueness:** the value type alone does not guarantee uniqueness. The
+  component that creates/submits tasks must ensure no duplicate live task IDs
+  within the relevant Runtime instance. The allocator and reuse policy are not
+  defined by this value-type contract. No cross-process or global uniqueness is
+  promised.
+- **Stability:** a task's ID does not change during its logical lifetime. A retry
+  must explicitly define whether it is the same logical task or a new task.
+- **Value semantics:** equality, ordering, hashing, copying, display, and access
+  to the numeric value are supported; serialization and persistence formats are
+  deferred until a real storage/API requirement exists.
+- **Scope:** `TaskId` identifies a task; it does not represent task state, prove
+  that a task is registered, or authorize access to a task result.
+
+The newtype intentionally mirrors `CoreId`'s simple non-zero value semantics
+without aliasing it. It does not imply that `CoreId` must be used for Runtime
+tasks, nor that `HasCoreId` should be implemented by `Task`.
+
+Acceptance criteria for point 038: the domain, numeric representation, invalid
+value, construction responsibility, uniqueness limits, stability, and public
+value semantics are documented. This is a design decision; implementation and
+tests remain separate work.
+
 ## Task lifecycle
 
 The initial conceptual states are:
