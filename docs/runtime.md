@@ -451,11 +451,15 @@ from timing runs to avoid treating noisy measurements as a correctness gate.
 The harness reports seven-sample medians for direct `Executor` no-op calls,
 immediate `Scheduler` submissions, sequential queue draining at 1/16/64/256
 items, and parallel queue draining at 16/64/256 items with 2 or 4 temporary
-workers. It also compares sequential and parallel execution of a deterministic
-CPU workload with 1,000,000 integer-mixing iterations per task. It prints total
-median nanoseconds, decimal nanoseconds per task, and
-approximate tasks per second. `black_box` limits dead-code elimination, every
-queue is asserted empty, and all tasks return a checked successful result.
+workers. It compares sequential and parallel execution of a deterministic CPU
+workload with 1,000,000 integer-mixing iterations per task. A benchmark-only
+persistent-pool prototype also reports pool startup/shutdown separately and
+reuses 2 or 4 workers for no-op and CPU task batches. This prototype is isolated
+to `benches/runtime.rs`; it is not production Runtime code and does not yet
+establish a public pool API or lifecycle contract. It prints total median
+nanoseconds, decimal nanoseconds per task, and approximate tasks per second.
+`black_box` limits dead-code elimination, every production-scheduler queue is
+asserted empty, and all tasks return a checked successful result.
 
 These cases primarily characterize dispatch/queue/thread-creation overhead for a
 trivial deterministic task; they do not model CPU-heavy application workloads,
@@ -485,15 +489,22 @@ identified and measured.
 
 ## Scheduler optimization investigation (point 059, in progress)
 
-The first no-op baseline shows temporary thread creation dominates tiny parallel
-tasks; it is not enough evidence to justify a scheduler redesign. The benchmark
-harness now also measures a deterministic CPU workload (1,000,000 wrapping integer
-mixing iterations per task) through both sequential queue draining and parallel
-batches at 2 and 4 workers, across 16/64/256 tasks. This comparison is still a
-synthetic microbenchmark, not an application workload, but it helps distinguish
-thread-startup overhead from useful work before selecting an optimization. No
-optimization is claimed until the new remote baseline is green, its results are
-reviewed, and the correctness contract remains covered by tests.
+The no-op baseline shows that temporary thread creation and dispatch overhead can
+dominate tiny parallel tasks; it is not enough evidence to justify a scheduler
+redesign. The harness measures sequential queue draining and temporary-thread
+batches at 2 and 4 workers for 16/64/256 tasks, with a deterministic CPU workload
+of 1,000,000 wrapping integer-mixing iterations per task. It now also compares a
+benchmark-only persistent-pool prototype: worker startup/shutdown is measured
+separately, while no-op and CPU batches reuse workers created before the timed
+samples. The prototype uses standard-library channels and a mutex-protected
+receiver, so its dispatch overhead is not identical to a future production pool;
+results must be interpreted as an exploratory comparison, not a drop-in
+implementation. A persistent pool should be considered only if repeated remote
+measurements show a useful benefit across relevant task sizes and if lifecycle,
+shutdown, panic, backpressure, and regression tests can define its behavior.
+Point 059 remains in progress; no production scheduler optimization is claimed
+until the new remote baseline is green, its results are reviewed, and the
+correctness contract is covered by regression tests.
 
 
 ## Durable benchmark artifacts

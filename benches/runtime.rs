@@ -1,11 +1,78 @@
 use std::hint::black_box;
 use std::num::NonZeroUsize;
+use std::sync::{mpsc, Arc, Mutex};
+use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 
 use dinah::runtime::{Executor, Scheduler, TaskQueue};
 
 const SAMPLES: usize = 7;
 const TASK_SIZES: &[usize] = &[1, 16, 64, 256];
+
+enum PoolMessage {
+    Run(Box<dyn FnOnce() + Send + 'static>),
+    Shutdown,
+}
+
+/// Benchmark-only persistent pool prototype; not part of DINAH's public API.
+struct PersistentPool {
+    sender: mpsc::Sender<PoolMessage>,
+    workers: Vec<JoinHandle<()>>,
+}
+
+impl PersistentPool {
+    fn new(worker_count: usize) -> Self {
+        let (sender, receiver) = mpsc::channel::<PoolMessage>();
+        let receiver = Arc::new(Mutex::new(receiver));
+        let mut workers = Vec::with_capacity(worker_count);
+        for _ in 0..worker_count {
+            let receiver = Arc::clone(&receiver);
+            workers.push(thread::spawn(move || loop {
+                let message = receiver
+                    .lock()
+                    .expect("benchmark pool receiver mutex is not poisoned")
+                    .recv();
+                match message {
+                    Ok(PoolMessage::Run(job)) => job(),
+                    Ok(PoolMessage::Shutdown) | Err(_) => break,
+                }
+            }));
+        }
+        Self { sender, workers }
+    }
+
+    fn run_tasks(&self, task_count: usize, task: fn() -> Result<u64, &'static str>) {
+        let (done_sender, done_receiver) = mpsc::channel();
+        for _ in 0..task_count {
+            let done_sender = done_sender.clone();
+            self.sender
+                .send(PoolMessage::Run(Box::new(move || {
+                    black_box(task().expect("benchmark pool task succeeds"));
+                    done_sender
+                        .send(())
+                        .expect("benchmark completion receiver exists");
+                })))
+                .expect("benchmark pool is accepting work");
+        }
+        drop(done_sender);
+        for _ in 0..task_count {
+            done_receiver
+                .recv()
+                .expect("every benchmark pool task completes");
+        }
+    }
+}
+
+impl Drop for PersistentPool {
+    fn drop(&mut self) {
+        for _ in &self.workers {
+            let _ = self.sender.send(PoolMessage::Shutdown);
+        }
+        for worker in self.workers.drain(..) {
+            worker.join().expect("benchmark pool worker exits cleanly");
+        }
+    }
+}
 
 fn noop_task() -> Result<u64, &'static str> {
     Ok(black_box(1))
@@ -105,6 +172,26 @@ fn main() {
         );
     }
 
+    // This pool is only a comparison prototype. Its workers are created once
+    // before measurement and reused across samples; startup cost is reported
+    // separately so reuse is not compared unfairly with per-call thread startup.
+    for &worker_count in &[2usize, 4] {
+        let startup_samples = measure(|| {
+            let pool = PersistentPool::new(worker_count);
+            black_box(&pool);
+            drop(pool);
+        });
+        report(
+            if worker_count == 2 {
+                "persistent_pool_startup_shutdown_2_workers"
+            } else {
+                "persistent_pool_startup_shutdown_4_workers"
+            },
+            1,
+            &startup_samples,
+        );
+    }
+
     for &task_count in &[16usize, 64, 256] {
         let sequential_cpu_samples = measure(|| {
             let capacity = NonZeroUsize::new(task_count).expect("task size is nonzero");
@@ -123,6 +210,31 @@ fn main() {
             task_count,
             &sequential_cpu_samples,
         );
+
+        for &worker_count in &[2usize, 4] {
+            let pool = PersistentPool::new(worker_count);
+            let noop_pool_samples = measure(|| pool.run_tasks(task_count, noop_task));
+            report(
+                if worker_count == 2 {
+                    "persistent_pool_noop_2_workers"
+                } else {
+                    "persistent_pool_noop_4_workers"
+                },
+                task_count,
+                &noop_pool_samples,
+            );
+            let cpu_pool_samples = measure(|| pool.run_tasks(task_count, cpu_task));
+            report(
+                if worker_count == 2 {
+                    "persistent_pool_cpu_1m_2_workers"
+                } else {
+                    "persistent_pool_cpu_1m_4_workers"
+                },
+                task_count,
+                &cpu_pool_samples,
+            );
+            drop(pool);
+        }
 
         for &worker_count in &[2usize, 4] {
             let parallel_samples = measure(|| {
