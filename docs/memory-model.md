@@ -66,6 +66,24 @@ Contrato de diseño para una primera implementación futura:
 
 **Criterio para implementar más adelante:** pruebas de pool vacío y lleno, agotamiento, adquisición/retorno, destrucción con recursos disponibles, exclusividad de leases, fallo de construcción y ausencia de acceso a recursos no inicializados. Los detalles de limpieza/reset, las pruebas de concurrencia y los benchmarks corresponden a sus puntos específicos; no se consideran completados por esta decisión de diseño.
 
+## Contrato de reutilización de memoria (punto 066)
+
+**Decisión: reutilizar almacenamiento no significa conservar vivos los valores anteriores.** La estrategia por defecto será destruir los valores que ya no pertenecen al usuario y conservar solo la reserva de almacenamiento cuando el contenedor lo permita. No se añadirá un trait genérico `Reset` ni se supondrá que cualquier tipo puede volver a un estado inicial de forma segura.
+
+Reglas para las APIs presentes y futuras:
+
+1. **Separar almacenamiento y valor.** La capacidad reservada puede reutilizarse aunque los valores anteriores se hayan destruido. La vida útil de cada valor sigue las reglas de Rust; reservar memoria no equivale a inicializar objetos en ella.
+2. **`Buffer::clear` destruye, no resetea.** Destruye exactamente los elementos actualmente contenidos y conserva la reserva del buffer. Un `Drop` de elemento puede ejecutar efectos observables. Una inserción posterior debe aportar un valor nuevo y correctamente inicializado.
+3. **`pop` transfiere propiedad.** El elemento extraído pasa al llamador y deja de pertenecer al buffer; el buffer puede reutilizar la capacidad liberada para futuras inserciones. El llamador es responsable de la vida útil del valor extraído.
+4. **No exponer contenido obsoleto.** Las vistas solo cubren los elementos inicializados actualmente. Después de limpiar o extraer elementos, ninguna API podrá leerlos mediante el buffer ni asumir que la memoria reservada contiene valores válidos. No se expondrá memoria sin inicializar ni se usarán bytes antiguos como valores nuevos.
+5. **Reset explícito y específico.** Si una estructura futura necesita conservar un objeto vivo y reiniciarlo, deberá definir una operación explícita cuyo contrato describa qué campos se restablecen, qué recursos se liberan, cómo se manejan errores y qué invariantes quedan garantizadas. No se aplicará automáticamente a tipos arbitrarios.
+6. **Reutilización de slots de pool.** Un lease devuelto marca el slot como disponible, pero no autoriza por sí solo a reutilizar el estado anterior. Antes de entregarlo al siguiente usuario, el pool deberá destruir y reconstruir el valor o ejecutar un reset específico, documentado y probado. La política concreta se elige por tipo y no debe permitir dos leases simultáneos para el mismo slot.
+7. **Fallos sin estado corrupto.** Si reinicializar un recurso puede fallar, la API debe representar ese fallo y mantener el slot fuera de circulación hasta que vuelva a un estado válido o se retire de forma segura. Nunca debe marcarse como disponible un recurso parcialmente reinicializado.
+8. **Sin garantías de puesta a cero.** Destruir un valor no garantiza borrar físicamente sus bytes. Los datos sensibles requieren una política de borrado seguro específica; no se afirmará que `clear` o `Drop` constituyen borrado criptográfico.
+9. **Medir antes de sofisticar.** La reutilización debe preservar la semántica observable y se optimizará solo cuando las mediciones indiquen que evitar construcciones/asignaciones compensa la complejidad añadida.
+
+**Pruebas requeridas al implementar:** contar destrucciones con tipos instrumentados; comprobar que `clear` mantiene la capacidad y permite insertar valores nuevos; verificar que `pop` transfiere exactamente un valor; probar errores de reset si se introduce; y demostrar que no se puede observar contenido de elementos destruidos o no inicializados. El pool concreto, la sincronización y los benchmarks siguen siendo tareas separadas.
+
 ## Layout, alineación y concurrencia
 
 - Usar el layout y la alineación garantizados por los tipos y contenedores estándar. No inferir layout estable de tipos `repr(Rust)` ni serializar su representación en memoria.
@@ -98,7 +116,7 @@ La implementación y sus pruebas viven en `src/memory/buffer.rs`. No se expone a
 | 063 | Completado: propiedad única de `Buffer<T>`, préstamos con lifetimes del compilador, transferencia por movimiento, sin clonación implícita ni acceso mutable al contenedor interno |
 | 064 | Completado: usar contenedores estándar y reservas fallibles; aplazar un trait propio hasta disponer de un segundo backend real |
 | 065 | Completado: contrato de pool acotado, agotamiento explícito, leases exclusivos y sincronización local por defecto |
-| 066 | Reglas de reinicio, limpieza y reutilización |
+| 066 | Completado: separar reserva de almacenamiento y vida de valores; `clear` destruye, `pop` transfiere propiedad y reset debe ser explícito |
 | 067 | Requisitos concretos de alineación |
 | 068 | Casos SIMD y layouts respaldados por mediciones |
 | 069–070 | Representaciones contiguas y data-oriented para cargas identificadas |
