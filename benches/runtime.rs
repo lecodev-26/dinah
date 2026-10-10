@@ -2,7 +2,7 @@ use std::hint::black_box;
 use std::num::NonZeroUsize;
 use std::time::{Duration, Instant};
 
-use dinah::{Executor, Scheduler, TaskQueue};
+use dinah::runtime::{Executor, Scheduler, TaskQueue};
 
 const SAMPLES: usize = 7;
 const TASK_SIZES: &[usize] = &[1, 16, 64, 256];
