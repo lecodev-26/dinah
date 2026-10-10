@@ -315,3 +315,20 @@ a guard. This primitive does not yet make `TaskQueue` or `Scheduler` themselves
 concurrently mutable, and it does not promise fairness, lock-free progress, task
 cancellation, or panic recovery. Tests cover shared clone visibility, contended
 increments across threads, and explicit poison reporting.
+
+
+## Task error classification (point 049)
+
+`TaskFailure<E>` wraps the original task error and labels it as
+`TaskFailureKind::ReturnedError`. It preserves the concrete error type and
+provides borrowing, consuming, display, and error-mapping operations without
+flattening details into `CoreError`. Mapping an error retains the classification.
+
+This is deliberately a task-error value, not a scheduler rejection, lock error,
+cancellation signal, or panic wrapper. The executor and scheduler continue to
+return their generic `Result<T, E>` values unchanged; callers can opt into
+`TaskFailure::returned(error)` when they need a stable task-level category.
+Panics still unwind and are not caught or mislabeled as returned errors. This
+point does not yet implement a task registry or aggregate multiple task outcomes.
+Tests verify preservation of the original error, classification, display, and
+error mapping.
