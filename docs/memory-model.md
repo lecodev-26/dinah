@@ -84,6 +84,22 @@ Reglas para las APIs presentes y futuras:
 
 **Pruebas requeridas al implementar:** contar destrucciones con tipos instrumentados; comprobar que `clear` mantiene la capacidad y permite insertar valores nuevos; verificar que `pop` transfiere exactamente un valor; probar errores de reset si se introduce; y demostrar que no se puede observar contenido de elementos destruidos o no inicializados. El pool concreto, la sincronización y los benchmarks siguen siendo tareas separadas.
 
+## Contrato de alineación (punto 067)
+
+**Decisión: la alineación debe venir garantizada por el tipo y por la API de almacenamiento utilizada; DINAH no prometerá alineación especial sin representarla explícitamente en el contrato.** La implementación inicial permanece en Rust seguro y no calculará direcciones ni desplazamientos manualmente.
+
+Reglas:
+
+1. **Alineación ordinaria.** Para `Buffer<T>` y los contenedores estándar, confiar en las garantías de alineación de `T` y del contenedor de Rust. El consumidor no necesita ni puede asumir una alineación adicional distinta de la documentada por el tipo.
+2. **Sin promesas basadas en el layout accidental.** No inferir offsets, padding ni layout estable a partir de `repr(Rust)`. Si un contrato binario requiere una representación concreta, deberá elegir y documentar una representación admitida, como `repr(C)`, sin confundir layout de campos con alineación especial de una reserva.
+3. **Alineación mayor que la ordinaria.** Si un caso real exige alineación explícita (por ejemplo, una interfaz de hardware), modelarla en un tipo o API de asignación cuya garantía sea verificable. La construcción debe fallar de forma recuperable cuando no pueda cumplirse el contrato; nunca devolver almacenamiento con alineación insuficiente.
+4. **No falsear alineación SIMD.** Que un buffer sea contiguo no significa que empiece en una frontera SIMD específica. El punto 068 evaluará por separado requisitos concretos de instrucciones, tipos y plataformas; no añadir padding ni sobreasignación especulativa sin mediciones.
+5. **Sin aritmética manual de punteros.** No exponer punteros crudos ni usar `unsafe` para ajustar direcciones en esta fase. Si las APIs seguras disponibles no pueden satisfacer un requisito demostrado, documentar la limitación y proponer un diseño separado antes de ampliar el alcance.
+6. **Casos límite.** Cualquier implementación futura debe definir el comportamiento para capacidad cero y tipos de tamaño cero (ZST), además de tamaños/alineaciones elevados y fallos de reserva. No deducir alineación útil de una dirección cuando no exista almacenamiento de elementos.
+7. **Alineación no es rendimiento garantizado.** Una alineación más estricta puede aumentar el coste o el desperdicio de memoria; solo se adoptará si benchmarks representativos demuestran una mejora sin romper el contrato de seguridad.
+
+**Pruebas requeridas al implementar alineación especial:** comprobar con `align_of`/`align_of_val` las garantías del tipo; probar tipos ordinarios y sobrealineados en las APIs que los admitan; cubrir capacidad cero y ZST; comprobar que un fallo de construcción no publica una instancia parcial; y verificar que la API no afirma garantías más fuertes que las que realmente ofrece. Las pruebas SIMD y los benchmarks comparativos permanecen en los puntos 068 y 074–075.
+
 ## Layout, alineación y concurrencia
 
 - Usar el layout y la alineación garantizados por los tipos y contenedores estándar. No inferir layout estable de tipos `repr(Rust)` ni serializar su representación en memoria.
@@ -117,7 +133,7 @@ La implementación y sus pruebas viven en `src/memory/buffer.rs`. No se expone a
 | 064 | Completado: usar contenedores estándar y reservas fallibles; aplazar un trait propio hasta disponer de un segundo backend real |
 | 065 | Completado: contrato de pool acotado, agotamiento explícito, leases exclusivos y sincronización local por defecto |
 | 066 | Completado: separar reserva de almacenamiento y vida de valores; `clear` destruye, `pop` transfiere propiedad y reset debe ser explícito |
-| 067 | Requisitos concretos de alineación |
+| 067 | Completado: usar garantías de alineación del tipo/contenedor; alineación especial solo con contrato explícito, errores recuperables y pruebas |
 | 068 | Casos SIMD y layouts respaldados por mediciones |
 | 069–070 | Representaciones contiguas y data-oriented para cargas identificadas |
 | 071–073 | Sincronización, invariantes y pruebas de seguridad/concurrencia |
