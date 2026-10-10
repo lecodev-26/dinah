@@ -13,7 +13,7 @@ fn noop_task() -> Result<u64, &'static str> {
 
 fn cpu_task() -> Result<u64, &'static str> {
     let mut value = black_box(1_u64);
-    for _ in 0..10_000 {
+    for _ in 0..1_000_000 {
         value = value
             .wrapping_mul(6_364_136_223_846_793_005)
             .wrapping_add(1);
@@ -119,7 +119,7 @@ fn main() {
             assert!(queue.is_empty());
         });
         report(
-            "scheduler_queue_sequential_cpu_10k",
+            "scheduler_queue_sequential_cpu_1m",
             task_count,
             &sequential_cpu_samples,
         );
@@ -140,9 +140,9 @@ fn main() {
             });
             report(
                 if worker_count == 2 {
-                    "scheduler_queue_parallel_cpu_10k_2_workers"
+                    "scheduler_queue_parallel_cpu_1m_2_workers"
                 } else {
-                    "scheduler_queue_parallel_cpu_10k_4_workers"
+                    "scheduler_queue_parallel_cpu_1m_4_workers"
                 },
                 task_count,
                 &parallel_samples,

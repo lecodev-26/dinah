@@ -452,7 +452,7 @@ The harness reports seven-sample medians for direct `Executor` no-op calls,
 immediate `Scheduler` submissions, sequential queue draining at 1/16/64/256
 items, and parallel queue draining at 16/64/256 items with 2 or 4 temporary
 workers. It also compares sequential and parallel execution of a deterministic
-CPU workload with 10,000 integer-mixing iterations per task. It prints total
+CPU workload with 1,000,000 integer-mixing iterations per task. It prints total
 median nanoseconds, decimal nanoseconds per task, and
 approximate tasks per second. `black_box` limits dead-code elimination, every
 queue is asserted empty, and all tasks return a checked successful result.
@@ -474,10 +474,14 @@ produced the following medians; the raw log is retained in the run artifact
 | Parallel queue drain, 4 workers | 256 | 10.958 ms | 42.805 µs |
 
 The no-op parallel cases are substantially slower because this scheduler creates
-short-lived threads for each batch; this is evidence against claiming that parallel
+short-lived threads for each batch. The first 10,000-iteration CPU baseline was
+also dominated by dispatch/thread-startup overhead: at 256 tasks, sequential took
+0.346 ms versus 8.344 ms (2 workers) and 7.557 ms (4 workers). That workload is
+still too small to infer the useful-work crossover, so the harness now raises it
+to 1,000,000 iterations per task. This is evidence against claiming parallel
 execution is always faster, not a universal performance conclusion. It suggests
-that a persistent worker pool is a future design candidate, but point 059 must
-measure representative workloads before optimizing. Point 033 (Core benchmarks)
+a persistent worker pool as a candidate, but point 059 must compare workloads
+before selecting an optimization. Point 033 (Core benchmarks)
 remains open until a representative Core operation and suitable workload are
 identified and measured.
 
@@ -486,7 +490,7 @@ identified and measured.
 
 The first no-op baseline shows temporary thread creation dominates tiny parallel
 tasks; it is not enough evidence to justify a scheduler redesign. The benchmark
-harness now also measures a deterministic CPU workload (10,000 wrapping integer
+harness now also measures a deterministic CPU workload (1,000,000 wrapping integer
 mixing iterations per task) through both sequential queue draining and parallel
 batches at 2 and 4 workers, across 16/64/256 tasks. This comparison is still a
 synthetic microbenchmark, not an application workload, but it helps distinguish
