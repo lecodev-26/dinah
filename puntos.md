@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 34
+- Completados: 35
 - En progreso: 2
-- Pendientes: 251
+- Pendientes: 250
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -55,7 +55,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 ## FASE 2 — Runtime
 
 - [x] 036 — Diseñar modelo de ejecución
-- [ ] 037 — Definir Task
+- [x] 037 — Definir Task
 - [ ] 038 — Definir TaskId
 - [ ] 039 — Definir estado de tarea
 - [ ] 040 — Definir Worker

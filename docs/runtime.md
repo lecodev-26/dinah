@@ -20,6 +20,42 @@ parallel execution is introduced.
   Worker identity and lifecycle should be added only with the first concrete
   worker implementation.
 
+## Task contract (point 037)
+
+A `Task` is the logical, one-shot unit of work accepted by the Runtime. It has
+identity, observable lifecycle state, and eventually one terminal outcome. It is
+not a worker, queue entry, scheduler, or executor. The same logical task must
+not begin execution more than once, even if dispatch or worker operations fail.
+
+The contract is deliberately split into stable semantics and a not-yet-selected
+Rust representation:
+
+- **Ownership:** once submission is accepted, the Runtime owns responsibility
+  for either executing the task or reporting that it was cancelled/rejected
+  according to the submission contract. An unaccepted task remains the caller's
+  responsibility.
+- **Single execution:** a task is started at most once. Retries, if ever added,
+  must be explicit and must define whether they create a new task identity.
+- **Lifecycle:** the state transitions in the next section are authoritative;
+  a cancellation request is not itself proof that a running task stopped.
+- **Outcome:** every terminal task distinguishes success, failure, and
+  cancellation. Failure information should remain task-specific rather than be
+  flattened into `CoreError`. A task cannot have two terminal outcomes.
+- **Isolation:** task logic must execute outside scheduler/queue internal locks.
+  Runtime bookkeeping must not imply that arbitrary user work is deterministic
+  or side-effect-free.
+- **Identity scope:** identity is assigned by the Runtime-facing API once the
+  `TaskId` contract is defined; this section does not imply global uniqueness.
+- **Representation not yet frozen:** closure type erasure, output/result handles,
+  `Send + 'static` bounds, panic capture, and concrete error storage remain open
+  until the executor and queue API are designed. These are implementation/API
+  decisions, not permission to weaken the semantic guarantees above.
+
+Acceptance criteria for point 037: the meaning, ownership boundary, one-shot
+rule, lifecycle relationship, terminal outcome, and isolation requirement are
+written down. The concrete Rust type and executable payload are separate follow-up
+decisions; this point does not claim that a `Task` type exists in code.
+
 ## Task lifecycle
 
 The initial conceptual states are:
