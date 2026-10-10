@@ -1,8 +1,10 @@
 //! Minimal Runtime execution primitives.
 //!
 //! This module provides synchronous execution, a bounded FIFO queue, sequential
-//! dispatch, bounded parallel batches using temporary scoped threads, and opt-in
-//! shared state protected by a mutex. Panics are not converted into task errors.
+//! dispatch, and bounded parallel execution using scoped workers reused within
+//! each parallel call. Cancellation, metrics, tracing, task-state, and shared-state
+//! primitives are opt-in and caller-managed, not automatically wired into tasks.
+//! Task panics propagate to callers after the current parallel batch is joined.
 
 mod cancellation;
 mod executor;

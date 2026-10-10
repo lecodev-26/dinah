@@ -1,9 +1,32 @@
 # dinah Runtime — initial execution model
 
-This document records the first Runtime design decision. It is a design contract,
-not a claim that task execution, scheduling, or worker management is implemented.
-The first implementation must be small enough to test deterministically before
-parallel execution is introduced.
+This document records the Runtime v0.1 design contract and implemented behavior.
+The implementation intentionally remains small and synchronous at submission time;
+parallel execution is an explicit queue-draining operation, not background work.
+The contract distinguishes implemented guarantees from future worker-lifecycle
+features that are not part of v0.1.
+
+## Runtime v0.1 contract (point 060)
+
+The public surface is a set of explicit primitives, not a fully managed task
+service. `Executor` invokes one closure on the caller's thread. `Scheduler::schedule`
+also runs immediately; `dispatch_next` and `run_until_empty` drain a caller-owned
+bounded FIFO queue sequentially, while `run_parallel` uses a bounded set of scoped
+workers reused across batches during that call. Results retain dispatch order and
+task-level errors remain distinct from scheduler submission errors.
+
+The queue is single-owner and not internally synchronized. `CancellationToken` is
+cooperative and does not interrupt a closure. `RuntimeMetrics` and `TraceBuffer`
+are opt-in recording primitives; they are not automatically instrumented by the
+scheduler. `TaskState` validates transitions but is not an automatically maintained
+task registry. `Shared<T>` provides explicit mutex-backed sharing. Task panics are
+not converted into `TaskFailure`; sequential execution unwinds directly, while
+`run_parallel` joins the current batch and scoped workers before resuming the panic.
+
+Not included in v0.1: a background scheduler, workers persistent across calls,
+retries, automatic cancellation propagation, automatic metrics/tracing, or a
+scheduler-wide close/shutdown lifecycle. These omissions are deliberate API limits,
+not implicit guarantees.
 
 ## Responsibilities
 
@@ -219,9 +242,11 @@ capacity. It is deliberately not a concurrent queue and does not execute tasks.
 
 When the queue is full, `try_push` returns `QueuePushError::Full(item)` with the
 original item, preserving caller ownership and preventing silent work loss.
-The queue is not yet wired into `Scheduler`; queue-backed dispatch and its
-acceptance/rejection semantics belong to later Runtime points. Tests cover empty
-state, FIFO order, full-queue rejection without item loss, and reuse after a pop.
+`Scheduler::dispatch_next`, `run_until_empty`, and `run_parallel` consume this
+queue by removing tasks before executing user closures. Queue insertion remains a
+caller-owned operation; a full queue returns the rejected task without losing it.
+Tests cover empty state, FIFO order, full-queue rejection without item loss, and
+reuse after a pop.
 
 ## Queue-backed dispatch (point 045)
 
@@ -240,12 +265,13 @@ caller when inserting work.
    deterministic and easy to verify.
 3. Add a scheduler and bounded queue with explicit capacity and submission-error
    behavior; do not silently drop accepted tasks.
-4. Introduce workers and parallel execution only after sequential semantics are
-   stable. Keep user callbacks outside scheduler/queue locks.
-5. Add cancellation and shutdown semantics before claiming robust parallel
-   lifecycle behavior.
-6. Add contention/race tests and benchmarks only when there is a representative
-   workload and reproducible measurement procedure.
+4. Introduce bounded scoped workers after sequential semantics are stable. Keep
+   user callbacks outside queue locks and preserve FIFO result order.
+5. Keep cancellation cooperative and document that tokens do not interrupt work;
+   parallel worker shutdown is scoped to each `run_parallel` call.
+6. Maintain public-API integration tests and repeatable benchmarks. A background
+   persistent pool and scheduler-wide close/shutdown lifecycle are not part of the
+   current v0.1 contract.
 
 ## Design constraints
 
