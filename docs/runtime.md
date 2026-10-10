@@ -291,13 +291,14 @@ background progress, panic recovery, or a persistent scheduler lifecycle.
 
 `Scheduler::run_parallel` executes queued closures in batches of at most the
 caller-supplied non-zero worker limit. Each batch is removed from the queue
-before its tasks run on scoped threads. Results are returned in FIFO dispatch
-order, not completion order; task-level errors are retained and later batches
-continue. The queue is empty after a normal return. This initial implementation
-creates temporary threads per batch rather than maintaining a worker pool. Tasks
-and result/error values must satisfy `Send`; panics are not caught and propagate
-to the caller. Persistent workers, cancellation, shutdown coordination, and
-recovery from panicking tasks remain out of scope for this point.
+before its tasks run on a bounded set of scoped workers, reused across batches
+within that call. Results are returned in FIFO dispatch order, not completion
+order; task-level errors are retained and later batches continue. The queue is
+empty after a normal return. Tasks and result/error values must satisfy `Send`.
+Task panics are captured only to finish the current batch and shut workers down,
+then the panic is resumed on the caller; later batches remain queued. Workers do
+not persist across calls, and there is no background worker lifecycle or shutdown
+API.
 
 
 ## Shared-state synchronization (point 048)
@@ -450,9 +451,12 @@ from timing runs to avoid treating noisy measurements as a correctness gate.
 
 The harness reports seven-sample medians for direct `Executor` no-op calls,
 immediate `Scheduler` submissions, sequential queue draining at 1/16/64/256
-items, and parallel queue draining at 16/64/256 items with 2 or 4 temporary
-workers, including no-op tasks to expose dispatch/thread-startup overhead. It
-compares sequential and parallel execution of a deterministic CPU workload with 1,000,000 integer-mixing iterations per task. A benchmark-only
+items, and parallel queue draining at 16/64/256 items with 2 or 4 workers,
+including no-op tasks to expose dispatch/thread-startup overhead. The current
+scheduler reuses scoped workers across batches within each `run_parallel` call;
+the historical pre-optimization measurements below used temporary threads per
+batch. It compares sequential and parallel execution of a deterministic CPU
+workload with 1,000,000 integer-mixing iterations per task. A benchmark-only
 persistent-pool prototype also reports pool startup/shutdown separately and
 reuses 2 or 4 workers for no-op and CPU task batches. This prototype is isolated
 to `benches/runtime.rs`; it is not production Runtime code and does not yet
@@ -477,51 +481,48 @@ produced the following medians; the raw log is retained in the run artifact
 | Parallel queue drain, 2 workers | 256 | 11.541 ms | 45.083 µs |
 | Parallel queue drain, 4 workers | 256 | 10.958 ms | 42.805 µs |
 
-The no-op parallel cases are substantially slower because this scheduler creates
+The historical pre-optimization no-op parallel cases were dominated by creating
 short-lived threads for each batch. The first 10,000-iteration CPU baseline was
-also dominated by dispatch/thread-startup overhead: at 256 tasks, sequential took
-0.346 ms versus 8.344 ms (2 workers) and 7.557 ms (4 workers). That workload is
-still too small to infer the useful-work crossover, so the harness now raises it
-to 1,000,000 iterations per task. The latest successful run ([run 38057383426](https://github.com/lecodev-26/dinah/actions/runs/38057383426)) measured 256 tasks at 39.849 ms sequentially, 32.190 ms with 2 workers, and 34.690 ms with 4 workers. On this runner and synthetic workload, 2 workers were about 19% faster than sequential while 4 workers were slower than 2 workers. This is evidence against assuming more workers always improve throughput, not a universal performance conclusion. It suggests a persistent worker pool as a candidate, but point 059 remains in progress while the scheduling policy and workload limits are evaluated. Point 033 (Core benchmarks)
-remains open until a representative Core operation and suitable workload are
-identified and measured.
+also too small to infer the useful-work crossover, so the harness raised the work
+to 1,000,000 iterations per task. The earlier run ([run 38057383426](https://github.com/lecodev-26/dinah/actions/runs/38057383426)) measured 256 tasks at 39.849 ms sequentially, 32.190 ms with 2 workers, and 34.690 ms with 4 workers. These are historical baseline results, not measurements of the current scheduler. Point 033 (Core benchmarks) remains open until a representative Core operation and suitable workload are identified and measured.
 
 
-## Scheduler optimization investigation (point 059, in progress)
+## Scheduler optimization investigation (point 059, completed)
 
-The no-op baseline shows that temporary thread creation and dispatch overhead can
-dominate tiny parallel tasks; it is not enough evidence to justify a scheduler
-redesign. The harness measures sequential queue draining and temporary-thread
-batches at 2 and 4 workers for 16/64/256 tasks, with a deterministic CPU workload
-of 1,000,000 wrapping integer-mixing iterations per task. It now also compares a
-benchmark-only persistent-pool prototype: worker startup/shutdown is measured
-separately, while no-op and CPU batches reuse workers created before the timed
-samples. The prototype uses standard-library channels and a mutex-protected
-receiver, so its dispatch overhead is not identical to a future production pool;
-results must be interpreted as an exploratory comparison, not a drop-in
-implementation. Two successful remote runs on the same source commit (2026-10-10, [run
-38058048968](https://github.com/lecodev-26/dinah/actions/runs/38058048968) and
-[repeat run 38058161242](https://github.com/lecodev-26/dinah/actions/runs/38058161242))
-showed a consistent direction at 256 tasks. In the repeat run, no-op work took
-11.139 ms with temporary threads (4 workers) versus 75.7 µs with the reused
-4-worker prototype (the 2-worker temporary case took 12.485 ms versus 59.0 µs
-with the 2-worker pool). For the CPU workload, temporary threads took 31.811 ms (2
-workers) and 36.590 ms (4 workers), while the pool prototype took 22.545 ms (2)
-and 21.129 ms (4). The first run's 2-worker pool CPU result was notably slower
-(28.759 ms), so exact speedups are noisy even when the overall pool direction is
-favorable. The pool startup+shutdown medians were 134.9 µs for 2 workers and
-226.4 µs for 4 workers in the repeat run; that one-time cost must be amortized
-across enough batches to pay off.
+The measurements justified reducing per-batch thread creation. `Scheduler::run_parallel`
+now starts up to `min(max_workers, queued_tasks)` scoped workers once per invocation
+and reuses them across batches, rather than creating a new set of threads for every
+batch. This remains a per-call scoped worker set, not a background pool retained
+across calls: it preserves borrowed task closures and avoids adding a public worker
+lifecycle or shutdown API.
 
-These measurements justify investigating a persistent pool further, but not
-blindly transplanting the benchmark prototype into the public scheduler. Its
-channel/receiver design differs from a production scheduler, and a production
-implementation needs explicit semantics and regression coverage for shutdown,
-panics, backpressure, queue draining, ordering, and task errors. Raw outputs and
-provenance are archived under `artifacts/benchmarks/runtime-pool-comparison-*`.
-Point 059 remains in progress; no production scheduler optimization is claimed
-until the design is selected, implemented, and validated by remote CI and
-regression tests.
+Two pre-change runs ([38058048968](https://github.com/lecodev-26/dinah/actions/runs/38058048968),
+[38058161242](https://github.com/lecodev-26/dinah/actions/runs/38058161242)) and two
+post-change runs ([38058454819](https://github.com/lecodev-26/dinah/actions/runs/38058454819),
+[38058504887](https://github.com/lecodev-26/dinah/actions/runs/38058504887)) provide a
+repeatable directional comparison at 256 tasks:
+
+| Workload | Before: temporary threads | After: scoped worker reuse | Median change |
+| --- | ---: | ---: | ---: |
+| No-op, 2 workers | 12.20 ms | 3.27 ms | ~73% faster |
+| No-op, 4 workers | 11.00 ms | 2.08 ms | ~81% faster |
+| CPU, 2 workers | 31.69 ms | 24.91 ms | ~21% faster |
+| CPU, 4 workers | 35.83 ms | 22.65 ms | ~37% faster |
+
+These are synthetic, runner-specific medians rather than performance guarantees;
+individual runs vary, especially for CPU-bound cases. Raw outputs and provenance
+are preserved under `artifacts/benchmarks/runtime-scoped-workers-*`.
+
+Regression tests verify FIFO result order across batches, execution within the
+worker limit, task-error handling, empty queues, single-worker behavior, and panic
+propagation without losing the later queued batch. The implementation catches task
+panics only long enough to finish the current batch and shut down workers, then
+resumes unwinding; it does not convert panics into ordinary task errors. The full
+CI workflow and the dedicated benchmark workflow passed. Point 059 is complete for
+this scoped-worker-reuse optimization. A truly persistent pool across calls remains
+a separate future design decision requiring a public lifecycle/shutdown contract
+and fresh measurements.
+
 
 
 ## Durable benchmark artifacts
