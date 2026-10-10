@@ -271,12 +271,12 @@ mod tests {
         let mut queue = super::super::TaskQueue::new(core::num::NonZeroUsize::new(4).unwrap());
         for value in 0..4 {
             let barrier = Arc::clone(&barrier);
-            queue
+            assert!(queue
                 .try_push(move || {
                     barrier.wait();
                     Ok::<_, &'static str>(value)
                 })
-                .unwrap();
+                .is_ok());
         }
         let results = scheduler.run_parallel(&mut queue, core::num::NonZeroUsize::new(2).unwrap());
         assert_eq!(results, vec![Ok(0), Ok(1), Ok(2), Ok(3)]);
