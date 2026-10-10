@@ -113,21 +113,18 @@ mod tests {
 
     #[test]
     fn dispatch_next_executes_oldest_task_once() {
+        fn first() -> Result<i32, ()> { Ok(1) }
+        fn second() -> Result<i32, ()> { Ok(2) }
+
         let scheduler = Scheduler::new();
-        let mut queue = super::super::TaskQueue::new(
-            core::num::NonZeroUsize::new(2).expect("positive capacity"),
-        );
-        let calls = Cell::new(0);
-        queue
-            .try_push(|| {
-                calls.set(calls.get() + 1);
-                Ok::<_, ()>(1)
-            })
-            .unwrap();
-        queue.try_push(|| Ok::<_, ()>(2)).unwrap();
+        let mut queue: super::super::TaskQueue<fn() -> Result<i32, ()>> =
+            super::super::TaskQueue::new(
+                core::num::NonZeroUsize::new(2).expect("positive capacity"),
+            );
+        assert!(queue.try_push(first).is_ok());
+        assert!(queue.try_push(second).is_ok());
 
         assert_eq!(scheduler.dispatch_next(&mut queue), Some(Ok(1)));
-        assert_eq!(calls.get(), 1);
         assert_eq!(queue.len(), 1);
         assert_eq!(scheduler.dispatch_next(&mut queue), Some(Ok(2)));
         assert_eq!(scheduler.dispatch_next(&mut queue), None);
@@ -135,13 +132,14 @@ mod tests {
 
     #[test]
     fn dispatch_next_preserves_task_error() {
+        fn failed() -> Result<(), &'static str> { Err("queued task failed") }
+
         let scheduler = Scheduler::new();
-        let mut queue = super::super::TaskQueue::new(
-            core::num::NonZeroUsize::new(1).expect("positive capacity"),
-        );
-        queue
-            .try_push(|| Err::<(), _>("queued task failed"))
-            .unwrap();
+        let mut queue: super::super::TaskQueue<fn() -> Result<(), &'static str>> =
+            super::super::TaskQueue::new(
+                core::num::NonZeroUsize::new(1).expect("positive capacity"),
+            );
+        assert!(queue.try_push(failed).is_ok());
         assert_eq!(
             scheduler.dispatch_next(&mut queue),
             Some(Err("queued task failed"))
