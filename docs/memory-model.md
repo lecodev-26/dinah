@@ -160,7 +160,9 @@ Los tipos de `dinah::memory` siguen siendo propietarios y no incorporan bloqueos
 - El wrapper no hace que cualquier `T` sea seguro para cualquier uso: las restricciones `Send`/`Sync` siguen dependiendo de los tipos de Rust y de la API utilizada. El wrapper no sustituye la validación de invariantes ni las pruebas de concurrencia.
 - La sincronización es opt-in. Para datos inmutables, preferir compartir referencias/valores inmutables; para acceso local a un solo hilo, usar directamente el buffer y evitar el coste del mutex. No se afirma que `Mutex` sea la estrategia más rápida para todas las cargas.
 
-La prueba `shared_soa_serializes_concurrent_row_insertions` comprueba que varios hilos pueden insertar filas completas mediante un `Shared<SoaBuffer<_, _>>` sin desalinear las columnas. Las pruebas generales de carrera/concurrencia y los benchmarks completos siguen perteneciendo a los puntos 072–075; este punto solo establece y prueba la integración básica con la primitiva existente.
+Las pruebas de concurrencia comprueban también que 16 hilos que empiezan mediante una barrera no pierden ninguna de sus 32.000 actualizaciones, y que un segundo hilo no puede adquirir el mutex mientras otro conserva el guard: tras liberar el guard, la adquisición termina. El test usa un timeout solo para detectar que el bloqueo sigue retenido y no presupone un orden de planificación entre hilos.
+
+La prueba `shared_soa_serializes_concurrent_row_insertions` comprueba que varios hilos pueden insertar filas completas mediante un `Shared<SoaBuffer<_, _>>` sin desalinear las columnas. Estas pruebas validan la exclusión mutua y las invariantes observables, pero no demuestran ausencia de interbloqueos en cualquier programa, fairness, ausencia de starvation ni rendimiento escalable. Los benchmarks completos siguen perteneciendo a los puntos 074–075.
 
 ## Buffer inicial (punto 062)
 

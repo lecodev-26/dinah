@@ -81,6 +81,8 @@ impl<T> From<PoisonError<MutexGuard<'_, T>>> for SynchronizationError {
 #[cfg(test)]
 mod tests {
     use super::{Shared, SynchronizationError};
+    use std::sync::{mpsc, Barrier};
+    use std::time::Duration;
 
     #[test]
     fn clones_share_the_same_value() {
@@ -109,6 +111,55 @@ mod tests {
             thread.join().expect("worker should not panic");
         }
         assert_eq!(*shared.lock().expect("lock should be healthy"), 8_000);
+    }
+
+    #[test]
+    fn cloned_handles_start_together_and_preserve_every_update() {
+        const WORKERS: usize = 16;
+        const UPDATES: usize = 2_000;
+        let shared = Shared::new(0_usize);
+        let barrier = std::sync::Arc::new(Barrier::new(WORKERS + 1));
+        let workers: Vec<_> = (0..WORKERS)
+            .map(|_| {
+                let shared = shared.clone();
+                let barrier = std::sync::Arc::clone(&barrier);
+                std::thread::spawn(move || {
+                    barrier.wait();
+                    for _ in 0..UPDATES {
+                        *shared.lock().expect("lock should remain healthy") += 1;
+                    }
+                })
+            })
+            .collect();
+
+        barrier.wait();
+        for worker in workers {
+            worker.join().expect("worker should finish without panic");
+        }
+        assert_eq!(
+            *shared.lock().expect("lock should remain healthy"),
+            WORKERS * UPDATES
+        );
+    }
+
+    #[test]
+    fn lock_is_exclusive_until_guard_is_dropped() {
+        let shared = Shared::new(42_u32);
+        let guard = shared.lock().expect("initial lock should be healthy");
+        let clone = shared.clone();
+        let (tx, rx) = mpsc::channel();
+        let worker = std::thread::spawn(move || {
+            let result = clone.lock().map(|value| *value);
+            tx.send(result).expect("receiver should still exist");
+        });
+
+        assert!(rx.recv_timeout(Duration::from_millis(25)).is_err());
+        drop(guard);
+        assert_eq!(
+            rx.recv_timeout(Duration::from_secs(2)).unwrap().unwrap(),
+            42
+        );
+        worker.join().expect("worker should finish without panic");
     }
 
     #[test]
