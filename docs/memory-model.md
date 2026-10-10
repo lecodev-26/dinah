@@ -156,6 +156,18 @@ Reglas:
 
 La implementación y sus pruebas viven en `src/memory/buffer.rs`. No se expone acceso mutable al almacenamiento interno ni una API de crecimiento dinámico en este punto.
 
+## Estructuras contiguas iniciales (punto 069)
+
+La primera estructura contigua implementada es `Buffer<T>`: posee una secuencia contigua de elementos inicializados con una capacidad lógica máxima fija. El punto 069 amplía su utilidad para cargas por lotes sin duplicar el almacenamiento ni exponer el `Vec<T>` interno:
+
+- `as_slice()` presta acceso de solo lectura a los elementos inicializados; `as_mut_slice()` permite modificar esos elementos in situ, pero no cambiar la longitud, la capacidad ni la asignación.
+- `try_extend_from_slice()` permite añadir una secuencia de elementos `Clone` en una sola operación lógica. Comprueba la capacidad restante antes de modificar el buffer; si no caben todos, devuelve `BufferExtendError { requested, remaining }` y conserva el contenido original.
+- La capacidad sigue siendo un máximo de elementos, no un presupuesto de bytes. La reserva del constructor y el límite lógico evitan crecimiento por encima del límite en operaciones exitosas, pero no prometen tamaño físico exacto ni residencia de memoria.
+- La API permanece segura, sin punteros crudos ni `unsafe`, y no añade sincronización implícita. Los préstamos siguen gobernando cuándo puede mutarse el buffer.
+- `try_extend_from_slice` necesita `T: Clone`; la clonación de elementos puede ejecutar código del usuario y entrar en pánico. La garantía de no modificación aplica al error normal de capacidad, no a una garantía transaccional frente a pánicos de `Clone`.
+
+No se crea una segunda envoltura sobre `Vec<T>` ni una abstracción genérica adicional: primero se aprovecha y refuerza la estructura existente. Una matriz contigua, SoA u otra representación se añadirá cuando el punto 070 o una carga concreta defina dimensiones, ownership y patrón de acceso que justifiquen su API.
+
 ## Contratos que deben resolver los siguientes puntos
 
 | Punto | Decisión pendiente |
@@ -167,7 +179,8 @@ La implementación y sus pruebas viven en `src/memory/buffer.rs`. No se expone a
 | 066 | Completado: separar reserva de almacenamiento y vida de valores; `clear` destruye, `pop` transfiere propiedad y reset debe ser explícito |
 | 067 | Completado: usar garantías de alineación del tipo/contenedor; alineación especial solo con contrato explícito, errores recuperables y pruebas |
 | 068 | Completado: documentados AoS, SoA, AoSoA y slices contiguos; implementación SIMD y benchmarks quedan separados |
-| 069–070 | Representaciones contiguas y data-oriented para cargas identificadas |
+| 069 | Completado: `Buffer<T>` contiguo con acceso por slices y extensión por lotes acotada; sin crecimiento implícito |
+| 070 | Representaciones data-oriented para cargas identificadas |
 | 071–073 | Sincronización, invariantes y pruebas de seguridad/concurrencia |
 | 074–075 | Baselines de asignaciones y optimizaciones demostrables |
 | 076 | Documentación integrada y criterios de salida del subsistema |

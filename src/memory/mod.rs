@@ -8,4 +8,4 @@
 
 mod buffer;
 
-pub use buffer::{Buffer, BufferCreateError, BufferPushError};
+pub use buffer::{Buffer, BufferCreateError, BufferExtendError, BufferPushError};
