@@ -63,7 +63,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 042 — Crear executor
 - [x] 043 — Crear scheduler
 - [x] 044 — Crear cola de tareas
-- [ ] 045 — Crear asignación de tareas
+- [>] 045 — Crear asignación de tareas
 - [ ] 046 — Crear ejecución secuencial
 - [ ] 047 — Crear ejecución paralela
 - [ ] 048 — Crear sincronización

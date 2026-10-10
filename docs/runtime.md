@@ -223,6 +223,16 @@ The queue is not yet wired into `Scheduler`; queue-backed dispatch and its
 acceptance/rejection semantics belong to later Runtime points. Tests cover empty
 state, FIFO order, full-queue rejection without item loss, and reuse after a pop.
 
+## Queue-backed dispatch (point 045)
+
+`Scheduler::dispatch_next` integrates the bounded queue and synchronous executor:
+it removes at most one oldest closure from `TaskQueue`, then executes it after
+the queue borrow has ended. An empty queue returns `None`; a task result or task
+error is returned as `Some(result)` without erasing the task error. This is a
+sequential dispatch primitive, not a worker pool, background queue consumer, or
+concurrent scheduler. Queue-full rejection remains the responsibility of the
+caller when inserting work.
+
 ## Initial delivery sequence
 
 1. Define task identity, task state, and outcome contracts with exhaustive tests.

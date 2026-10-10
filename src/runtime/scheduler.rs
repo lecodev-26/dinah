@@ -1,4 +1,4 @@
-use super::Executor;
+use super::{Executor, TaskQueue};
 
 /// A small synchronous scheduler that dispatches each submitted task immediately.
 ///
@@ -53,6 +53,19 @@ impl Scheduler {
     {
         Ok(self.executor.execute(task))
     }
+
+    /// Removes and executes the oldest queued task, if one is available.
+    ///
+    /// The queue item is removed before user code runs. The queue is borrowed
+    /// only for the pop operation, so task execution does not occur while any
+    /// queue borrow or internal queue lock is held. `None` means the queue was
+    /// empty; `Some(Err(error))` is the task's own error.
+    pub fn dispatch_next<T, E, F>(&self, queue: &mut TaskQueue<F>) -> Option<Result<T, E>>
+    where
+        F: FnOnce() -> Result<T, E>,
+    {
+        queue.pop().map(|task| self.executor.execute(task))
+    }
 }
 
 #[cfg(test)]
@@ -87,6 +100,42 @@ mod tests {
             scheduler.schedule(|| Err::<(), _>("task failed")),
             Ok(Err("task failed"))
         );
+    }
+
+    #[test]
+    fn dispatch_next_returns_none_for_empty_queue() {
+        let scheduler = Scheduler::new();
+        let mut queue = super::super::TaskQueue::<fn() -> Result<(), ()>>::new(
+            core::num::NonZeroUsize::new(1).expect("positive capacity"),
+        );
+        assert_eq!(scheduler.dispatch_next(&mut queue), None);
+    }
+
+    #[test]
+    fn dispatch_next_executes_oldest_task_once() {
+        let scheduler = Scheduler::new();
+        let mut queue = super::super::TaskQueue::new(
+            core::num::NonZeroUsize::new(2).expect("positive capacity"),
+        );
+        let calls = Cell::new(0);
+        queue.try_push(|| { calls.set(calls.get() + 1); Ok::<_, ()>(1) }).unwrap();
+        queue.try_push(|| Ok::<_, ()>(2)).unwrap();
+
+        assert_eq!(scheduler.dispatch_next(&mut queue), Some(Ok(1)));
+        assert_eq!(calls.get(), 1);
+        assert_eq!(queue.len(), 1);
+        assert_eq!(scheduler.dispatch_next(&mut queue), Some(Ok(2)));
+        assert_eq!(scheduler.dispatch_next(&mut queue), None);
+    }
+
+    #[test]
+    fn dispatch_next_preserves_task_error() {
+        let scheduler = Scheduler::new();
+        let mut queue = super::super::TaskQueue::new(
+            core::num::NonZeroUsize::new(1).expect("positive capacity"),
+        );
+        queue.try_push(|| Err::<(), _>("queued task failed")).unwrap();
+        assert_eq!(scheduler.dispatch_next(&mut queue), Some(Err("queued task failed")));
     }
 
     #[test]
