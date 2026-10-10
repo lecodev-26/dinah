@@ -140,6 +140,18 @@ Reglas:
 - Los recursos compartidos deben cumplir los contratos `Send`/`Sync` aplicables y documentar quién sincroniza cada mutación. Un pool no es seguro para compartir por el mero hecho de estar envuelto en un puntero compartido.
 - Evitar bloqueos globales como valor por defecto. Comparar alternativas con benchmarks y pruebas de concurrencia antes de optimizar.
 
+## Sincronización explícita de Memory (punto 071)
+
+Los tipos de `dinah::memory` siguen siendo propietarios y no incorporan bloqueos implícitos. Cuando varios hilos necesiten mutar la misma estructura, se puede envolver en `dinah::runtime::Shared<T>`, la primitiva existente basada en `Arc<Mutex<T>>`. Clonar `Shared<T>` comparte el mismo valor; no copia el buffer ni sus elementos.
+
+- `Shared::lock()` devuelve un guard de mutex y comunica el envenenamiento mediante `SynchronizationError::Poisoned`; el llamador debe gestionar ese error de forma explícita. No se recupera silenciosamente un estado potencialmente inconsistente.
+- Mantener los guards lo más breves posible. No ejecutar callbacks externos ni esperar trabajo asíncrono mientras se mantiene un bloqueo; definir un orden consistente si se necesitan varios locks para evitar interbloqueos.
+- Las operaciones de una estructura compuesta —por ejemplo, insertar una fila en ambas columnas de `SoaBuffer`— deben ejecutarse bajo el mismo guard para conservar invariantes. No repartir las columnas entre locks independientes.
+- El wrapper no hace que cualquier `T` sea seguro para cualquier uso: las restricciones `Send`/`Sync` siguen dependiendo de los tipos de Rust y de la API utilizada. El wrapper no sustituye la validación de invariantes ni las pruebas de concurrencia.
+- La sincronización es opt-in. Para datos inmutables, preferir compartir referencias/valores inmutables; para acceso local a un solo hilo, usar directamente el buffer y evitar el coste del mutex. No se afirma que `Mutex` sea la estrategia más rápida para todas las cargas.
+
+La prueba `shared_soa_serializes_concurrent_row_insertions` comprueba que varios hilos pueden insertar filas completas mediante un `Shared<SoaBuffer<_, _>>` sin desalinear las columnas. Las pruebas generales de carrera/concurrencia y los benchmarks completos siguen perteneciendo a los puntos 072–075; este punto solo establece y prueba la integración básica con la primitiva existente.
+
 ## Buffer inicial (punto 062)
 
 `dinah::memory::Buffer<T>` es un contenedor propietario y contiguo de capacidad lógica fija. `try_with_capacity` reserva de forma fallible la capacidad máxima antes de devolver el buffer; por tanto, una reserva fallida no deja una instancia parcialmente inicializada y los `try_push` posteriores no necesitan aumentar la reserva mientras se respete el límite. La reserva real del allocator puede ser mayor que la solicitada.

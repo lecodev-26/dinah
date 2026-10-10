@@ -201,4 +201,41 @@ mod tests {
             SoaCreateError::AllocationFailed
         );
     }
+
+    #[test]
+    fn shared_soa_serializes_concurrent_row_insertions() {
+        use crate::runtime::Shared;
+        use std::thread;
+
+        const WORKERS: u64 = 8;
+        const ROWS_PER_WORKER: u64 = 128;
+        let shared = Shared::new(
+            SoaBuffer::<u64, u64>::try_with_capacity((WORKERS * ROWS_PER_WORKER) as usize).unwrap(),
+        );
+
+        let workers: Vec<_> = (0..WORKERS)
+            .map(|worker| {
+                let shared = shared.clone();
+                thread::spawn(move || {
+                    for row in 0..ROWS_PER_WORKER {
+                        let value = worker * ROWS_PER_WORKER + row;
+                        let mut buffer = shared.lock().expect("shared lock should remain healthy");
+                        buffer
+                            .try_push(value, value + 1)
+                            .expect("capacity covers every row");
+                    }
+                })
+            })
+            .collect();
+
+        for worker in workers {
+            worker.join().expect("worker should finish without panic");
+        }
+
+        let buffer = shared.lock().expect("shared lock should remain healthy");
+        let (first, second) = buffer.as_slices();
+        assert_eq!(first.len(), (WORKERS * ROWS_PER_WORKER) as usize);
+        assert_eq!(second.len(), first.len());
+        assert!(first.iter().zip(second).all(|(a, b)| *b == *a + 1));
+    }
 }
