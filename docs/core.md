@@ -15,3 +15,12 @@ resources as a side effect.
 
 This API is an initial internal foundation, not a stability guarantee. Changes
 must be accompanied by tests and reviewed against the roadmap.
+
+## Shared contracts
+
+`Validate` provides a common validation interface while retaining each type's
+specific error. `HasCoreId` is the shared contract for future objects that own
+or expose a `CoreId`; no resource type implements it until that type exists.
+`CORE_INVARIANTS` lists the foundational assumptions that later modules must
+preserve. These are descriptive contracts, not a substitute for module-level
+checks or synchronization.

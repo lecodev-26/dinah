@@ -1,4 +1,4 @@
-use super::{CoreConfig, CoreConfigError, CoreId, IdError, LifecycleState, CORE_API_VERSION};
+use super::{CoreConfig, CoreConfigError, CoreId, IdError, LifecycleState, Validate, CORE_API_VERSION, CORE_INVARIANTS};
 
 #[test]
 fn config_defaults_are_valid_and_conservative() {
@@ -33,4 +33,16 @@ fn lifecycle_transitions_are_explicit() {
 #[test]
 fn core_api_version_is_defined() {
     assert_eq!(CORE_API_VERSION, 1);
+}
+
+#[test]
+fn validate_trait_checks_configuration_contract() {
+    let config = CoreConfig::default();
+    assert_eq!(Validate::validate(&config), Ok(()));
+}
+
+#[test]
+fn core_invariants_are_documented_in_api() {
+    assert_eq!(CORE_INVARIANTS.len(), 4);
+    assert!(CORE_INVARIANTS.iter().all(|invariant| !invariant.is_empty()));
 }

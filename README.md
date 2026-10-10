@@ -42,6 +42,6 @@ The initial crate is deliberately minimal. Planned capabilities are not consider
 
 ## Core (inicial)
 
-La API base vive en `dinah::core`; consulta [`docs/core.md`](docs/core.md) para
+La API base vive en `dinah::core`; incluye configuración validada, IDs no nulos, estados de ciclo de vida y contratos compartidos de validación. Consulta [`docs/core.md`](docs/core.md) para
 sus invariantes y límites actuales. El Core sigue en desarrollo y no se declara
 estable hasta completar la revisión y validación previstas en el roadmap.
