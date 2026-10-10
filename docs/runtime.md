@@ -298,3 +298,20 @@ creates temporary threads per batch rather than maintaining a worker pool. Tasks
 and result/error values must satisfy `Send`; panics are not caught and propagate
 to the caller. Persistent workers, cancellation, shutdown coordination, and
 recovery from panicking tasks remain out of scope for this point.
+
+
+## Shared-state synchronization (point 048)
+
+`Shared<T>` is an opt-in, cloneable owner around `Arc<Mutex<T>>`. Clones point
+to the same value, and `lock()` gives exclusive access through a guard. It
+returns `SynchronizationError::Poisoned` if a previous thread panicked while
+holding the mutex; the wrapper does not guess whether the protected value can
+be safely recovered. No extra dependency or unsafe code is needed.
+
+The lock protects only access to the wrapped value; it does not make arbitrary
+operations atomic unless callers perform them while holding the guard. Keep
+critical sections short and do not execute arbitrary task callbacks while holding
+a guard. This primitive does not yet make `TaskQueue` or `Scheduler` themselves
+concurrently mutable, and it does not promise fairness, lock-free progress, task
+cancellation, or panic recovery. Tests cover shared clone visibility, contended
+increments across threads, and explicit poison reporting.
