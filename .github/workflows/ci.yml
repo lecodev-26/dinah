@@ -32,6 +32,8 @@ jobs:
           test -s src/lib.rs
           test -s LICENSE-MIT
           test -s LICENSE-APACHE
+          test -s assets/dinah-mark.svg
+          grep -Fq 'assets/dinah-mark.svg' README.md
           grep -Fq 'license = "MIT OR Apache-2.0"' Cargo.toml
           grep -Fq 'MIT License' LICENSE-MIT
           grep -Fq 'Apache License' LICENSE-APACHE

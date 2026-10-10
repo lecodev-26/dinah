@@ -1,5 +1,9 @@
 # dinah
 
+![dinah mark](assets/dinah-mark.svg)
+
+**dinah** is the lowercase project name and visual identity. The initial mark is a simple, monochrome vector intended to remain legible in repository and documentation contexts.
+
 dinah is a Rust-first project exploring a high-performance runtime and a modular foundation for compute, data-oriented processing, simulation, networking, and storage.
 
 ## Project status

@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 19
+- Completados: 20
 - En progreso: 0
-- Pendientes: 268
+- Pendientes: 267
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -29,7 +29,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 014 — Definir política de benchmarks
 - [x] 015 — Definir política de documentación
 - [x] 016 — Definir licencia dual MIT OR Apache-2.0, añadir textos de licencia y declararla en Cargo.toml
-- [ ] 017 — Crear identidad visual básica
+- [x] 017 — Crear identidad visual básica en SVG y documentar el uso de dinah en minúsculas
 - [x] 018 — Crear README inicial
 - [x] 019 — Crear roadmap
 - [x] 020 — Crear checklist de puntos

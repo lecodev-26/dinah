@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate stable checklist IDs and the declared initial total."""
+"""Validate stable checklist IDs and status summary."""
 from pathlib import Path
 import re
 import sys
