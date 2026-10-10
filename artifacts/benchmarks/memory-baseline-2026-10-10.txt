@@ -1,0 +1,21 @@
+# DINAH memory benchmark baseline
+# CI run: https://github.com/lecodev-26/dinah/actions/runs/38096431710
+# Source commit: fa1ec6623619641204c2babeb172c2a634d50004
+# Runner: GitHub Actions ubuntu-latest; Cargo bench/release profile
+# Harness: cargo bench --bench memory; median of 7 samples
+# These measurements are machine-specific observations, not guarantees.
+
+dinah memory benchmark; build=release; statistic=median; samples=7
+case=buffer_push_preallocated operations=64 samples=7 median_total_ns=201 ns_per_operation=3.141 operations_per_second=318407960
+case=buffer_bulk_extend operations=64 samples=7 median_total_ns=91 ns_per_operation=1.422 operations_per_second=703296703
+case=soa_push_rows operations=64 samples=7 median_total_ns=341 ns_per_operation=5.328 operations_per_second=187683284
+case=soa_scan_two_columns operations=64 samples=7 median_total_ns=100 ns_per_operation=1.562 operations_per_second=640000000
+case=buffer_push_preallocated operations=1024 samples=7 median_total_ns=1974 ns_per_operation=1.928 operations_per_second=518743668
+case=buffer_bulk_extend operations=1024 samples=7 median_total_ns=4428 ns_per_operation=4.324 operations_per_second=231255646
+case=soa_push_rows operations=1024 samples=7 median_total_ns=3787 ns_per_operation=3.698 operations_per_second=270398733
+case=soa_scan_two_columns operations=1024 samples=7 median_total_ns=430 ns_per_operation=0.420 operations_per_second=2381395349
+case=buffer_push_preallocated operations=16384 samples=7 median_total_ns=31258 ns_per_operation=1.908 operations_per_second=524153817
+case=buffer_bulk_extend operations=16384 samples=7 median_total_ns=79909 ns_per_operation=4.877 operations_per_second=205033225
+case=soa_push_rows operations=16384 samples=7 median_total_ns=138729 ns_per_operation=8.467 operations_per_second=118100758
+case=soa_scan_two_columns operations=16384 samples=7 median_total_ns=6052 ns_per_operation=0.369 operations_per_second=2707204230
+case=shared_mutex_lock_update operations=10000 samples=7 median_total_ns=52718 ns_per_operation=5.272 operations_per_second=189688531

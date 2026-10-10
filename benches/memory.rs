@@ -68,6 +68,17 @@ fn main() {
         });
         report("soa_push_rows", size, &soa_push);
 
+        let first: Vec<usize> = (0..size).collect();
+        let second: Vec<usize> = (0..size).map(|value| value.wrapping_add(1)).collect();
+        let soa_extend = measure(|| {
+            let mut rows =
+                SoaBuffer::try_with_capacity(size).expect("capacity reservation succeeds");
+            rows.try_extend_from_slices(black_box(&first), black_box(&second))
+                .expect("both columns fit buffer");
+            black_box(rows.as_slices());
+        });
+        report("soa_bulk_extend", size, &soa_extend);
+
         let soa_scan = {
             let mut rows =
                 SoaBuffer::try_with_capacity(size).expect("capacity reservation succeeds");

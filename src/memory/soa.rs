@@ -34,6 +34,35 @@ impl fmt::Display for SoaCreateError {
 
 impl std::error::Error for SoaCreateError {}
 
+/// Error when appending two SoA columns as one bounded batch.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SoaExtendError {
+    /// The columns contain different numbers of elements.
+    LengthMismatch { first: usize, second: usize },
+    /// The complete batch does not fit in the remaining row capacity.
+    CapacityExceeded { requested: usize, remaining: usize },
+}
+
+impl fmt::Display for SoaExtendError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::LengthMismatch { first, second } => write!(
+                f,
+                "cannot append SoA columns with different lengths ({first} and {second})"
+            ),
+            Self::CapacityExceeded {
+                requested,
+                remaining,
+            } => write!(
+                f,
+                "cannot append {requested} SoA rows; only {remaining} slots remain"
+            ),
+        }
+    }
+}
+
+impl std::error::Error for SoaExtendError {}
+
 /// A rejected row returned by [`SoaBuffer::try_push`] when the buffer is full.
 #[derive(Debug, PartialEq, Eq)]
 pub struct SoaPushError<A, B> {
@@ -71,6 +100,44 @@ impl<A, B> SoaBuffer<A, B> {
         if self.second.try_push(second).is_err() {
             unreachable!("SoA column invariant violated");
         }
+        debug_assert_eq!(self.first.len(), self.second.len());
+        Ok(())
+    }
+
+    /// Appends two equally sized slices as a single bounded batch.
+    ///
+    /// Length mismatch and capacity errors leave both columns unchanged. The
+    /// operation validates the batch once and then extends each pre-reserved
+    /// column, avoiding per-row capacity checks. Cloning may panic, in which
+    /// case this method does not promise rollback.
+    pub fn try_extend_from_slices(
+        &mut self,
+        first: &[A],
+        second: &[B],
+    ) -> Result<(), SoaExtendError>
+    where
+        A: Clone,
+        B: Clone,
+    {
+        if first.len() != second.len() {
+            return Err(SoaExtendError::LengthMismatch {
+                first: first.len(),
+                second: second.len(),
+            });
+        }
+        let remaining = self.capacity() - self.len();
+        if first.len() > remaining {
+            return Err(SoaExtendError::CapacityExceeded {
+                requested: first.len(),
+                remaining,
+            });
+        }
+        self.first
+            .try_extend_from_slice(first)
+            .expect("validated first SoA column fits");
+        self.second
+            .try_extend_from_slice(second)
+            .expect("validated second SoA column fits");
         debug_assert_eq!(self.first.len(), self.second.len());
         Ok(())
     }
@@ -127,7 +194,7 @@ impl<A, B> SoaBuffer<A, B> {
 
 #[cfg(test)]
 mod tests {
-    use super::{SoaBuffer, SoaCreateError, SoaPushError};
+    use super::{SoaBuffer, SoaCreateError, SoaExtendError, SoaPushError};
 
     #[test]
     fn keeps_columns_contiguous_and_rows_aligned() {
@@ -178,6 +245,54 @@ mod tests {
         assert_eq!(rows.as_slices(), (&[7][..], &[9][..]));
         assert_eq!(rows.len(), 1);
         assert_eq!(rows.capacity(), 2);
+    }
+
+    #[test]
+    fn batch_extend_appends_both_columns_in_order() {
+        let mut rows = SoaBuffer::try_with_capacity(5).unwrap();
+        rows.try_push(1, "one").unwrap();
+        rows.try_extend_from_slices(&[2, 3], &["two", "three"])
+            .unwrap();
+        assert_eq!(
+            rows.as_slices(),
+            (&[1, 2, 3][..], &["one", "two", "three"][..])
+        );
+        assert_eq!(rows.len(), 3);
+    }
+
+    #[test]
+    fn batch_extend_rejects_mismatched_columns_without_mutation() {
+        let mut rows = SoaBuffer::try_with_capacity(4).unwrap();
+        rows.try_push(1, 10).unwrap();
+        assert_eq!(
+            rows.try_extend_from_slices(&[2, 3], &[20]),
+            Err(SoaExtendError::LengthMismatch {
+                first: 2,
+                second: 1
+            })
+        );
+        assert_eq!(rows.as_slices(), (&[1][..], &[10][..]));
+    }
+
+    #[test]
+    fn batch_extend_rejects_over_capacity_without_mutation() {
+        let mut rows = SoaBuffer::try_with_capacity(2).unwrap();
+        rows.try_push(1, 10).unwrap();
+        assert_eq!(
+            rows.try_extend_from_slices(&[2, 3], &[20, 30]),
+            Err(SoaExtendError::CapacityExceeded {
+                requested: 2,
+                remaining: 1
+            })
+        );
+        assert_eq!(rows.as_slices(), (&[1][..], &[10][..]));
+    }
+
+    #[test]
+    fn empty_batch_extend_is_valid() {
+        let mut rows = SoaBuffer::<u8, u8>::try_with_capacity(0).unwrap();
+        assert_eq!(rows.try_extend_from_slices(&[], &[]), Ok(()));
+        assert!(rows.is_empty());
     }
 
     #[test]

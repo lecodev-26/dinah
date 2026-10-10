@@ -10,4 +10,4 @@ mod buffer;
 mod soa;
 
 pub use buffer::{Buffer, BufferCreateError, BufferExtendError, BufferPushError};
-pub use soa::{SoaBuffer, SoaCreateError, SoaPushError};
+pub use soa::{SoaBuffer, SoaCreateError, SoaExtendError, SoaPushError};

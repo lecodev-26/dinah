@@ -199,6 +199,7 @@ No se crea una segunda envoltura sobre `Vec<T>` ni una abstracción genérica ad
 - `try_with_capacity` reserva ambas columnas mediante operaciones fallibles. Si falla cualquiera, no devuelve una estructura parcial y Rust libera la reserva ya creada.
 - `try_push` añade ambos valores como una fila lógica o devuelve ambos valores sin insertarlos cuando se alcanza la capacidad. Las capacidades iguales y el control privado de las columnas mantienen alineadas sus longitudes.
 - `as_slices` y `as_mut_slices` permiten procesar un campo a la vez sin reconstruir filas ni modificar la longitud. `pop` y `clear` operan sobre ambas columnas para preservar la correspondencia por índice.
+- `try_extend_from_slices` añade dos slices como un lote: valida que tengan la misma longitud y que todo el lote quepa antes de mutar cualquiera de las columnas. Reutiliza las reservas y evita ejecutar la comprobación de capacidad por cada fila. Requiere `Clone` para ambos tipos y no promete rollback si una clonación entra en pánico.
 - Capacidad cero es válida; la estructura no crece automáticamente, no sincroniza internamente y no usa `unsafe`. La API no promete alineación SIMD especial ni una mejora de rendimiento sin benchmarks.
 - SoA conviene cuando se procesa repetidamente un campo de muchas filas. Para cargas que consumen casi todos los campos de una fila, AoS puede ser más simple o eficiente; AoSoA queda aplazado hasta tener una carga y mediciones que lo justifiquen.
 
@@ -219,7 +220,7 @@ La implementación y las pruebas viven en `src/memory/soa.rs`. Es una primitiva 
 | 070 | Completado: `SoaBuffer<A, B>` con dos columnas contiguas, filas coordinadas y límites explícitos |
 | 071–073 | Sincronización, invariantes y pruebas de seguridad/concurrencia |
 | 074 | Completado: benchmark reproducible `benches/memory.rs` para push preasignado, extensión por lotes, inserción/escaneo SoA y coste de `Shared` con mediana de 7 muestras; resultados de cada ejecución se guardan como artifact de CI |
-| 075 | Optimizar solo después de comparar una línea base con la misma carga y configuración; no inferir mejoras entre máquinas distintas |
+| 075 | Añadido `SoaBuffer::try_extend_from_slices` para validar una vez e insertar lotes en las columnas reservadas; benchmark `soa_bulk_extend` añadido. La mejora debe confirmarse en CI y archivarse antes de cerrar el punto |
 | 076 | Documentación integrada y criterios de salida del subsistema |
 
 ## Criterios para aceptar una implementación
