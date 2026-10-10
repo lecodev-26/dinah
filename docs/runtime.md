@@ -410,7 +410,7 @@ tasks to reach a synchronization point concurrently, then verifies the results
 remain in FIFO dispatch order and the queue is drained. The barrier avoids relying
 on wall-clock timing to infer overlap.
 
-## Executor regression coverage (point 057, in progress)
+## Executor regression coverage (point 057, complete)
 
 Executor tests cover successful return values, exactly-once invocation, error
 identity preservation, and propagation of task panics to the caller. Panic
