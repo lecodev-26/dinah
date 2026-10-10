@@ -193,6 +193,7 @@ mod tests {
         use std::sync::atomic::{AtomicUsize, Ordering};
         use std::sync::Arc;
 
+        #[derive(Debug)]
         struct Tracked(Arc<AtomicUsize>);
         impl Drop for Tracked {
             fn drop(&mut self) {
