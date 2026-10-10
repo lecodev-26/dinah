@@ -13,14 +13,22 @@ pub struct IdError;
 
 impl CoreId {
     pub const fn new(value: u64) -> Result<Self, IdError> {
-        if value == 0 { Err(IdError) } else { Ok(Self(value)) }
+        if value == 0 {
+            Err(IdError)
+        } else {
+            Ok(Self(value))
+        }
     }
 
-    pub const fn get(self) -> u64 { self.0 }
+    pub const fn get(self) -> u64 {
+        self.0
+    }
 }
 
 impl fmt::Display for CoreId {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { self.0.fmt(f) }
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.0.fmt(f)
+    }
 }
 
 impl fmt::Display for IdError {

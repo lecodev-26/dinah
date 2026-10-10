@@ -26,27 +26,43 @@ impl CoreConfig {
         if max_batch_size == 0 {
             return Err(CoreConfigError::ZeroBatchSize);
         }
-        Ok(Self { max_workers, max_batch_size })
+        Ok(Self {
+            max_workers,
+            max_batch_size,
+        })
     }
 
     /// Returns a conservative configuration suitable for a single worker.
     pub const fn default_config() -> Self {
-        Self { max_workers: 1, max_batch_size: 64 }
+        Self {
+            max_workers: 1,
+            max_batch_size: 64,
+        }
     }
 
-    pub const fn max_workers(self) -> usize { self.max_workers }
-    pub const fn max_batch_size(self) -> usize { self.max_batch_size }
+    pub const fn max_workers(self) -> usize {
+        self.max_workers
+    }
+    pub const fn max_batch_size(self) -> usize {
+        self.max_batch_size
+    }
 
     /// Checks whether this configuration satisfies Core's invariants.
     pub const fn validate(self) -> Result<(), CoreConfigError> {
-        if self.max_workers == 0 { return Err(CoreConfigError::ZeroWorkers); }
-        if self.max_batch_size == 0 { return Err(CoreConfigError::ZeroBatchSize); }
+        if self.max_workers == 0 {
+            return Err(CoreConfigError::ZeroWorkers);
+        }
+        if self.max_batch_size == 0 {
+            return Err(CoreConfigError::ZeroBatchSize);
+        }
         Ok(())
     }
 }
 
 impl Default for CoreConfig {
-    fn default() -> Self { Self::default_config() }
+    fn default() -> Self {
+        Self::default_config()
+    }
 }
 
 impl fmt::Display for CoreConfigError {
@@ -61,5 +77,7 @@ impl fmt::Display for CoreConfigError {
 impl std::error::Error for CoreConfigError {}
 
 impl From<CoreConfigError> for CoreError {
-    fn from(_: CoreConfigError) -> Self { Self::InvalidConfiguration }
+    fn from(_: CoreConfigError) -> Self {
+        Self::InvalidConfiguration
+    }
 }
