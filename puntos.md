@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 62
+- Completados: 63
 - En progreso: 2
-- Pendientes: 223
+- Pendientes: 222
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -86,7 +86,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 062 — Definir buffers
 - [x] 063 — Definir ownership interno
 - [x] 064 — Definir allocation abstractions
-- [ ] 065 — Definir pools
+- [x] 065 — Definir pools
 - [ ] 066 — Definir reutilización de memoria
 - [ ] 067 — Gestionar alineación
 - [ ] 068 — Investigar SIMD-friendly layouts

@@ -44,10 +44,27 @@ Contrato inicial:
 ## Buffers, pools y reutilización
 
 - Los buffers propios serán dueños de sus elementos; las vistas serán prestadas y no poseerán la memoria.
-- Pools y arenas son optimizaciones posteriores, opt-in y acotadas por una política explícita de capacidad y recuperación. No se introducen como asignador global ni como comportamiento oculto.
-- Una API de pool debe definir claramente quién devuelve cada bloque, cuándo se puede reutilizar, qué sucede al agotarse y si el pool es local a un hilo o compartido.
+- Pools y arenas son optimizaciones opt-in, acotadas por una política explícita de capacidad y recuperación. No se introducen como asignador global ni como comportamiento oculto.
+- Una API de pool debe definir quién adquiere y devuelve cada recurso, cuándo puede reutilizarse, qué sucede al agotarse y si el pool es local a un hilo o compartido.
 - La reutilización no puede cambiar la semántica de inicialización ni exponer valores obsoletos. Los elementos deben estar correctamente inicializados antes de leerse.
 - El descarte de un pool libera sus recursos propios; los handles prestados no pueden sobrevivir al propietario del almacenamiento.
+
+## Contrato de pools (punto 065)
+
+**Decisión: diseñar primero un pool explícito, acotado y local a su propietario; no implementarlo todavía ni convertirlo en allocator global.** El punto 065 fija el contrato. El punto 066 resolverá por separado cómo reiniciar y limpiar cada clase de recurso antes de reutilizarla.
+
+Contrato de diseño para una primera implementación futura:
+
+1. **Capacidad fija y explícita.** La creación recibe un límite de recursos y falla de forma recuperable si no puede reservar/preparar lo requerido. El pool no crece automáticamente al agotarse y no promete un presupuesto exacto de bytes salvo que una API posterior lo mida explícitamente.
+2. **Agotamiento visible.** Una adquisición sin recursos disponibles devuelve un error/resultado de agotamiento; no bloquea indefinidamente, no asigna un recurso ocultamente y no sobrescribe un recurso prestado.
+3. **Préstamo exclusivo con retorno verificable.** La primera API preferirá un lease/handle RAII que represente la adquisición exclusiva y devuelva el recurso al pool al finalizar su vida. El tipo de handle debe impedir que el pool se destruya o que el mismo slot se adquiera dos veces mientras el lease siga vivo. No se devolverán índices o referencias que permitan reutilización sin controlar el ciclo de vida.
+4. **Propiedad y fallos claros.** El pool es dueño de sus slots y recursos; el usuario posee temporalmente el lease, no el slot subyacente. Si la construcción del pool falla, no se publica una instancia parcial. Si no puede satisfacerse una adquisición, el estado del pool permanece válido y el error es observable.
+5. **Sin crecimiento ni recuperación implícitos.** La capacidad y la política de agotamiento forman parte del contrato. La liberación de un lease permite volver a adquirir el recurso, pero la política de reset/limpieza queda definida en el punto 066 y no se presume que todos los tipos puedan reutilizarse de la misma forma.
+6. **Sincronización explícita.** La primera implementación será local y no sincronizada: no promete `Send`/`Sync` adicionales ni acceso concurrente automático. El uso compartido y su estrategia de sincronización se deciden en los puntos 071 y 073; no habrá mutex global implícito.
+7. **Seguridad de memoria.** Mantener la implementación inicial en Rust seguro, sin punteros crudos ni `unsafe`. No se podrá leer un slot sin inicializar ni reciclarlo mientras exista un lease válido.
+8. **Sin compromiso prematuro de backend.** El pool no obliga a introducir un trait `Allocator`. Solo se extraerá una abstracción común cuando otro backend real demuestre operaciones y semánticas compartidas.
+
+**Criterio para implementar más adelante:** pruebas de pool vacío y lleno, agotamiento, adquisición/retorno, destrucción con recursos disponibles, exclusividad de leases, fallo de construcción y ausencia de acceso a recursos no inicializados. Los detalles de limpieza/reset, las pruebas de concurrencia y los benchmarks corresponden a sus puntos específicos; no se consideran completados por esta decisión de diseño.
 
 ## Layout, alineación y concurrencia
 
@@ -80,7 +97,7 @@ La implementación y sus pruebas viven en `src/memory/buffer.rs`. No se expone a
 | 062 | Completado: primer buffer contiguo y acotado; quedan otros tipos de buffer sujetos a necesidades futuras |
 | 063 | Completado: propiedad única de `Buffer<T>`, préstamos con lifetimes del compilador, transferencia por movimiento, sin clonación implícita ni acceso mutable al contenedor interno |
 | 064 | Completado: usar contenedores estándar y reservas fallibles; aplazar un trait propio hasta disponer de un segundo backend real |
-| 065 | Diseño de pools, política de agotamiento y ámbito de sincronización |
+| 065 | Completado: contrato de pool acotado, agotamiento explícito, leases exclusivos y sincronización local por defecto |
 | 066 | Reglas de reinicio, limpieza y reutilización |
 | 067 | Requisitos concretos de alineación |
 | 068 | Casos SIMD y layouts respaldados por mediciones |
