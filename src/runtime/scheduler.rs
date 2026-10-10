@@ -114,10 +114,7 @@ impl Scheduler {
             }
 
             let mut batch_results = std::thread::scope(|scope| {
-                let handles: Vec<_> = batch
-                    .into_iter()
-                    .map(|task| scope.spawn(task))
-                    .collect();
+                let handles: Vec<_> = batch.into_iter().map(|task| scope.spawn(task)).collect();
                 handles
                     .into_iter()
                     .map(|handle| match handle.join() {
