@@ -5,8 +5,8 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 26
-- En progreso: 9
+- Completados: 33
+- En progreso: 2
 - Pendientes: 252
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
@@ -42,14 +42,14 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 024 — Definir resultados internos
 - [x] 025 — Definir configuración
 - [x] 026 — Definir IDs internos
-- [>] 027 — Definir estados internos
-- [>] 028 — Definir abstracciones comunes
-- [>] 029 — Definir traits fundamentales
-- [>] 030 — Definir invariantes del sistema
-- [>] 031 — Crear tests del Core
-- [>] 032 — Crear documentación del Core
+- [x] 027 — Definir estados internos
+- [x] 028 — Definir abstracciones comunes
+- [x] 029 — Definir traits fundamentales
+- [x] 030 — Definir invariantes del sistema
+- [x] 031 — Crear tests del Core
+- [x] 032 — Crear documentación del Core
 - [>] 033 — Crear primeros benchmarks
-- [>] 034 — Revisar API pública
+- [x] 034 — Revisar API pública
 - [>] 035 — Estabilizar Core v0.1
 
 ## FASE 2 — Runtime
