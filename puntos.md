@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 70
+- Completados: 71
 - En progreso: 2
-- Pendientes: 215
+- Pendientes: 214
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -94,7 +94,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 070 — Crear estructuras data-oriented
 - [x] 071 — Añadir sincronización
 - [x] 072 — Testear seguridad de memoria
-- [ ] 073 — Testear concurrencia
+- [x] 073 — Testear concurrencia
 - [ ] 074 — Crear benchmarks
 - [ ] 075 — Optimizar allocations
 - [ ] 076 — Documentar Memory
