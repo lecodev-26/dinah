@@ -100,6 +100,38 @@ Reglas:
 
 **Pruebas requeridas al implementar alineación especial:** comprobar con `align_of`/`align_of_val` las garantías del tipo; probar tipos ordinarios y sobrealineados en las APIs que los admitan; cubrir capacidad cero y ZST; comprobar que un fallo de construcción no publica una instancia parcial; y verificar que la API no afirma garantías más fuertes que las que realmente ofrece. Las pruebas SIMD y los benchmarks comparativos permanecen en los puntos 068 y 074–075.
 
+## Investigación de layouts compatibles con SIMD (punto 068)
+
+**Resultado de la investigación: no existe un layout universalmente óptimo.** La elección debe seguir el patrón de acceso y los datos que realmente procesa una operación. Este punto fija criterios de diseño; no añade instrucciones SIMD, dependencias, tipos vectoriales ni garantías de alineación nuevas.
+
+### Alternativas de layout
+
+- **Array of Structures (AoS).** Cada elemento contiene todos sus campos (por ejemplo, `struct Particle { x, y, z, mass }`). Es adecuado cuando se consume la mayoría de los campos de cada elemento. Si una operación recorre solo un campo entre muchos, los datos relevantes quedan intercalados y puede reducirse la eficiencia de caché/vectorización.
+- **Structure of Arrays (SoA).** Cada campo ocupa su propio array (`x[]`, `y[]`, `z[]`, `mass[]`). Favorece recorridos que aplican la misma operación a muchos valores de un campo y puede facilitar el acceso contiguo y la vectorización automática. Puede ser menos cómodo cuando casi siempre se necesita reunir todos los campos de un único elemento.
+- **Array of Structures of Arrays (AoSoA).** Agrupa bloques de varios elementos y almacena cada campo en arrays dentro de cada bloque. Puede equilibrar procesamiento por lotes y agrupación por entidad, pero añade complejidad, padding potencial y una elección de tamaño de bloque dependiente de la carga y del hardware. No será la opción inicial sin evidencia.
+- **Slices contiguos de un solo tipo.** Para operaciones simples sobre un campo (`&[f32]`, por ejemplo), empezar por slices contiguos y bucles ordinarios seguros. Permitir que el compilador optimice antes de introducir intrinsics o una API vectorial específica.
+
+### Decisiones para DINAH
+
+1. **Primero, semántica y patrón de acceso.** Documentar si una operación consume entidades completas, campos individuales o bloques, y si inserta/elimina elementos con frecuencia. Elegir AoS, SoA o AoSoA en función de ese patrón.
+2. **SoA es un candidato, no una regla global.** Para cargas numéricas que recorren el mismo campo de muchas entidades, evaluar SoA primero; conservar AoS cuando las operaciones usan casi todos los campos de cada entidad o el diseño simplifica ownership y coherencia.
+3. **Contigüidad no implica vectorización.** Un slice contiguo ayuda al acceso secuencial, pero la vectorización depende también de aliasing, dependencias entre iteraciones, tipos, opciones de compilación y arquitectura. No prometer que un bucle será vectorizado por su forma o por su alineación.
+4. **No exigir alineación SIMD especial por defecto.** El diseño base respeta la alineación normal del tipo. Solo considerar alineación/padding adicional si una API o instrucción elegida lo exige y una medición lo justifica. No asumir un ancho fijo de vector ni un tamaño de bloque universal.
+5. **Mantener una implementación escalar de referencia.** La corrección no debe depender de que SIMD esté disponible. Si más adelante se añade una ruta vectorial, comparar sus resultados con la ruta escalar, incluidos tamaños no múltiplos del ancho de lote y el procesamiento del resto (tail).
+6. **No introducir todavía una API SIMD pública.** Primero identificar una operación real y sus datos. Evaluar las capacidades estables del toolchain objetivo cuando se diseñe la implementación; cualquier intrinsics, feature detection o ruta específica de CPU queda fuera de este punto.
+7. **Medir de forma reproducible.** Comparar layouts con los mismos datos, algoritmo, configuración de compilación y condiciones de ejecución. Separar tiempo de conversión/reorganización de datos del tiempo del kernel; incluir tamaños pequeños y grandes. Registrar CPU, versión de Rust, flags, número de iteraciones y variabilidad. Los benchmarks de Memory y la optimización permanecen en los puntos 074–075.
+
+### Matriz de decisión inicial
+
+| Patrón de trabajo | Candidato inicial | Riesgo que comprobar |
+|---|---|---|
+| Operaciones que consumen la mayoría de campos de cada entidad | AoS | Campos no usados y stride entre valores equivalentes |
+| Mismo cálculo sobre un campo de muchas entidades | SoA | Coste de reconstruir una entidad completa y coherencia entre arrays |
+| Procesamiento por lotes que necesita agrupación de entidades y campos | AoSoA experimental | Tamaño de bloque, padding y complejidad de mantenimiento |
+| Transformación numérica sobre una secuencia homogénea | Slice contiguo y bucle escalar idiomático | Si el compilador vectoriza y cómo procesa el resto |
+
+**Criterio para avanzar a implementación:** elegir una operación real, establecer una versión escalar correcta, crear datos representativos y medir al menos dos layouts comparables. Solo añadir complejidad SIMD/alineación cuando los resultados repetibles demuestren una mejora útil y se mantenga una ruta correcta para los casos límite.
+
 ## Layout, alineación y concurrencia
 
 - Usar el layout y la alineación garantizados por los tipos y contenedores estándar. No inferir layout estable de tipos `repr(Rust)` ni serializar su representación en memoria.
@@ -134,7 +166,7 @@ La implementación y sus pruebas viven en `src/memory/buffer.rs`. No se expone a
 | 065 | Completado: contrato de pool acotado, agotamiento explícito, leases exclusivos y sincronización local por defecto |
 | 066 | Completado: separar reserva de almacenamiento y vida de valores; `clear` destruye, `pop` transfiere propiedad y reset debe ser explícito |
 | 067 | Completado: usar garantías de alineación del tipo/contenedor; alineación especial solo con contrato explícito, errores recuperables y pruebas |
-| 068 | Casos SIMD y layouts respaldados por mediciones |
+| 068 | Completado: documentados AoS, SoA, AoSoA y slices contiguos; implementación SIMD y benchmarks quedan separados |
 | 069–070 | Representaciones contiguas y data-oriented para cargas identificadas |
 | 071–073 | Sincronización, invariantes y pruebas de seguridad/concurrencia |
 | 074–075 | Baselines de asignaciones y optimizaciones demostrables |
