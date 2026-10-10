@@ -332,3 +332,21 @@ Panics still unwind and are not caught or mislabeled as returned errors. This
 point does not yet implement a task registry or aggregate multiple task outcomes.
 Tests verify preservation of the original error, classification, display, and
 error mapping.
+
+
+## Cooperative cancellation token (point 050)
+
+`CancellationToken` is a cloneable, dependency-free signal backed by an atomic
+boolean. Any clone can request cancellation, and all clones can observe the
+request. Repeated requests are idempotent; `request_cancellation()` returns
+`true` only to the caller that first changed the flag. Acquire/release ordering
+provides visibility for the cancellation flag itself, not synchronization for
+unrelated task data.
+
+Cancellation is cooperative: this token cannot interrupt a closure, kill a
+thread, roll back side effects, or guarantee that work has stopped. Task code
+must poll at safe points and return or otherwise complete its own cleanup. A
+request must not be confused with a confirmed `Cancelled` terminal task state;
+that requires task lifecycle bookkeeping and observation of the task's actual
+completion, which are not implemented by this primitive. Tests cover shared
+visibility across clones and idempotent concurrent requests.

@@ -6,8 +6,8 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 
 - Total de puntos numerados: 287
 - Completados: 47
-- En progreso: 2
-- Pendientes: 238
+- En progreso: 3
+- Pendientes: 237
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -68,7 +68,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 047 — Crear ejecución paralela
 - [x] 048 — Crear sincronización
 - [x] 049 — Gestionar errores de ejecución
-- [ ] 050 — Gestionar cancelación
+- [>] 050 — Gestionar cancelación
 - [ ] 051 — Gestionar finalización
 - [ ] 052 — Añadir métricas
 - [ ] 053 — Añadir tracing

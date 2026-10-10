@@ -4,12 +4,14 @@
 //! dispatch, bounded parallel batches using temporary scoped threads, and opt-in
 //! shared state protected by a mutex. Panics are not converted into task errors.
 
+mod cancellation;
 mod executor;
 mod outcome;
 mod queue;
 mod scheduler;
 mod synchronization;
 
+pub use cancellation::CancellationToken;
 pub use executor::Executor;
 pub use outcome::{TaskFailure, TaskFailureKind};
 pub use queue::{QueuePushError, TaskQueue};
