@@ -4,7 +4,9 @@
 //! create threads, schedule multiple tasks, or capture panics.
 
 mod executor;
+mod queue;
 mod scheduler;
 
 pub use executor::Executor;
+pub use queue::{QueuePushError, TaskQueue};
 pub use scheduler::{ScheduleError, Scheduler};

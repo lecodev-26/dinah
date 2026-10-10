@@ -32,6 +32,7 @@ jobs:
           test -s src/lib.rs
           test -s src/runtime.rs
           test -s src/runtime/executor.rs
+          test -s src/runtime/queue.rs
           test -s src/runtime/scheduler.rs
           test -s docs/core.md
           test -s docs/runtime.md
