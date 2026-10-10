@@ -417,26 +417,29 @@ mod tests {
 
         let scheduler = Scheduler::new();
         let completed = Arc::new(AtomicUsize::new(0));
-        let mut queue = super::super::TaskQueue::new(
-            core::num::NonZeroUsize::new(3).expect("positive capacity"),
-        );
+        let mut queue: super::super::TaskQueue<Box<dyn FnOnce() -> Result<(), ()> + Send>> =
+            super::super::TaskQueue::new(
+                core::num::NonZeroUsize::new(3).expect("positive capacity"),
+            );
 
         assert!(queue
-            .try_push(|| -> Result<(), ()> { panic!("expected task panic") })
+            .try_push(Box::new(|| -> Result<(), ()> {
+                panic!("expected task panic")
+            }))
             .is_ok());
         let completed_in_batch = Arc::clone(&completed);
         assert!(queue
-            .try_push(move || {
+            .try_push(Box::new(move || {
                 completed_in_batch.fetch_add(1, Ordering::SeqCst);
                 Ok::<_, ()>(())
-            })
+            }))
             .is_ok());
         let queued_for_later = Arc::clone(&completed);
         assert!(queue
-            .try_push(move || {
+            .try_push(Box::new(move || {
                 queued_for_later.fetch_add(1, Ordering::SeqCst);
                 Ok::<_, ()>(())
-            })
+            }))
             .is_ok());
 
         let outcome = catch_unwind(AssertUnwindSafe(|| {
