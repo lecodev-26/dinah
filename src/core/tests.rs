@@ -1,4 +1,7 @@
-use super::{CoreConfig, CoreConfigError, CoreId, IdError, LifecycleState, Validate, CORE_API_VERSION, CORE_INVARIANTS};
+use super::{
+    CoreConfig, CoreConfigError, CoreId, IdError, LifecycleState, Validate, CORE_API_VERSION,
+    CORE_INVARIANTS,
+};
 
 #[test]
 fn config_defaults_are_valid_and_conservative() {
@@ -44,5 +47,7 @@ fn validate_trait_checks_configuration_contract() {
 #[test]
 fn core_invariants_are_documented_in_api() {
     assert_eq!(CORE_INVARIANTS.len(), 4);
-    assert!(CORE_INVARIANTS.iter().all(|invariant| !invariant.is_empty()));
+    assert!(CORE_INVARIANTS
+        .iter()
+        .all(|invariant| !invariant.is_empty()));
 }

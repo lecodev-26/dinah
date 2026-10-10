@@ -26,7 +26,7 @@ mod tests;
 /// - `CoreConfig` limits are non-zero.
 /// - Lifecycle transitions must be explicitly permitted by `can_transition_to`.
 /// - Core primitives do not perform I/O or spawn threads as a side effect.
-pub const CORE_INVARIANTS: [&str;  4] = [
+pub const CORE_INVARIANTS: [&str; 4] = [
     "CoreId is non-zero",
     "configuration limits are non-zero",
     "lifecycle transitions are explicit",
