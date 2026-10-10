@@ -116,6 +116,42 @@ Terminal states (`Completed`, `Failed`, `Cancelled`) do not transition again.
 A task outcome must distinguish successful completion, failure, and cancellation;
 these must not be inferred solely from a generic runtime lifecycle state.
 
+## Task state contract (point 039)
+
+`TaskState` is a Runtime-specific enum representing the observed lifecycle of one
+task. It is separate from Core's `LifecycleState`: a task's execution lifecycle
+is not the lifecycle of a long-lived Runtime resource. The initial variants are
+`Pending`, `Running`, `Completed`, `Failed`, and `Cancelled`.
+
+The transition relation is deliberately closed and pure:
+
+| Current state | Allowed next state | Meaning |
+| --- | --- | --- |
+| `Pending` | `Running` | The executor has claimed the task and execution is beginning. |
+| `Pending` | `Cancelled` | The task was prevented from starting. |
+| `Running` | `Completed` | The task returned successfully. |
+| `Running` | `Failed` | Execution returned an error or a panic was captured under the selected panic policy. |
+| `Running` | `Cancelled` | Running work observed and acknowledged cooperative cancellation. |
+| `Completed`, `Failed`, `Cancelled` | none | Terminal states never transition again. |
+
+Every transition not listed above is forbidden, including transitions to the same
+state. A cancellation request is a request, not a state transition; a running
+task remains `Running` until it acknowledges cancellation or reaches another
+terminal outcome. State-checking methods must be pure: they do not mutate state,
+provide synchronization, or claim that a transition has happened. The later
+Task implementation must enforce transitions atomically wherever multiple
+workers could race to claim or finish a task.
+
+The state records lifecycle only, not the result payload or error details. Those
+belong to a separate outcome/result contract. `TaskState` must be copyable,
+comparable, debuggable, and hashable; no timestamps, worker IDs, retry counters,
+or cancellation-request flag are embedded in this enum.
+
+Acceptance criteria for point 039: the variants, allowed transition matrix,
+terminal-state rule, cancellation semantics, separation from outcome data, and
+concurrency enforcement requirement are documented. This point defines the
+contract and does not claim that the enum or transition implementation exists.
+
 ## Initial delivery sequence
 
 1. Define task identity, task state, and outcome contracts with exhaustive tests.
