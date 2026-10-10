@@ -12,6 +12,7 @@ mod queue;
 mod scheduler;
 mod synchronization;
 mod task_state;
+mod tracing;
 
 pub use cancellation::CancellationToken;
 pub use executor::Executor;
@@ -21,3 +22,4 @@ pub use queue::{QueuePushError, TaskQueue};
 pub use scheduler::{ScheduleError, Scheduler};
 pub use synchronization::{Shared, SynchronizationError};
 pub use task_state::{InvalidTaskTransition, TaskState};
+pub use tracing::{TraceBuffer, TraceEvent, TraceRecordError};

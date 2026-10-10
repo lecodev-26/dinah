@@ -385,3 +385,19 @@ avoid wraparound. `snapshot()` reads each counter safely, but the group is not a
 globally atomic snapshot while concurrent updates occur. No task labels, timing,
 external exporter, allocation, or dependency is introduced. Tests cover event
 separation and concurrent increments.
+
+
+## Structured tracing (point 053)
+
+`TraceEvent` defines lifecycle event kinds for task submission, start, completion,
+failure, and cancellation request/acknowledgement. `TraceBuffer` stores events in
+recording order in a bounded, mutex-protected in-memory buffer. The caller chooses
+a non-zero capacity. When full, recording rejects the new event and returns it
+without overwriting existing history; callers may inspect or drain the buffer.
+
+Tracing is opt-in and not automatically emitted by the executor or scheduler,
+which currently lack task identity and a unified instrumentation hook. Do not
+record while holding unrelated application locks. Snapshot/drain briefly lock the
+buffer and copy or remove events; this implementation does not add timestamps,
+span nesting, exporters, automatic task IDs, or external dependencies. Tests cover
+ordered recording, overflow preservation, draining, and concurrent recording.
