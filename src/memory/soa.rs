@@ -203,6 +203,60 @@ mod tests {
     }
 
     #[test]
+    fn dropping_and_clearing_rows_drops_each_column_value_once() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        use std::sync::Arc;
+
+        struct Tracked(Arc<AtomicUsize>);
+        impl Drop for Tracked {
+            fn drop(&mut self) {
+                self.0.fetch_add(1, Ordering::SeqCst);
+            }
+        }
+
+        let first_drops = Arc::new(AtomicUsize::new(0));
+        let second_drops = Arc::new(AtomicUsize::new(0));
+        {
+            let mut rows = SoaBuffer::try_with_capacity(2).unwrap();
+            rows.try_push(
+                Tracked(Arc::clone(&first_drops)),
+                Tracked(Arc::clone(&second_drops)),
+            )
+            .unwrap();
+            rows.try_push(
+                Tracked(Arc::clone(&first_drops)),
+                Tracked(Arc::clone(&second_drops)),
+            )
+            .unwrap();
+            assert_eq!(rows.pop().map(|_| ()), Some(()));
+            assert_eq!(first_drops.load(Ordering::SeqCst), 1);
+            assert_eq!(second_drops.load(Ordering::SeqCst), 1);
+            rows.clear();
+            assert_eq!(first_drops.load(Ordering::SeqCst), 2);
+            assert_eq!(second_drops.load(Ordering::SeqCst), 2);
+            rows.try_push(
+                Tracked(Arc::clone(&first_drops)),
+                Tracked(Arc::clone(&second_drops)),
+            )
+            .unwrap();
+        }
+        assert_eq!(first_drops.load(Ordering::SeqCst), 3);
+        assert_eq!(second_drops.load(Ordering::SeqCst), 3);
+    }
+
+    #[test]
+    fn zero_sized_columns_keep_equal_lengths_at_capacity() {
+        let mut rows = SoaBuffer::<(), ()>::try_with_capacity(2).unwrap();
+        rows.try_push((), ()).unwrap();
+        rows.try_push((), ()).unwrap();
+        assert!(rows.is_full());
+        assert_eq!(rows.len(), 2);
+        assert_eq!(rows.as_slices(), (&[(), ()][..], &[(), ()][..]));
+        assert!(rows.try_push((), ()).is_err());
+        assert_eq!(rows.len(), 2);
+    }
+
+    #[test]
     fn shared_soa_serializes_concurrent_row_insertions() {
         use crate::runtime::Shared;
         use std::thread;

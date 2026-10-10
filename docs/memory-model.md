@@ -140,6 +140,16 @@ Reglas:
 - Los recursos compartidos deben cumplir los contratos `Send`/`Sync` aplicables y documentar quién sincroniza cada mutación. Un pool no es seguro para compartir por el mero hecho de estar envuelto en un puntero compartido.
 - Evitar bloqueos globales como valor por defecto. Comparar alternativas con benchmarks y pruebas de concurrencia antes de optimizar.
 
+## Pruebas de seguridad de memoria (punto 072)
+
+Las pruebas de Memory deben verificar el contrato observable sin usar `unsafe` ni depender de detalles internos del allocator:
+
+- **Propiedad y destrucción:** los valores extraídos por `pop` pasan al llamador; `clear` destruye los elementos restantes una sola vez y permite reutilizar la reserva; la destrucción del contenedor destruye todos los valores que aún posee. `SoaBuffer` aplica estas reglas a ambas columnas y conserva la alineación lógica de filas.
+- **Límites:** capacidad cero, capacidad llena, inserciones rechazadas y extensiones que no caben no deben producir longitudes superiores a la capacidad ni perder valores aceptados/rechazados.
+- **Tipos especiales:** los tipos de tamaño cero siguen sujetos a la capacidad lógica; los tipos sobrealineados conservan la alineación garantizada por Rust. No se infiere una alineación mayor que la del tipo.
+- **Accesos:** las vistas contienen únicamente elementos inicializados y los préstamos de Rust impiden mutaciones incompatibles mientras una vista siga viva. El ejemplo `compile_fail` de `Buffer` valida esta restricción en la documentación.
+- **Implementación:** `#![forbid(unsafe_code)]` en la raíz del crate impide introducir bloques `unsafe` en el código del proyecto. Estas pruebas refuerzan el contrato, pero no sustituyen Miri, fuzzing o una auditoría cuando se incorporen abstracciones más complejas.
+
 ## Sincronización explícita de Memory (punto 071)
 
 Los tipos de `dinah::memory` siguen siendo propietarios y no incorporan bloqueos implícitos. Cuando varios hilos necesiten mutar la misma estructura, se puede envolver en `dinah::runtime::Shared<T>`, la primitiva existente basada en `Arc<Mutex<T>>`. Clonar `Shared<T>` comparte el mismo valor; no copia el buffer ni sus elementos.

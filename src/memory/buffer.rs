@@ -285,6 +285,44 @@ mod tests {
     }
 
     #[test]
+    fn zero_sized_types_obey_logical_capacity() {
+        let mut buffer = Buffer::<()>::try_with_capacity(3).unwrap();
+        assert_eq!(buffer.capacity(), 3);
+        for _ in 0..3 {
+            buffer.try_push(()).unwrap();
+        }
+        assert_eq!(buffer.len(), 3);
+        assert!(buffer.is_full());
+        assert_eq!(buffer.try_push(()), Err(BufferPushError::Full(())));
+        assert_eq!(buffer.len(), 3);
+        assert_eq!(buffer.pop(), Some(()));
+        assert_eq!(buffer.len(), 2);
+    }
+
+    #[test]
+    fn over_aligned_elements_keep_their_type_alignment() {
+        #[repr(align(128))]
+        struct Aligned(u64);
+
+        let mut buffer = Buffer::try_with_capacity(2).unwrap();
+        buffer.try_push(Aligned(17)).unwrap();
+        buffer.try_push(Aligned(23)).unwrap();
+        let values = buffer.as_slice();
+        assert_eq!(
+            (values.as_ptr() as usize) % core::mem::align_of::<Aligned>(),
+            0
+        );
+        assert_eq!(
+            (core::ptr::addr_of!(values[1]) as usize) % core::mem::align_of::<Aligned>(),
+            0
+        );
+        assert_eq!(
+            values.iter().map(|item| item.0).collect::<Vec<_>>(),
+            [17, 23]
+        );
+    }
+
+    #[test]
     fn clear_and_drop_destroy_each_owned_item_once() {
         use std::sync::atomic::{AtomicUsize, Ordering};
         use std::sync::Arc;
