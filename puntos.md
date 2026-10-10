@@ -6,8 +6,8 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 
 - Total de puntos numerados: 287
 - Completados: 20
-- En progreso: 0
-- Pendientes: 267
+- En progreso: 6
+- Pendientes: 261
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -36,12 +36,12 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 
 ## FASE 1 — Core
 
-- [ ] 021 — Crear crate principal
-- [ ] 022 — Definir types
-- [ ] 023 — Definir errores
-- [ ] 024 — Definir resultados internos
-- [ ] 025 — Definir configuración
-- [ ] 026 — Definir IDs internos
+- [>] 021 — Crear crate principal
+- [>] 022 — Definir types
+- [>] 023 — Definir errores
+- [>] 024 — Definir resultados internos
+- [>] 025 — Definir configuración
+- [>] 026 — Definir IDs internos
 - [ ] 027 — Definir estados internos
 - [ ] 028 — Definir abstracciones comunes
 - [ ] 029 — Definir traits fundamentales

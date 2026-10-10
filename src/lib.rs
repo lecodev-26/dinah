@@ -1,14 +1,13 @@
 //! dinah: a Rust-first foundation for runtime, compute, and data-oriented systems.
 //!
-//! The crate is intentionally minimal at project bootstrap. Public APIs will be
-//! introduced incrementally with tests and documentation as roadmap items advance.
+//! The Core module provides small, dependency-free primitives shared by future
+//! subsystems. It intentionally avoids runtime, I/O, and platform assumptions.
 
 #![forbid(unsafe_code)]
 
+pub mod core;
+
 /// Returns the crate's current package name.
-///
-/// This tiny smoke-testable function is temporary bootstrap scaffolding, not a
-/// claim that the Core roadmap phase is complete.
 pub const fn crate_name() -> &'static str {
     "dinah"
 }

@@ -39,3 +39,9 @@ Pull requests and pushes to main run documentation/checklist validation, formatt
 ## Current scope
 
 The initial crate is deliberately minimal. Planned capabilities are not considered implemented until code, tests, documentation, and evidence exist.
+
+## Core (inicial)
+
+La API base vive en `dinah::core`; consulta [`docs/core.md`](docs/core.md) para
+sus invariantes y límites actuales. El Core sigue en desarrollo y no se declara
+estable hasta completar la revisión y validación previstas en el roadmap.
