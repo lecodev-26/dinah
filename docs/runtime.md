@@ -451,7 +451,9 @@ from timing runs to avoid treating noisy measurements as a correctness gate.
 The harness reports seven-sample medians for direct `Executor` no-op calls,
 immediate `Scheduler` submissions, sequential queue draining at 1/16/64/256
 items, and parallel queue draining at 16/64/256 items with 2 or 4 temporary
-workers. It prints total median nanoseconds, decimal nanoseconds per task, and
+workers. It also compares sequential and parallel execution of a deterministic
+CPU workload with 10,000 integer-mixing iterations per task. It prints total
+median nanoseconds, decimal nanoseconds per task, and
 approximate tasks per second. `black_box` limits dead-code elimination, every
 queue is asserted empty, and all tasks return a checked successful result.
 
@@ -478,3 +480,16 @@ that a persistent worker pool is a future design candidate, but point 059 must
 measure representative workloads before optimizing. Point 033 (Core benchmarks)
 remains open until a representative Core operation and suitable workload are
 identified and measured.
+
+
+## Scheduler optimization investigation (point 059, in progress)
+
+The first no-op baseline shows temporary thread creation dominates tiny parallel
+tasks; it is not enough evidence to justify a scheduler redesign. The benchmark
+harness now also measures a deterministic CPU workload (10,000 wrapping integer
+mixing iterations per task) through both sequential queue draining and parallel
+batches at 2 and 4 workers, across 16/64/256 tasks. This comparison is still a
+synthetic microbenchmark, not an application workload, but it helps distinguish
+thread-startup overhead from useful work before selecting an optimization. No
+optimization is claimed until the new remote baseline is green, its results are
+reviewed, and the correctness contract remains covered by tests.

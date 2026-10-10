@@ -11,6 +11,16 @@ fn noop_task() -> Result<u64, &'static str> {
     Ok(black_box(1))
 }
 
+fn cpu_task() -> Result<u64, &'static str> {
+    let mut value = black_box(1_u64);
+    for _ in 0..10_000 {
+        value = value
+            .wrapping_mul(6_364_136_223_846_793_005)
+            .wrapping_add(1);
+    }
+    Ok(black_box(value))
+}
+
 fn report(name: &str, task_count: usize, samples: &[Duration]) {
     let mut nanos: Vec<u128> = samples.iter().map(Duration::as_nanos).collect();
     nanos.sort_unstable();
@@ -96,13 +106,31 @@ fn main() {
     }
 
     for &task_count in &[16usize, 64, 256] {
+        let sequential_cpu_samples = measure(|| {
+            let capacity = NonZeroUsize::new(task_count).expect("task size is nonzero");
+            let mut queue = TaskQueue::new(capacity);
+            for _ in 0..task_count {
+                queue
+                    .try_push(cpu_task as fn() -> Result<u64, &'static str>)
+                    .expect("queue capacity matches task count");
+            }
+            let results = scheduler.run_until_empty(&mut queue);
+            black_box(results);
+            assert!(queue.is_empty());
+        });
+        report(
+            "scheduler_queue_sequential_cpu_10k",
+            task_count,
+            &sequential_cpu_samples,
+        );
+
         for &worker_count in &[2usize, 4] {
             let parallel_samples = measure(|| {
                 let capacity = NonZeroUsize::new(task_count).expect("task size is nonzero");
                 let mut queue = TaskQueue::new(capacity);
                 for _ in 0..task_count {
                     queue
-                        .try_push(noop_task as fn() -> Result<u64, &'static str>)
+                        .try_push(cpu_task as fn() -> Result<u64, &'static str>)
                         .expect("queue capacity matches task count");
                 }
                 let workers = NonZeroUsize::new(worker_count).expect("worker count is nonzero");
@@ -112,9 +140,9 @@ fn main() {
             });
             report(
                 if worker_count == 2 {
-                    "scheduler_queue_parallel_2_workers"
+                    "scheduler_queue_parallel_cpu_10k_2_workers"
                 } else {
-                    "scheduler_queue_parallel_4_workers"
+                    "scheduler_queue_parallel_cpu_10k_4_workers"
                 },
                 task_count,
                 &parallel_samples,
