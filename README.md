@@ -1,6 +1,6 @@
-# DINAH
+# dinah
 
-DINAH is a Rust-first project exploring a high-performance runtime and a modular foundation for compute, data-oriented processing, simulation, networking, and storage.
+dinah is a Rust-first project exploring a high-performance runtime and a modular foundation for compute, data-oriented processing, simulation, networking, and storage.
 
 ## Project status
 

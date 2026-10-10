@@ -1,14 +1,14 @@
-# DINAH — Roadmap maestro
+# dinah — Roadmap maestro
 
 ## 1. Identidad y propósito
 
-DINAH es un proyecto independiente, con Rust como lenguaje principal, orientado a construir una base modular de ejecución y procesamiento de alto rendimiento. El objetivo es combinar un runtime, gestión de memoria, compute, estructuras data-oriented, simulación y, cuando exista una necesidad demostrada, capacidades de red y persistencia.
+dinah es un proyecto independiente, con Rust como lenguaje principal, orientado a construir una base modular de ejecución y procesamiento de alto rendimiento. El objetivo es combinar un runtime, gestión de memoria, compute, estructuras data-oriented, simulación y, cuando exista una necesidad demostrada, capacidades de red y persistencia.
 
-DINAH no se define por acumular funciones: cada módulo debe tener límites claros, pruebas, documentación y resultados medibles.
+dinah no se define por acumular funciones: cada módulo debe tener límites claros, pruebas, documentación y resultados medibles.
 
 ## 2. Principios no negociables
 
-- **Independencia:** DINAH es un proyecto propio. AXIOMSYSTEMS, AXIOMSYSTEMS2 y AXIOM-NEXUS-Q quedan fuera del alcance y no se incorporan como dependencias ni como subproyectos.
+- **Independencia:** dinah es un proyecto propio. AXIOMSYSTEMS, AXIOMSYSTEMS2 y AXIOM-NEXUS-Q quedan fuera del alcance y no se incorporan como dependencias ni como subproyectos.
 - **Rust primero:** C/C++ y Assembly se evalúan caso por caso; nunca se añaden por espectáculo.
 - **Medir antes de optimizar:** cada optimización relevante debe incluir una comparación reproducible.
 - **Corrección antes que velocidad:** seguridad de memoria, concurrencia, determinismo y APIs comprensibles.
@@ -17,9 +17,9 @@ DINAH no se define por acumular funciones: cada módulo debe tener límites clar
 - **Checklist auditable:** los IDs de puntos.md son permanentes. No se renumeran ni se reutilizan.
 - **Evolución basada en evidencia:** las versiones posteriores se deciden con datos y necesidades reales, no por ampliar una lista indefinidamente.
 
-## 3. Qué es y qué no es DINAH
+## 3. Qué es y qué no es dinah
 
-DINAH aspira a ser una biblioteca/runtime modular reutilizable para tareas concurrentes, procesamiento de datos y simulación. No es, por definición, un motor de videojuegos, un sistema operativo, un sustituto universal de todas las bibliotecas ni una promesa de rendimiento sin benchmarks.
+dinah aspira a ser una biblioteca/runtime modular reutilizable para tareas concurrentes, procesamiento de datos y simulación. No es, por definición, un motor de videojuegos, un sistema operativo, un sustituto universal de todas las bibliotecas ni una promesa de rendimiento sin benchmarks.
 
 Las ideas externas se estudian por separado y solo se integran cuando la licencia lo permite, se entiende su procedencia y existe una justificación técnica.
 
@@ -36,7 +36,7 @@ La arquitectura prevista se divide en capas que pueden evolucionar de forma inde
 7. **Networking:** transporte, mensajes, serialización y herramientas para latencia y sincronización.
 8. **Storage:** persistencia, journal, recuperación, integridad e índices.
 9. **Native / Hardware:** abstracciones de plataforma, POSIX/Linux, FFI y optimizaciones justificadas.
-10. **CLI:** interfaz para crear, ejecutar, inspeccionar y diagnosticar proyectos DINAH.
+10. **CLI:** interfaz para crear, ejecutar, inspeccionar y diagnosticar proyectos dinah.
 11. **Observabilidad:** métricas, tracing, profiler hooks y diagnósticos.
 12. **Seguridad y calidad transversal:** testing, fuzzing, auditorías, CI y benchmarks reproducibles.
 
@@ -110,10 +110,10 @@ Establecer baselines, perfilar cada subsistema, identificar hotspots, reducir as
 ### Fase 15 — Integración total
 Integrar capas, resolver dependencias circulares, revisar APIs y ejecutar pruebas end-to-end con ejemplos completos.
 
-### Fase 16 — DINAH v0.1
+### Fase 16 — dinah v0.1
 Congelar alcance y API de la primera versión coherente; completar docs, ejemplos, CLI, pruebas, benchmarks, auditorías, changelog y publicación.
 
-### Fase 17 — DINAH v0.2+
+### Fase 17 — dinah v0.2+
 Evaluar la arquitectura y las limitaciones reales, recoger necesidades, priorizar cambios y repetir el ciclo de testing, benchmarking y auditoría. Las funciones futuras se deciden por evidencia.
 
 ## 8. Criterio de salida de v0.1

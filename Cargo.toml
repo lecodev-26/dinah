@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 description = "Rust-first modular runtime and high-performance compute foundation"
 license = "UNLICENSED"
-repository = "https://github.com/lecodev-26/DINAH"
+repository = "https://github.com/lecodev-26/dinah"
 
 [lib]
 path = "src/lib.rs"

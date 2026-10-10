@@ -1,4 +1,4 @@
-//! DINAH: a Rust-first foundation for runtime, compute, and data-oriented systems.
+//! dinah: a Rust-first foundation for runtime, compute, and data-oriented systems.
 //!
 //! The crate is intentionally minimal at project bootstrap. Public APIs will be
 //! introduced incrementally with tests and documentation as roadmap items advance.

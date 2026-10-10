@@ -1,4 +1,4 @@
-# DINAH — Checklist maestro
+# dinah — Checklist maestro
 
 Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. Para completar un punto, debe existir evidencia suficiente en código, pruebas, documentación o resultados según corresponda.
 
@@ -13,10 +13,10 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 
 ## FASE 0 — Fundación y reglas del proyecto
 
-- [x] 001 — Definir identidad oficial de DINAH
+- [x] 001 — Definir identidad oficial de dinah
 - [x] 002 — Definir propósito técnico
 - [x] 003 — Definir alcance inicial
-- [x] 004 — Definir qué NO es DINAH
+- [x] 004 — Definir qué NO es dinah
 - [x] 005 — Mantener AXIOMSYSTEMS fuera
 - [x] 006 — Mantener AXIOMSYSTEMS2 fuera
 - [x] 007 — Mantener AXIOM-NEXUS-Q fuera
@@ -321,7 +321,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [ ] 261 — Revisar API pública
 - [ ] 262 — Revisar arquitectura completa
 
-## FASE 16 — DINAH v0.1
+## FASE 16 — dinah v0.1
 
 - [ ] 263 — Congelar arquitectura v0.1
 - [ ] 264 — Congelar API v0.1
@@ -339,7 +339,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [ ] 276 — Crear paquetes/binarios
 - [ ] 277 — Crear release v0.1.0
 
-## FASE 17 — DINAH v0.2+
+## FASE 17 — dinah v0.2+
 
 - [ ] 278 — Evaluar arquitectura real
 - [ ] 279 — Evaluar rendimiento
