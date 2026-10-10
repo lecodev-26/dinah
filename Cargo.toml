@@ -1,0 +1,12 @@
+[package]
+name = "dinah"
+version = "0.1.0"
+edition = "2021"
+description = "Rust-first modular runtime and high-performance compute foundation"
+license = "UNLICENSED"
+repository = "https://github.com/lecodev-26/DINAH"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]

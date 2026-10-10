@@ -1,0 +1,50 @@
+name: DINAH CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dinah-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checklist:
+    name: Validate roadmap checklist
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Validate stable checklist IDs
+        run: python3 scripts/check_points.py
+      - name: Validate required project documents
+        run: |
+          test -s README.md
+          test -s roadmap.md
+          test -s puntos.md
+          test -s Cargo.toml
+          test -s src/lib.rs
+
+  rust:
+    name: Format, test, and lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+      - name: Run tests
+        run: cargo test --workspace --all-targets
+      - name: Run Clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
