@@ -494,3 +494,13 @@ synthetic microbenchmark, not an application workload, but it helps distinguish
 thread-startup overhead from useful work before selecting an optimization. No
 optimization is claimed until the new remote baseline is green, its results are
 reviewed, and the correctness contract remains covered by tests.
+
+
+## Durable benchmark artifacts
+
+The benchmark workflow uploads its output to GitHub Actions with a 90-day
+retention period. A version-controlled copy of the first extended runtime
+baseline is preserved under `artifacts/benchmarks/runtime-baseline-2026-10-10.txt`,
+with provenance in `artifacts/benchmarks/README.md`. Future important generated
+reports should be archived in `artifacts/` with dated filenames and source-run
+metadata so they remain available after CI artifact retention expires.
