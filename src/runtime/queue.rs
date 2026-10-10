@@ -108,7 +108,10 @@ mod tests {
     fn rejects_full_queue_without_losing_item() {
         let mut queue = queue(1);
         assert_eq!(queue.try_push("accepted"), Ok(()));
-        assert_eq!(queue.try_push("rejected"), Err(QueuePushError::Full("rejected")));
+        assert_eq!(
+            queue.try_push("rejected"),
+            Err(QueuePushError::Full("rejected"))
+        );
         assert_eq!(queue.pop(), Some("accepted"));
     }
 
