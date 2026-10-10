@@ -6,6 +6,7 @@
 #![forbid(unsafe_code)]
 
 pub mod core;
+pub mod runtime;
 
 /// Returns the crate's current package name.
 pub const fn crate_name() -> &'static str {
