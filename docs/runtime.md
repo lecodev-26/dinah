@@ -439,3 +439,26 @@ finish only after observing the request. The test validates eventual visibility
 without sleep-based timing assumptions. These tests validate the cancellation
 signal's concurrency contract, not interruption or task termination. Broader
 scheduler and executor coverage remains tracked by points 056–057.
+
+## Runtime benchmark harness (point 058)
+
+`benches/runtime.rs` is a dependency-free, release-mode benchmark executable.
+Run it remotely with `cargo bench --bench runtime`; the dedicated GitHub Actions
+workflow runs it when benchmark/runtime sources change or by manual dispatch and
+uploads the raw output as a 90-day artifact. The normal CI suite remains separate
+from timing runs to avoid treating noisy measurements as a correctness gate.
+
+The harness reports seven-sample medians for direct `Executor` no-op calls,
+immediate `Scheduler` submissions, sequential queue draining at 1/16/64/256
+items, and parallel queue draining at 16/64/256 items with 2 or 4 temporary
+workers. It prints total median nanoseconds, integer nanoseconds per task, and
+approximate tasks per second. `black_box` limits dead-code elimination, every
+queue is asserted empty, and all tasks return a checked successful result.
+
+These cases primarily characterize dispatch/queue/thread-creation overhead for a
+trivial deterministic task; they do not model CPU-heavy application workloads,
+prove that parallel dispatch is faster, or establish cross-machine comparisons.
+Results are machine- and runner-specific observations. Point 033 (Core benchmarks)
+remains open until a representative Core operation and suitable workload are
+identified and measured. Point 058 is not complete until the remote benchmark run
+succeeds and its output artifact is inspected and documented.

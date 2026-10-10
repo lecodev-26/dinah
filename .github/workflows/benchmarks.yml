@@ -1,0 +1,39 @@
+name: dinah benchmarks
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'benches/**'
+      - 'src/runtime/**'
+      - 'src/runtime.rs'
+      - 'Cargo.toml'
+      - '.github/workflows/benchmarks.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dinah-benchmarks-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  runtime-benchmarks:
+    name: Run Runtime benchmarks (release)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Run reproducible benchmark harness
+        run: cargo bench --bench runtime | tee runtime-benchmark-results.txt
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: dinah-runtime-benchmarks-${{ github.sha }}
+          path: runtime-benchmark-results.txt
+          if-no-files-found: error
+          retention-days: 90

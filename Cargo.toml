@@ -10,3 +10,9 @@ repository = "https://github.com/lecodev-26/dinah"
 path = "src/lib.rs"
 
 [dependencies]
+
+[[bench]]
+name = "runtime"
+path = "benches/runtime.rs"
+harness = false
+test = false
