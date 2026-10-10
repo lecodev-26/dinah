@@ -65,12 +65,12 @@ impl<A, B> SoaBuffer<A, B> {
         }
         // Both columns share capacity and length by construction, and only
         // this type can mutate them, so both pushes fit or neither is attempted.
-        self.first
-            .try_push(first)
-            .expect("SoA column invariant violated");
-        self.second
-            .try_push(second)
-            .expect("SoA column invariant violated");
+        if self.first.try_push(first).is_err() {
+            unreachable!("SoA column invariant violated");
+        }
+        if self.second.try_push(second).is_err() {
+            unreachable!("SoA column invariant violated");
+        }
         debug_assert_eq!(self.first.len(), self.second.len());
         Ok(())
     }
