@@ -148,6 +148,7 @@ fn core_error_conversions_and_messages_are_stable() {
 #[test]
 fn core_api_version_is_defined() {
     assert_eq!(CORE_API_VERSION, 1);
+    assert!(CORE_API_VERSION > 0);
 }
 
 #[test]

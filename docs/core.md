@@ -18,6 +18,12 @@ resources as a side effect.
 This API is an initial internal foundation, not a stability guarantee. Changes
 must be accompanied by tests and reviewed against the roadmap.
 
+`CORE_API_VERSION` identifies the documented Core contract independently of the
+crate's package version. Increment it when that contract changes incompatibly;
+adding an API item does not automatically require an increment. Because dinah is
+pre-alpha, the marker is informative and does not replace release notes, review,
+or the Core v0.1 readiness gate below.
+
 ## Shared contracts
 
 `Validate` provides a common validation interface while retaining each type's

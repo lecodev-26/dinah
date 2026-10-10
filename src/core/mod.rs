@@ -17,8 +17,11 @@ pub use traits::{HasCoreId, Validate};
 
 /// Version of the currently defined Core API contract.
 ///
-/// This is a contract marker, not a promise of semver stability while dinah
-/// remains pre-alpha.
+/// Increment this marker when the explicitly documented Core contract changes
+/// incompatibly. It is independent of the crate version and does not promise
+/// semantic-versioning stability while dinah remains pre-alpha. Adding a new
+/// API item alone does not necessarily require an increment; review the impact
+/// on existing callers and documented invariants.
 pub const CORE_API_VERSION: u16 = 1;
 
 #[cfg(test)]
