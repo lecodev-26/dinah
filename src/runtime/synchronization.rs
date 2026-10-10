@@ -54,7 +54,9 @@ impl<T> Shared<T> {
     /// as an explicit error; this API deliberately does not recover the guard
     /// because the protected value's invariants are unknown to the wrapper.
     pub fn lock(&self) -> Result<MutexGuard<'_, T>, SynchronizationError> {
-        self.inner.lock().map_err(|_| SynchronizationError::Poisoned)
+        self.inner
+            .lock()
+            .map_err(|_| SynchronizationError::Poisoned)
     }
 
     /// Returns the number of strong shared owners, primarily for diagnostics.
