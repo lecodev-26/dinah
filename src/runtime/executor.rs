@@ -68,6 +68,32 @@ mod tests {
     }
 
     #[test]
+    fn invokes_task_once_when_it_returns_an_error() {
+        let executor = Executor::new();
+        let calls = Cell::new(0);
+
+        let result = executor.execute(|| {
+            calls.set(calls.get() + 1);
+            Err::<(), _>("task-specific failure")
+        });
+
+        assert_eq!(result, Err("task-specific failure"));
+        assert_eq!(calls.get(), 1);
+    }
+
+    #[test]
+    fn does_not_swallow_task_panics() {
+        let executor = Executor::new();
+        let result = std::panic::catch_unwind(|| {
+            executor.execute(|| -> Result<(), &'static str> {
+                panic!("task panic should propagate");
+            })
+        });
+
+        assert!(result.is_err());
+    }
+
+    #[test]
     fn display_describes_execution_mode() {
         assert_eq!(Executor::new().to_string(), "synchronous executor");
     }

@@ -410,6 +410,15 @@ tasks to reach a synchronization point concurrently, then verifies the results
 remain in FIFO dispatch order and the queue is drained. The barrier avoids relying
 on wall-clock timing to infer overlap.
 
+## Executor regression coverage (point 057, in progress)
+
+Executor tests cover successful return values, exactly-once invocation, error
+identity preservation, and propagation of task panics to the caller. Panic
+propagation is intentional for this synchronous executor; it does not convert
+unwinds into task errors or guarantee cleanup beyond Rust's normal unwinding
+semantics.
+
+
 ## Scheduler regression coverage (point 056, complete)
 
 Scheduler tests verify immediate submission, single dispatch, FIFO queue draining,
