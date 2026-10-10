@@ -410,7 +410,7 @@ tasks to reach a synchronization point concurrently, then verifies the results
 remain in FIFO dispatch order and the queue is drained. The barrier avoids relying
 on wall-clock timing to infer overlap.
 
-## Race-condition regression coverage (point 055, in progress)
+## Race-condition regression coverage (point 055, complete)
 
 Cancellation tests cover simultaneous idempotent requests and a separate race
 between one requester and 16 cloned-token observers. A barrier releases the
