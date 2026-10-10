@@ -302,6 +302,7 @@ mod tests {
     #[test]
     fn over_aligned_elements_keep_their_type_alignment() {
         #[repr(align(128))]
+        #[derive(Debug)]
         struct Aligned(u64);
 
         let mut buffer = Buffer::try_with_capacity(2).unwrap();
