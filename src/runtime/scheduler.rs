@@ -284,6 +284,65 @@ mod tests {
     }
 
     #[test]
+    fn run_parallel_continues_after_error_across_batch_boundaries() {
+        fn first() -> Result<i32, &'static str> {
+            Ok(10)
+        }
+        fn failed() -> Result<i32, &'static str> {
+            Err("batch one failed")
+        }
+        fn third() -> Result<i32, &'static str> {
+            Ok(30)
+        }
+        fn fourth() -> Result<i32, &'static str> {
+            Ok(40)
+        }
+
+        let scheduler = Scheduler::new();
+        let mut queue: super::super::TaskQueue<fn() -> Result<i32, &'static str>> =
+            super::super::TaskQueue::new(
+                core::num::NonZeroUsize::new(4).expect("positive capacity"),
+            );
+        for task in [first, failed, third, fourth] {
+            assert!(queue.try_push(task).is_ok());
+        }
+
+        let results = scheduler.run_parallel(
+            &mut queue,
+            core::num::NonZeroUsize::new(2).expect("positive worker limit"),
+        );
+        assert_eq!(
+            results,
+            vec![Ok(10), Err("batch one failed"), Ok(30), Ok(40)]
+        );
+        assert!(queue.is_empty());
+    }
+
+    #[test]
+    fn run_parallel_with_one_worker_preserves_fifo_across_batches() {
+        fn task(value: i32) -> impl FnOnce() -> Result<i32, ()> {
+            move || Ok(value)
+        }
+
+        let scheduler = Scheduler::new();
+        let mut queue = super::super::TaskQueue::new(
+            core::num::NonZeroUsize::new(3).expect("positive capacity"),
+        );
+        for value in 0..3 {
+            assert!(queue.try_push(task(value)).is_ok());
+        }
+
+        assert_eq!(
+            scheduler.run_parallel(
+                &mut queue,
+                core::num::NonZeroUsize::new(1).expect("positive worker limit"),
+            ),
+            vec![Ok(0), Ok(1), Ok(2)]
+        );
+        assert!(queue.is_empty());
+    }
+
+    #[test]
     fn run_parallel_handles_empty_queue() {
         let scheduler = Scheduler::new();
         let mut queue = super::super::TaskQueue::<fn() -> Result<(), ()>>::new(

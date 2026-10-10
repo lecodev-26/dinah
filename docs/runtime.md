@@ -410,6 +410,17 @@ tasks to reach a synchronization point concurrently, then verifies the results
 remain in FIFO dispatch order and the queue is drained. The barrier avoids relying
 on wall-clock timing to infer overlap.
 
+## Scheduler regression coverage (point 056, in progress)
+
+Scheduler tests verify immediate submission, single dispatch, FIFO queue draining,
+empty queues, task-error preservation, and parallel execution bounded by a
+non-zero worker limit. Additional regressions verify that task errors do not
+prevent later parallel batches from running and that a one-worker configuration
+preserves FIFO results across batch boundaries. These tests describe the current
+synchronous and temporary-scoped-thread implementation; they do not imply a
+persistent worker pool or background scheduling.
+
+
 ## Race-condition regression coverage (point 055, complete)
 
 Cancellation tests cover simultaneous idempotent requests and a separate race
