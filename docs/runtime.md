@@ -152,6 +152,23 @@ terminal-state rule, cancellation semantics, separation from outcome data, and
 concurrency enforcement requirement are documented. This point defines the
 contract and does not claim that the enum or transition implementation exists.
 
+## Worker contract (point 040)
+
+A `Worker` is an execution resource responsible for running work that an executor or scheduler has dispatched to it. It is not a `Task`, does not choose global scheduling policy, and is not itself the queue. This is a role contract; no worker type, thread pool, or background thread is implemented by documenting it.
+
+The initial responsibilities and boundaries are:
+
+- **Execution boundary:** accept or claim work only through the executor's defined dispatch contract, run the selected task at most once, and make its execution outcome available to Runtime bookkeeping. A worker must not silently discard work that the Runtime has already accepted.
+- **Isolation:** execute user task logic outside internal scheduler and queue locks. Internal locks may protect dispatch bookkeeping, but must not be held while arbitrary user code runs.
+- **Identity:** a worker's identity belongs to the worker domain and must not be represented by `TaskId` or `CoreId`. A dedicated `WorkerId` contract is the next design point (041); this section does not imply that such a type exists.
+- **Lifecycle:** a worker is a Runtime execution resource, distinct from a task's `TaskState` and Core's `LifecycleState`. Concrete states and legal transitions are deferred until the worker implementation and shutdown protocol are designed.
+- **Failure and shutdown:** panic handling, worker replacement, draining or cancelling dispatched/pending work, and worker termination guarantees remain explicit open decisions. No failure-recovery or shutdown guarantee is claimed before it is implemented and tested.
+- **Configuration:** `CoreConfig::max_workers` is Core configuration data; it does not establish that a worker pool exists, that this value is currently consumed by Runtime, or that dynamic resizing is supported.
+
+The first worker implementation should remain in safe Rust and keep task execution outside scheduler/queue critical sections. Thread creation, synchronization primitives, worker count semantics, and dispatch ownership must be introduced in implementation work with tests rather than inferred from this contract.
+
+Acceptance criteria for point 040: the worker's role, separation from tasks and scheduling policy, execution/locking boundary, identity domain, and deferred shutdown/failure semantics are documented. This point defines the contract only; it does not claim a concrete `Worker` type or worker threads exist in code.
+
 ## Initial delivery sequence
 
 1. Define task identity, task state, and outcome contracts with exhaustive tests.
