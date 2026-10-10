@@ -31,6 +31,7 @@ Unless a file states otherwise, `dinah` is dual-licensed under either the MIT Li
 - puntos.md: master checklist and development status.
 - .github/workflows/ci.yml: remote continuous integration.
 - src/lib.rs: initial library entry point.
+- docs/runtime.md: initial Runtime execution model and deferred design decisions.
 
 ## CI
 

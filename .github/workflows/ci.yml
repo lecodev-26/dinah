@@ -30,6 +30,8 @@ jobs:
           test -s puntos.md
           test -s Cargo.toml
           test -s src/lib.rs
+          test -s docs/core.md
+          test -s docs/runtime.md
           test -s LICENSE-MIT
           test -s LICENSE-APACHE
           test -s assets/dinah-mark.svg
