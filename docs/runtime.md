@@ -478,10 +478,7 @@ short-lived threads for each batch. The first 10,000-iteration CPU baseline was
 also dominated by dispatch/thread-startup overhead: at 256 tasks, sequential took
 0.346 ms versus 8.344 ms (2 workers) and 7.557 ms (4 workers). That workload is
 still too small to infer the useful-work crossover, so the harness now raises it
-to 1,000,000 iterations per task. This is evidence against claiming parallel
-execution is always faster, not a universal performance conclusion. It suggests
-a persistent worker pool as a candidate, but point 059 must compare workloads
-before selecting an optimization. Point 033 (Core benchmarks)
+to 1,000,000 iterations per task. The latest successful run ([run 38057383426](https://github.com/lecodev-26/dinah/actions/runs/38057383426)) measured 256 tasks at 39.849 ms sequentially, 32.190 ms with 2 workers, and 34.690 ms with 4 workers. On this runner and synthetic workload, 2 workers were about 19% faster than sequential while 4 workers were slower than 2 workers. This is evidence against assuming more workers always improve throughput, not a universal performance conclusion. It suggests a persistent worker pool as a candidate, but point 059 remains in progress while the scheduling policy and workload limits are evaluated. Point 033 (Core benchmarks)
 remains open until a representative Core operation and suitable workload are
 identified and measured.
 
