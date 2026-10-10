@@ -1,6 +1,6 @@
 # dinah Memory — modelo de diseño inicial
 
-Estado: diseño para guiar los puntos 062–076; no implica que exista ya un subsistema Memory implementado ni una API pública estable.
+Estado: diseño inicial; el punto 062 implementa el primer buffer acotado. El subsistema sigue siendo experimental y su API no es una garantía de estabilidad.
 
 ## Objetivos
 
@@ -43,11 +43,25 @@ Estado: diseño para guiar los puntos 062–076; no implica que exista ya un sub
 - Los recursos compartidos deben cumplir los contratos `Send`/`Sync` aplicables y documentar quién sincroniza cada mutación. Un pool no es seguro para compartir por el mero hecho de estar envuelto en un puntero compartido.
 - Evitar bloqueos globales como valor por defecto. Comparar alternativas con benchmarks y pruebas de concurrencia antes de optimizar.
 
+## Buffer inicial (punto 062)
+
+`dinah::memory::Buffer<T>` es un contenedor propietario y contiguo de capacidad lógica fija. `try_with_capacity` reserva de forma fallible la capacidad máxima antes de devolver el buffer; por tanto, una reserva fallida no deja una instancia parcialmente inicializada y los `try_push` posteriores no necesitan aumentar la reserva mientras se respete el límite. La reserva real del allocator puede ser mayor que la solicitada.
+
+- La capacidad es el máximo de elementos, no un límite de bytes; `T` puede tener tamaños distintos.
+- Capacidad cero es válida. `is_full()` es verdadero cuando longitud y capacidad son cero.
+- `try_push` devuelve el elemento original en `BufferPushError::Full(T)` si está lleno; nunca sobrescribe ni descarta silenciosamente datos.
+- `as_slice` presta únicamente los elementos inicializados; la propiedad permanece en el buffer.
+- `pop` elimina el último elemento y `clear` destruye los elementos actuales conservando la reserva.
+- No hay sincronización interna: el acceso mutable requiere `&mut self`.
+- La API no promete un límite de memoria en bytes ni que la reserva física permanezca residente.
+
+La implementación y sus pruebas viven en `src/memory/buffer.rs`. No se expone acceso mutable al almacenamiento interno ni una API de crecimiento dinámico en este punto.
+
 ## Contratos que deben resolver los siguientes puntos
 
 | Punto | Decisión pendiente |
 |---|---|
-| 062 | API de buffers, vistas, capacidad y errores |
+| 062 | Completado: primer buffer contiguo y acotado; quedan otros tipos de buffer sujetos a necesidades futuras |
 | 063 | Tipos propietarios y límites de ownership interno |
 | 064 | Si se necesita una abstracción de asignación y cómo mantenerla fallible |
 | 065 | Diseño de pools, política de agotamiento y ámbito de sincronización |
@@ -69,4 +83,4 @@ Estado: diseño para guiar los puntos 062–076; no implica que exista ya un sub
 
 ## Fuera de alcance por ahora
 
-No se implementan aquí allocators personalizados, arenas, pools, API pública de buffers, SIMD, FFI ni garantías de tiempo real. Este documento establece restricciones de diseño; los puntos siguientes deben justificar y probar cada abstracción antes de incorporarla.
+No se implementan aquí allocators personalizados, arenas, pools, SIMD, FFI ni garantías de tiempo real. El `Buffer<T>` inicial es una primitiva mínima experimental, no un subsistema Memory completo. Los puntos siguientes deben justificar y probar cada abstracción antes de incorporarla.

@@ -6,6 +6,7 @@
 #![forbid(unsafe_code)]
 
 pub mod core;
+pub mod memory;
 pub mod runtime;
 
 /// Returns the crate's current package name.
