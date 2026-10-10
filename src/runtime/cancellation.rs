@@ -61,7 +61,8 @@ mod tests {
             .collect();
         let first_request_count = threads
             .into_iter()
-            .filter(|thread| thread.join().expect("request thread should finish"))
+            .map(|thread| thread.join().expect("request thread should finish"))
+            .filter(|was_first| *was_first)
             .count();
         assert_eq!(first_request_count, 1);
         assert!(token.is_cancellation_requested());
