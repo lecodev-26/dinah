@@ -66,7 +66,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 045 — Crear asignación de tareas
 - [x] 046 — Crear ejecución secuencial
 - [x] 047 — Crear ejecución paralela
-- [ ] 048 — Crear sincronización
+- [>] 048 — Crear sincronización
 - [ ] 049 — Gestionar errores de ejecución
 - [ ] 050 — Gestionar cancelación
 - [ ] 051 — Gestionar finalización
