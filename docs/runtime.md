@@ -210,6 +210,19 @@ Acceptance criteria for point 041: the domain, newtype representation, invalid
 value behavior, construction and allocation boundary, uniqueness limits,
 stability, and value semantics are documented.
 
+## Bounded task queue (point 044)
+
+The first queue implementation is a generic, single-owner `TaskQueue<T>` backed
+by `VecDeque<T>` and configured with a non-zero capacity. It provides FIFO
+`try_push`/`pop`, length/empty/full inspection, and exposes its configured
+capacity. It is deliberately not a concurrent queue and does not execute tasks.
+
+When the queue is full, `try_push` returns `QueuePushError::Full(item)` with the
+original item, preserving caller ownership and preventing silent work loss.
+The queue is not yet wired into `Scheduler`; queue-backed dispatch and its
+acceptance/rejection semantics belong to later Runtime points. Tests cover empty
+state, FIFO order, full-queue rejection without item loss, and reuse after a pop.
+
 ## Initial delivery sequence
 
 1. Define task identity, task state, and outcome contracts with exhaustive tests.
