@@ -264,6 +264,26 @@ mod tests {
     }
 
     #[test]
+    fn run_parallel_executes_tasks_concurrently_within_worker_limit() {
+        use std::sync::{Arc, Barrier};
+        let scheduler = Scheduler::new();
+        let barrier = Arc::new(Barrier::new(2));
+        let mut queue = super::super::TaskQueue::new(core::num::NonZeroUsize::new(4).unwrap());
+        for value in 0..4 {
+            let barrier = Arc::clone(&barrier);
+            queue
+                .try_push(move || {
+                    barrier.wait();
+                    Ok::<_, &'static str>(value)
+                })
+                .unwrap();
+        }
+        let results = scheduler.run_parallel(&mut queue, core::num::NonZeroUsize::new(2).unwrap());
+        assert_eq!(results, vec![Ok(0), Ok(1), Ok(2), Ok(3)]);
+        assert!(queue.is_empty());
+    }
+
+    #[test]
     fn run_parallel_handles_empty_queue() {
         let scheduler = Scheduler::new();
         let mut queue = super::super::TaskQueue::<fn() -> Result<(), ()>>::new(

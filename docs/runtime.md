@@ -401,3 +401,12 @@ record while holding unrelated application locks. Snapshot/drain briefly lock th
 buffer and copy or remove events; this implementation does not add timestamps,
 span nesting, exporters, automatic task IDs, or external dependencies. Tests cover
 ordered recording, overflow preservation, draining, and concurrent recording.
+
+
+## Concurrency regression coverage (point 054, in progress)
+
+The scheduler tests now include a barrier-based regression test that requires two
+tasks to reach a synchronization point concurrently, then verifies the results
+remain in FIFO dispatch order and the queue is drained. The barrier avoids relying
+on wall-clock timing to infer overlap. Broader race-condition and scheduler stress
+coverage remains tracked by points 055–057.
