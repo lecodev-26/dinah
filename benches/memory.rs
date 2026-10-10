@@ -57,19 +57,19 @@ fn main() {
         });
         report("buffer_bulk_extend", size, &extend);
 
+        let first: Vec<usize> = (0..size).collect();
+        let second: Vec<usize> = (0..size).map(|value| value.wrapping_add(1)).collect();
         let soa_push = measure(|| {
             let mut rows =
                 SoaBuffer::try_with_capacity(size).expect("capacity reservation succeeds");
-            for value in 0..size {
-                rows.try_push(black_box(value), black_box(value.wrapping_add(1)))
+            for (&a, &b) in black_box(&first).iter().zip(black_box(&second)) {
+                rows.try_push(black_box(a), black_box(b))
                     .expect("row capacity matches workload");
             }
             black_box(rows.as_slices());
         });
         report("soa_push_rows", size, &soa_push);
 
-        let first: Vec<usize> = (0..size).collect();
-        let second: Vec<usize> = (0..size).map(|value| value.wrapping_add(1)).collect();
         let soa_extend = measure(|| {
             let mut rows =
                 SoaBuffer::try_with_capacity(size).expect("capacity reservation succeeds");
