@@ -87,12 +87,14 @@ impl Scheduler {
 
     /// Executes queued tasks in parallel batches bounded by `max_workers`.
     ///
-    /// Each batch is removed from the queue before its tasks start. Tasks in a
-    /// batch run on scoped threads, and results are collected in FIFO dispatch
-    /// order regardless of completion order. A task-level `Err` is retained and
-    /// does not stop later batches. Task closures and their result types must be
-    /// `Send`; panics are not converted into task errors and propagate to the
-    /// caller. This creates temporary threads per batch, not a persistent pool.
+    /// A bounded set of scoped workers is created once per call and reused across
+    /// batches. Each batch is removed from the queue before its tasks start, and
+    /// results are returned in FIFO dispatch order regardless of completion
+    /// order. Task-level `Err` is retained and does not stop later batches. If a
+    /// task panics, all tasks in its current batch are allowed to finish, workers
+    /// are shut down, and the panic is propagated; later batches remain queued.
+    /// Workers are scoped to this call, not retained across calls, so closures may
+    /// borrow data and no persistent scheduler lifecycle is implied.
     pub fn run_parallel<T, E, F>(
         &self,
         queue: &mut TaskQueue<F>,
@@ -103,29 +105,94 @@ impl Scheduler {
         E: Send,
         F: FnOnce() -> Result<T, E> + Send,
     {
-        let mut results = Vec::with_capacity(queue.len());
-        while !queue.is_empty() {
-            let batch_size = queue.len().min(max_workers.get());
-            let mut batch = Vec::with_capacity(batch_size);
-            for _ in 0..batch_size {
-                if let Some(task) = queue.pop() {
-                    batch.push(task);
+        use std::any::Any;
+        use std::panic::{catch_unwind, AssertUnwindSafe};
+        use std::sync::{mpsc, Arc, Mutex};
+
+        if queue.is_empty() {
+            return Vec::new();
+        }
+
+        let total_tasks = queue.len();
+        let worker_count = max_workers.get().min(total_tasks);
+        let mut results: Vec<Option<Result<T, E>>> =
+            std::iter::repeat_with(|| None).take(total_tasks).collect();
+
+        std::thread::scope(|scope| {
+            let (task_sender, task_receiver) = mpsc::channel::<Option<(usize, F)>>();
+            let task_receiver = Arc::new(Mutex::new(task_receiver));
+            let (result_sender, result_receiver) =
+                mpsc::channel::<(usize, Result<Result<T, E>, Box<dyn Any + Send>>)>();
+
+            for _ in 0..worker_count {
+                let task_receiver = Arc::clone(&task_receiver);
+                let result_sender = result_sender.clone();
+                scope.spawn(move || loop {
+                    let message = task_receiver
+                        .lock()
+                        .expect("scoped worker receiver mutex is not poisoned")
+                        .recv();
+                    match message {
+                        Ok(Some((index, task))) => {
+                            let outcome = catch_unwind(AssertUnwindSafe(task));
+                            if result_sender.send((index, outcome)).is_err() {
+                                break;
+                            }
+                        }
+                        Ok(None) | Err(_) => break,
+                    }
+                });
+            }
+            drop(result_sender);
+
+            let mut next_index = 0;
+            while !queue.is_empty() {
+                let batch_size = queue.len().min(worker_count);
+                let mut batch = Vec::with_capacity(batch_size);
+                for _ in 0..batch_size {
+                    if let Some(task) = queue.pop() {
+                        batch.push(task);
+                    }
+                }
+
+                for task in batch {
+                    task_sender
+                        .send(Some((next_index, task)))
+                        .expect("scoped workers accept the current batch");
+                    next_index += 1;
+                }
+
+                let mut panics = Vec::new();
+                for _ in 0..batch_size {
+                    let (index, outcome) = result_receiver
+                        .recv()
+                        .expect("every dispatched task reports an outcome");
+                    match outcome {
+                        Ok(result) => results[index] = Some(result),
+                        Err(payload) => panics.push((index, payload)),
+                    }
+                }
+
+                if !panics.is_empty() {
+                    for _ in 0..worker_count {
+                        let _ = task_sender.send(None);
+                    }
+                    panics.sort_unstable_by_key(|(index, _)| *index);
+                    std::panic::resume_unwind(panics.remove(0).1);
                 }
             }
 
-            let mut batch_results = std::thread::scope(|scope| {
-                let handles: Vec<_> = batch.into_iter().map(|task| scope.spawn(task)).collect();
-                handles
-                    .into_iter()
-                    .map(|handle| match handle.join() {
-                        Ok(result) => result,
-                        Err(payload) => std::panic::resume_unwind(payload),
-                    })
-                    .collect::<Vec<_>>()
-            });
-            results.append(&mut batch_results);
-        }
+            for _ in 0..worker_count {
+                task_sender
+                    .send(None)
+                    .expect("scoped workers accept shutdown messages");
+            }
+        });
+
         results
+            .into_iter()
+            .map(|result| result.expect("every normally completed task has a result"))
+            .collect()
     }
 }
 
@@ -340,6 +407,50 @@ mod tests {
             vec![Ok(0), Ok(1), Ok(2)]
         );
         assert!(queue.is_empty());
+    }
+
+    #[test]
+    fn run_parallel_reuses_workers_and_propagates_panic_after_current_batch() {
+        use std::panic::{catch_unwind, AssertUnwindSafe};
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        use std::sync::Arc;
+
+        let scheduler = Scheduler::new();
+        let completed = Arc::new(AtomicUsize::new(0));
+        let mut queue = super::super::TaskQueue::new(
+            core::num::NonZeroUsize::new(3).expect("positive capacity"),
+        );
+
+        assert!(queue
+            .try_push(|| -> Result<(), ()> { panic!("expected task panic") })
+            .is_ok());
+        let completed_in_batch = Arc::clone(&completed);
+        assert!(queue
+            .try_push(move || {
+                completed_in_batch.fetch_add(1, Ordering::SeqCst);
+                Ok::<_, ()>(())
+            })
+            .is_ok());
+        let queued_for_later = Arc::clone(&completed);
+        assert!(queue
+            .try_push(move || {
+                queued_for_later.fetch_add(1, Ordering::SeqCst);
+                Ok::<_, ()>(())
+            })
+            .is_ok());
+
+        let outcome = catch_unwind(AssertUnwindSafe(|| {
+            scheduler.run_parallel(
+                &mut queue,
+                core::num::NonZeroUsize::new(2).expect("positive worker limit"),
+            )
+        }));
+
+        assert!(outcome.is_err());
+        assert_eq!(completed.load(Ordering::SeqCst), 1);
+        assert_eq!(queue.len(), 1, "later batches remain queued after a panic");
+        assert_eq!(scheduler.run_until_empty(&mut queue), vec![Ok(())]);
+        assert_eq!(completed.load(Ordering::SeqCst), 2);
     }
 
     #[test]
