@@ -410,7 +410,7 @@ tasks to reach a synchronization point concurrently, then verifies the results
 remain in FIFO dispatch order and the queue is drained. The barrier avoids relying
 on wall-clock timing to infer overlap.
 
-## Scheduler regression coverage (point 056, in progress)
+## Scheduler regression coverage (point 056, complete)
 
 Scheduler tests verify immediate submission, single dispatch, FIFO queue draining,
 empty queues, task-error preservation, and parallel execution bounded by a
