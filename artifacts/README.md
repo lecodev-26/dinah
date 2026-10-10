@@ -22,3 +22,4 @@ artifacts that would otherwise be available only for a limited time from CI.
   commit `7a3c7b0` (`bench(runtime): measure heavier CPU-bound tasks`).
 
 - `benchmarks/memory-baseline-2026-10-10.txt` — raw memory benchmark output captured from [GitHub Actions run 38096431710](https://github.com/lecodev-26/dinah/actions/runs/38096431710), source commit `fa1ec66`. Metadata and interpretation: `benchmarks/README.md`.
+- `benchmarks/memory-soa-batch-2026-10-11.txt` — raw output comparing SoA row-by-row and batch insertion from [GitHub Actions run 38096820914](https://github.com/lecodev-26/dinah/actions/runs/38096820914), source commit `1a80e01`. Summary and limits: `benchmarks/README.md`.
