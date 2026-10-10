@@ -113,8 +113,12 @@ mod tests {
 
     #[test]
     fn dispatch_next_executes_oldest_task_once() {
-        fn first() -> Result<i32, ()> { Ok(1) }
-        fn second() -> Result<i32, ()> { Ok(2) }
+        fn first() -> Result<i32, ()> {
+            Ok(1)
+        }
+        fn second() -> Result<i32, ()> {
+            Ok(2)
+        }
 
         let scheduler = Scheduler::new();
         let mut queue: super::super::TaskQueue<fn() -> Result<i32, ()>> =
@@ -132,7 +136,9 @@ mod tests {
 
     #[test]
     fn dispatch_next_preserves_task_error() {
-        fn failed() -> Result<(), &'static str> { Err("queued task failed") }
+        fn failed() -> Result<(), &'static str> {
+            Err("queued task failed")
+        }
 
         let scheduler = Scheduler::new();
         let mut queue: super::super::TaskQueue<fn() -> Result<(), &'static str>> =
