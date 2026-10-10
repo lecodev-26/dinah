@@ -66,6 +66,30 @@ fn lifecycle_transition_matrix_matches_the_contract() {
 }
 
 #[test]
+fn core_error_conversions_and_messages_are_stable() {
+    use super::CoreError;
+
+    assert_eq!(
+        CoreConfigError::ZeroWorkers.to_string(),
+        "max_workers must be greater than zero"
+    );
+    assert_eq!(
+        CoreConfigError::ZeroBatchSize.to_string(),
+        "max_batch_size must be greater than zero"
+    );
+    assert_eq!(
+        CoreError::from(CoreConfigError::ZeroWorkers),
+        CoreError::InvalidConfiguration
+    );
+    assert_eq!(IdError.to_string(), "core identifier must be non-zero");
+    assert_eq!(
+        CoreError::InvalidState.to_string(),
+        "operation is invalid for the current state"
+    );
+    assert_eq!(CoreError::InvalidId.to_string(), "invalid core identifier");
+}
+
+#[test]
 fn core_api_version_is_defined() {
     assert_eq!(CORE_API_VERSION, 1);
 }
