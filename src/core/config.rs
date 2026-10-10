@@ -40,9 +40,11 @@ impl CoreConfig {
         }
     }
 
+    /// Returns the maximum number of workers allowed by this configuration.
     pub const fn max_workers(self) -> usize {
         self.max_workers
     }
+    /// Returns the maximum number of items allowed in one batch.
     pub const fn max_batch_size(self) -> usize {
         self.max_batch_size
     }

@@ -12,6 +12,10 @@ pub struct CoreId(u64);
 pub struct IdError;
 
 impl CoreId {
+    /// Constructs an identifier, rejecting zero.
+    ///
+    /// IDs are supplied by the caller; this method does not allocate IDs or
+    /// guarantee uniqueness across objects or processes.
     pub const fn new(value: u64) -> Result<Self, IdError> {
         if value == 0 {
             Err(IdError)
@@ -20,6 +24,7 @@ impl CoreId {
         }
     }
 
+    /// Returns the underlying non-zero numeric identifier.
     pub const fn get(self) -> u64 {
         self.0
     }

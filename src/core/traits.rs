@@ -19,5 +19,6 @@ impl Validate for CoreConfig {
 
 /// Contract for values that expose a stable, non-zero Core identifier.
 pub trait HasCoreId {
+    /// Returns the stable identifier exposed by this value.
     fn core_id(&self) -> CoreId;
 }

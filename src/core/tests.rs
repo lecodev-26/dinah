@@ -8,6 +8,7 @@ fn config_defaults_are_valid_and_conservative() {
     let config = CoreConfig::default();
     assert_eq!(config.max_workers(), 1);
     assert_eq!(config.max_batch_size(), 64);
+    assert_eq!(config, CoreConfig::default_config());
     assert_eq!(config.validate(), Ok(()));
 }
 
@@ -22,6 +23,7 @@ fn ids_reject_zero_and_preserve_nonzero_values() {
     assert_eq!(CoreId::new(0), Err(IdError));
     let id = CoreId::new(42).expect("non-zero ID should be accepted");
     assert_eq!(id.get(), 42);
+    assert_eq!(CoreId::new(id.get()), Ok(id));
 }
 
 #[test]
