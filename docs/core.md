@@ -24,3 +24,20 @@ or expose a `CoreId`; no resource type implements it until that type exists.
 `CORE_INVARIANTS` lists the foundational assumptions that later modules must
 preserve. These are descriptive contracts, not a substitute for module-level
 checks or synchronization.
+
+## Core v0.1 readiness gate
+
+The Core is not considered stable merely because its crate version is `0.1.0` or CI is green. Before marking roadmap point 035 complete, review each item below against the implementation and CI evidence:
+
+- [ ] Public types and methods have documented contracts, including invalid inputs and state transitions.
+- [ ] Error types preserve actionable detail at the API where the error originates; conversions to `CoreError` are documented as intentionally coarse.
+- [ ] Tests cover valid and invalid configuration, non-zero IDs, every lifecycle transition, and stable error messages where callers may rely on them.
+- [ ] The public API has been reviewed for unnecessary commitments, misleading names, and unused abstractions.
+- [ ] `cargo fmt`, the full workspace test suite, and Clippy pass in GitHub Actions.
+- [ ] No stability promise, release tag, or benchmark claim is made without separate review and evidence.
+
+`HasCoreId` is currently an extension contract for future resource types; it has no concrete implementor yet. Keep it only while it supports an identified planned use, and revisit it during the API review rather than treating the trait's presence as proof of a complete resource model.
+
+### Benchmark policy for the initial Core
+
+The Core currently provides small validation and lifecycle primitives, not a representative workload for dinah's future runtime or compute layers. Do not publish synthetic throughput claims for these primitives. Roadmap point 033 remains in progress until there is a meaningful, reproducible operation to benchmark, with its workload, toolchain, machine/runner context, and baseline recorded. Performance-sensitive modules must add benchmarks alongside their first real implementation.

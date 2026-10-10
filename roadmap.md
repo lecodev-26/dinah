@@ -68,7 +68,7 @@ No se marca un punto como completado solo porque exista un archivo o una impleme
 Definir identidad, propósito, alcance, exclusiones, políticas de lenguaje, dependencias, pruebas, benchmarks, documentación, licencia dual MIT/Apache-2.0 e identidad visual básica. Crear README, roadmap y checklist.
 
 ### Fase 1 — Core
-Construir los tipos, errores, configuración, IDs, estados, abstracciones, traits e invariantes esenciales. Estabilizar la primera API interna y acompañarla con tests y documentación.
+Construir los tipos, errores, configuración, IDs, estados, abstracciones, traits e invariantes esenciales. Estabilizar la primera API interna y acompañarla con tests y documentación. El Core no se declara estable solo porque CI esté verde: deben cumplirse los criterios de salida de `docs/core.md`. El punto de benchmarks permanece abierto hasta que exista una operación representativa; no se publican cifras sintéticas de rendimiento.
 
 ### Fase 2 — Runtime
 Diseñar tareas y workers; crear executor, scheduler y colas; añadir ejecución secuencial y paralela, sincronización, cancelación, errores, métricas y tracing. Probar carreras y comportamiento del scheduler.
