@@ -5,34 +5,34 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 0
+- Completados: 18
 - En progreso: 0
-- Pendientes: 287
+- Pendientes: 269
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
 ## FASE 0 — Fundación y reglas del proyecto
 
-- [ ] 001 — Definir identidad oficial de DINAH
-- [ ] 002 — Definir propósito técnico
-- [ ] 003 — Definir alcance inicial
-- [ ] 004 — Definir qué NO es DINAH
-- [ ] 005 — Mantener AXIOMSYSTEMS fuera
-- [ ] 006 — Mantener AXIOMSYSTEMS2 fuera
-- [ ] 007 — Mantener AXIOM-NEXUS-Q fuera
-- [ ] 008 — Definir Rust como lenguaje principal
-- [ ] 009 — Definir política para C/C++
-- [ ] 010 — Definir política para Assembly
-- [ ] 011 — Definir política de código externo reutilizado
-- [ ] 012 — Definir política de dependencias
-- [ ] 013 — Definir política de testing
-- [ ] 014 — Definir política de benchmarks
-- [ ] 015 — Definir política de documentación
+- [x] 001 — Definir identidad oficial de DINAH
+- [x] 002 — Definir propósito técnico
+- [x] 003 — Definir alcance inicial
+- [x] 004 — Definir qué NO es DINAH
+- [x] 005 — Mantener AXIOMSYSTEMS fuera
+- [x] 006 — Mantener AXIOMSYSTEMS2 fuera
+- [x] 007 — Mantener AXIOM-NEXUS-Q fuera
+- [x] 008 — Definir Rust como lenguaje principal
+- [x] 009 — Definir política para C/C++
+- [x] 010 — Definir política para Assembly
+- [x] 011 — Definir política de código externo reutilizado
+- [x] 012 — Definir política de dependencias
+- [x] 013 — Definir política de testing
+- [x] 014 — Definir política de benchmarks
+- [x] 015 — Definir política de documentación
 - [ ] 016 — Definir licencia
 - [ ] 017 — Crear identidad visual básica
-- [ ] 018 — Crear README inicial
-- [ ] 019 — Crear roadmap
-- [ ] 020 — Crear checklist de puntos
+- [x] 018 — Crear README inicial
+- [x] 019 — Crear roadmap
+- [x] 020 — Crear checklist de puntos
 
 ## FASE 1 — Core
 
