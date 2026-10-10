@@ -7,5 +7,7 @@
 //! views cannot outlive their owner.
 
 mod buffer;
+mod soa;
 
 pub use buffer::{Buffer, BufferCreateError, BufferExtendError, BufferPushError};
+pub use soa::{SoaBuffer, SoaCreateError, SoaPushError};

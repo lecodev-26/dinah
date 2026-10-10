@@ -168,6 +168,18 @@ La primera estructura contigua implementada es `Buffer<T>`: posee una secuencia 
 
 No se crea una segunda envoltura sobre `Vec<T>` ni una abstracción genérica adicional: primero se aprovecha y refuerza la estructura existente. Una matriz contigua, SoA u otra representación se añadirá cuando el punto 070 o una carga concreta defina dimensiones, ownership y patrón de acceso que justifiquen su API.
 
+## Estructura data-oriented inicial (punto 070)
+
+`SoaBuffer<A, B>` implementa una estructura de dos columnas (Structure of Arrays, SoA) encima de los `Buffer<T>` acotados existentes. Cada columna mantiene sus elementos contiguos; una fila lógica es el par de valores en el mismo índice. Ambas columnas comparten capacidad y longitud por construcción, y el tipo no expone acceso mutable a los buffers internos.
+
+- `try_with_capacity` reserva ambas columnas mediante operaciones fallibles. Si falla cualquiera, no devuelve una estructura parcial y Rust libera la reserva ya creada.
+- `try_push` añade ambos valores como una fila lógica o devuelve ambos valores sin insertarlos cuando se alcanza la capacidad. Las capacidades iguales y el control privado de las columnas mantienen alineadas sus longitudes.
+- `as_slices` y `as_mut_slices` permiten procesar un campo a la vez sin reconstruir filas ni modificar la longitud. `pop` y `clear` operan sobre ambas columnas para preservar la correspondencia por índice.
+- Capacidad cero es válida; la estructura no crece automáticamente, no sincroniza internamente y no usa `unsafe`. La API no promete alineación SIMD especial ni una mejora de rendimiento sin benchmarks.
+- SoA conviene cuando se procesa repetidamente un campo de muchas filas. Para cargas que consumen casi todos los campos de una fila, AoS puede ser más simple o eficiente; AoSoA queda aplazado hasta tener una carga y mediciones que lo justifiquen.
+
+La implementación y las pruebas viven en `src/memory/soa.rs`. Es una primitiva genérica limitada a dos columnas, no una API ECS ni una afirmación de layout universalmente óptimo.
+
 ## Contratos que deben resolver los siguientes puntos
 
 | Punto | Decisión pendiente |
@@ -180,7 +192,7 @@ No se crea una segunda envoltura sobre `Vec<T>` ni una abstracción genérica ad
 | 067 | Completado: usar garantías de alineación del tipo/contenedor; alineación especial solo con contrato explícito, errores recuperables y pruebas |
 | 068 | Completado: documentados AoS, SoA, AoSoA y slices contiguos; implementación SIMD y benchmarks quedan separados |
 | 069 | Completado: `Buffer<T>` contiguo con acceso por slices y extensión por lotes acotada; sin crecimiento implícito |
-| 070 | Representaciones data-oriented para cargas identificadas |
+| 070 | Completado: `SoaBuffer<A, B>` con dos columnas contiguas, filas coordinadas y límites explícitos |
 | 071–073 | Sincronización, invariantes y pruebas de seguridad/concurrencia |
 | 074–075 | Baselines de asignaciones y optimizaciones demostrables |
 | 076 | Documentación integrada y criterios de salida del subsistema |

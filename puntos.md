@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 67
+- Completados: 68
 - En progreso: 2
-- Pendientes: 218
+- Pendientes: 217
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -91,7 +91,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 067 — Gestionar alineación
 - [x] 068 — Investigar SIMD-friendly layouts
 - [x] 069 — Crear estructuras contiguas
-- [ ] 070 — Crear estructuras data-oriented
+- [x] 070 — Crear estructuras data-oriented
 - [ ] 071 — Añadir sincronización
 - [ ] 072 — Testear seguridad de memoria
 - [ ] 073 — Testear concurrencia
