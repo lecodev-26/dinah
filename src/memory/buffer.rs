@@ -46,9 +46,13 @@ impl<T> Buffer<T> {
     /// handled by an infallible allocation path.
     pub fn try_with_capacity(max_capacity: usize) -> Result<Self, BufferCreateError> {
         let mut items = Vec::new();
-        items.try_reserve_exact(max_capacity)
+        items
+            .try_reserve_exact(max_capacity)
             .map_err(|_| BufferCreateError::AllocationFailed)?;
-        Ok(Self { items, max_capacity })
+        Ok(Self {
+            items,
+            max_capacity,
+        })
     }
 
     /// Appends an item unless the configured maximum has been reached.
@@ -62,30 +66,44 @@ impl<T> Buffer<T> {
     }
 
     /// Removes and returns the last item, if present.
-    pub fn pop(&mut self) -> Option<T> { self.items.pop() }
+    pub fn pop(&mut self) -> Option<T> {
+        self.items.pop()
+    }
 
     /// Removes all items while retaining the reserved backing storage.
-    pub fn clear(&mut self) { self.items.clear(); }
+    pub fn clear(&mut self) {
+        self.items.clear();
+    }
 
     /// Returns the initialized elements as a contiguous read-only slice.
     #[must_use]
-    pub fn as_slice(&self) -> &[T] { self.items.as_slice() }
+    pub fn as_slice(&self) -> &[T] {
+        self.items.as_slice()
+    }
 
     /// Returns the number of initialized elements.
     #[must_use]
-    pub fn len(&self) -> usize { self.items.len() }
+    pub fn len(&self) -> usize {
+        self.items.len()
+    }
 
     /// Returns whether the buffer contains no elements.
     #[must_use]
-    pub fn is_empty(&self) -> bool { self.items.is_empty() }
+    pub fn is_empty(&self) -> bool {
+        self.items.is_empty()
+    }
 
     /// Returns the configured maximum number of elements.
     #[must_use]
-    pub const fn capacity(&self) -> usize { self.max_capacity }
+    pub const fn capacity(&self) -> usize {
+        self.max_capacity
+    }
 
     /// Returns whether the configured maximum has been reached.
     #[must_use]
-    pub fn is_full(&self) -> bool { self.len() == self.capacity() }
+    pub fn is_full(&self) -> bool {
+        self.len() == self.capacity()
+    }
 }
 
 #[cfg(test)]
@@ -116,7 +134,10 @@ mod tests {
     fn full_buffer_returns_item_without_changing_contents() {
         let mut buffer = Buffer::try_with_capacity(1).unwrap();
         buffer.try_push("kept").unwrap();
-        assert_eq!(buffer.try_push("returned"), Err(BufferPushError::Full("returned")));
+        assert_eq!(
+            buffer.try_push("returned"),
+            Err(BufferPushError::Full("returned"))
+        );
         assert_eq!(buffer.as_slice(), &["kept"]);
     }
 
@@ -143,6 +164,9 @@ mod tests {
 
     #[test]
     fn impossible_capacity_fails_fallibly() {
-        assert_eq!(Buffer::<u8>::try_with_capacity(usize::MAX).unwrap_err(), BufferCreateError::AllocationFailed);
+        assert_eq!(
+            Buffer::<u8>::try_with_capacity(usize::MAX).unwrap_err(),
+            BufferCreateError::AllocationFailed
+        );
     }
 }
