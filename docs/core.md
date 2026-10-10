@@ -21,8 +21,12 @@ must be accompanied by tests and reviewed against the roadmap.
 ## Shared contracts
 
 `Validate` provides a common validation interface while retaining each type's
-specific error. `HasCoreId` is the shared contract for future objects that own
-or expose a `CoreId`; no resource type implements it until that type exists.
+specific error. Validation implementations should be deterministic and free of
+side effects; successful validation does not guarantee that external conditions
+remain unchanged. `HasCoreId` is the shared contract for future objects that own
+or expose a `CoreId`; implementations must keep the identifier stable for the
+value's lifetime. The trait does not allocate IDs, guarantee global uniqueness,
+or imply runtime registration.
 `CORE_INVARIANTS` lists the foundational assumptions that later modules must
 preserve. These are descriptive contracts, not a substitute for module-level
 checks or synchronization.
@@ -38,7 +42,7 @@ The Core is not considered stable merely because its crate version is `0.1.0` or
 - [ ] `cargo fmt`, the full workspace test suite, Clippy, and warning-free public documentation build pass in GitHub Actions.
 - [ ] No stability promise, release tag, or benchmark claim is made without separate review and evidence.
 
-`HasCoreId` is currently an extension contract for future resource types; it has no concrete implementor yet. It is retained as a planned integration seam for managed resources, but must be reviewed before the Core API is declared stable rather than treated as proof of a complete resource model.
+`HasCoreId` is currently an extension contract for future resource types; it has no concrete implementor yet. Its stability decision remains open: keep it only if the first real resource type can use the contract without awkward adapters or extra constraints. Until then, do not treat it as proof of a complete resource model.
 
 ### Benchmark policy for the initial Core
 

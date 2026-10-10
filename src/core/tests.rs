@@ -157,6 +157,15 @@ fn validate_trait_checks_configuration_contract() {
 }
 
 #[test]
+fn validate_trait_preserves_specific_configuration_errors() {
+    let invalid = CoreConfig::new(0, 1);
+    assert_eq!(invalid, Err(CoreConfigError::ZeroWorkers));
+
+    let config = CoreConfig::new(2, 3).expect("valid limits");
+    assert_eq!(Validate::validate(&config), Ok(()));
+}
+
+#[test]
 fn core_invariants_are_documented_in_api() {
     assert_eq!(CORE_INVARIANTS.len(), 4);
     assert!(CORE_INVARIANTS
