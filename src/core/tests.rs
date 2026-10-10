@@ -34,6 +34,38 @@ fn lifecycle_transitions_are_explicit() {
 }
 
 #[test]
+fn lifecycle_transition_matrix_matches_the_contract() {
+    use LifecycleState::{Ready, Running, Stopped, Stopping};
+
+    let cases = [
+        (Ready, Ready, false),
+        (Ready, Running, true),
+        (Ready, Stopping, false),
+        (Ready, Stopped, true),
+        (Running, Ready, false),
+        (Running, Running, false),
+        (Running, Stopping, true),
+        (Running, Stopped, false),
+        (Stopping, Ready, false),
+        (Stopping, Running, false),
+        (Stopping, Stopping, false),
+        (Stopping, Stopped, true),
+        (Stopped, Ready, false),
+        (Stopped, Running, false),
+        (Stopped, Stopping, false),
+        (Stopped, Stopped, false),
+    ];
+
+    for (current, next, expected) in cases {
+        assert_eq!(
+            current.can_transition_to(next),
+            expected,
+            "unexpected transition: {current:?} -> {next:?}"
+        );
+    }
+}
+
+#[test]
 fn core_api_version_is_defined() {
     assert_eq!(CORE_API_VERSION, 1);
 }
