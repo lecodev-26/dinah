@@ -1,6 +1,6 @@
 # dinah Compute — API secuencial y diseño evolutivo
 
-Estado: las primitivas secuenciales de la etapa A están implementadas y documentadas. Las etapas B–D siguen siendo diseño futuro; no se deben interpretar como APIs disponibles.
+Estado: las primitivas secuenciales, los lotes y la iteración paralela están implementados y documentados. La reducción paralela y las etapas posteriores siguen siendo trabajo futuro; no se deben interpretar como APIs disponibles.
 
 ## Objetivo y límites
 
@@ -61,9 +61,28 @@ Un tamaño cero devuelve `BatchError::ZeroSize` antes de invocar la closure o mu
 
 ### Etapa C — iteración y reducción paralelas
 
-La paralelización será opt-in y estará conectada a las primitivas reales de Runtime, no a un pool oculto independiente. Los límites `Send`/`Sync`, propiedad de closures y vida útil de referencias se decidirán por operación y se documentarán. El primer contrato paralelo usará particiones disjuntas y no compartirá referencias mutables entre workers.
+La iteración paralela está implementada mediante `for_each_parallel` y utiliza explícitamente `Runtime::Scheduler::run_parallel`; no mantiene un pool oculto ni crea un sistema de ejecución independiente. Las particiones son slices mutables disjuntos y se entregan como tareas a la cola de Runtime. Los workers están acotados por `worker_count` y por el número de elementos; son scoped y se unen antes de que la llamada termine.
 
-- La iteración paralela no promete orden de finalización; sí debe garantizar que cada elemento elegible se procesa exactamente una vez en una ejecución normal.
+```rust
+pub enum ParallelError {
+    ZeroWorkers,
+}
+
+pub fn for_each_parallel<T, F>(
+    items: &mut [T],
+    worker_count: usize,
+    operation: F,
+) -> Result<(), ParallelError>
+where
+    T: Send,
+    F: Fn(&mut T) + Sync;
+```
+
+Un `worker_count` de cero devuelve `ParallelError::ZeroWorkers` antes de mutar la entrada. Una entrada vacía con un valor positivo no crea workers. Cada elemento se procesa exactamente una vez en una ejecución normal, pero el orden de finalización no está definido. `T: Send` permite mover particiones a workers y `F: Sync` permite compartir la operación de forma segura. Los pánicos se propagan conforme al contrato de Runtime tras unirse las tareas del lote actual; las mutaciones previas no se revierten. No se garantiza aceleración para cargas pequeñas.
+
+La reducción paralela aún no está implementada y debe definir operador de combinación, errores y determinismo antes de publicarse.
+
+- La iteración paralela no promete orden de finalización; sí garantiza que cada elemento se procesa exactamente una vez en una ejecución normal.
 - La reducción paralela requiere un operador de combinación explícito y asociativo para obtener resultados independientes de la partición. No se prometerá equivalencia bit a bit para operaciones de punto flotante reordenadas.
 - Los errores de las tareas se propagarán sin convertirlos silenciosamente en valores por defecto. La política de agregación de varios errores se definirá antes de exponer la API.
 - Los pánicos seguirán la política documentada de Runtime; Compute no debe tragárselos.
@@ -89,7 +108,7 @@ Un pipeline solo se incorporará cuando las operaciones básicas demuestren un c
 - **077 — Diseñar Compute API:** responsabilidades, familias de operaciones y contratos documentados; sin declarar funciones inexistentes.
 - **078 — Definir primitivas de procesamiento:** implementado con `for_each`, `map` y `try_reduce`, pruebas unitarias y ejemplos de documentación pública.
 - **079 — Crear procesamiento por lotes:** implementado con `for_each_batch` y `BatchError`; tamaño cero validado antes de mutar, último lote parcial y slices prestados sin buffer temporal.
-- **080 — Crear parallel iteration:** particiones disjuntas, integración explícita con Runtime, pruebas de cobertura y errores.
+- **080 — Crear parallel iteration:** implementado con `for_each_parallel`, particiones disjuntas, `Scheduler::run_parallel`, pruebas de cobertura, entrada vacía y rechazo de cero workers.
 - **081 — Crear reducción paralela:** contrato del operador, orden de combinación, errores y límites de determinismo.
 - **082 — Crear pipelines:** solo después de las primitivas anteriores; semántica explícita de ejecución, ownership y errores.
 - **083–089:** investigar SIMD, optimizar layouts, instrumentar y comparar secuencial/paralelo, y probar determinismo con resultados archivados.

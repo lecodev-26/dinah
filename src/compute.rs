@@ -1,8 +1,8 @@
 //! Sequential, explicit data-processing primitives.
 //!
-//! Operations borrow their input slices and never create worker threads. The
-//! [`map`] function is the exception to allocation-free processing: it returns
-//! a newly allocated `Vec` whose length matches the input slice.
+//! Operations borrow their input slices. Sequential functions do not create
+//! worker threads; [`for_each_parallel`] opts into bounded Runtime workers. The
+//! [`map`] function returns a newly allocated `Vec` whose length matches the input slice.
 
 /// Applies a mutable operation to every element, from left to right.
 ///
@@ -92,6 +92,97 @@ where
     Ok(())
 }
 
+/// Error returned when parallel iteration is requested without any workers.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ParallelError {
+    /// At least one worker must be requested.
+    ZeroWorkers,
+}
+
+impl core::fmt::Display for ParallelError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::ZeroWorkers => f.write_str("parallel iteration requires at least one worker"),
+        }
+    }
+}
+
+impl std::error::Error for ParallelError {}
+
+/// Applies an operation to every element using explicitly bounded Runtime workers.
+///
+/// The slice is split into disjoint mutable chunks before dispatch. Each element
+/// is passed to `operation` exactly once during normal completion; completion
+/// order is unspecified. The Runtime scheduler creates scoped workers for this
+/// call and joins the active batch before propagating a worker panic. Mutations
+/// completed before a panic are not rolled back. The operation is shared across
+/// workers, so it must be `Sync`; elements must be `Send` to cross worker
+/// boundaries. This function does not promise a speedup for small workloads.
+///
+/// `worker_count` must be positive. The invalid value is rejected before any
+/// element is mutated. Empty slices with a positive worker count do no work and
+/// spawn no workers.
+///
+/// # Errors
+///
+/// Returns [`ParallelError::ZeroWorkers`] when `worker_count` is zero.
+///
+/// # Examples
+///
+/// ```
+/// use dinah::compute::for_each_parallel;
+///
+/// let mut values = [1, 2, 3, 4];
+/// for_each_parallel(&mut values, 2, |value| *value *= 2)?;
+/// assert_eq!(values, [2, 4, 6, 8]);
+/// # Ok::<(), dinah::compute::ParallelError>(())
+/// ```
+pub fn for_each_parallel<T, F>(
+    items: &mut [T],
+    worker_count: usize,
+    operation: F,
+) -> Result<(), ParallelError>
+where
+    T: Send,
+    F: Fn(&mut T) + Sync,
+{
+    use core::num::NonZeroUsize;
+    use std::convert::Infallible;
+
+    let worker_count = NonZeroUsize::new(worker_count).ok_or(ParallelError::ZeroWorkers)?;
+    if items.is_empty() {
+        return Ok(());
+    }
+
+    let active_workers = worker_count.get().min(items.len());
+    let chunk_size = items.len() / active_workers + usize::from(items.len() % active_workers != 0);
+    let chunk_count = items.len() / chunk_size + usize::from(items.len() % chunk_size != 0);
+    let capacity =
+        NonZeroUsize::new(chunk_count).expect("non-empty input creates at least one chunk");
+    let mut queue = crate::runtime::TaskQueue::new(capacity);
+
+    for chunk in items.chunks_mut(chunk_size) {
+        let operation = &operation;
+        queue
+            .try_push(move || {
+                for item in chunk {
+                    operation(item);
+                }
+                Ok::<(), Infallible>(())
+            })
+            .unwrap_or_else(|_| unreachable!("queue capacity matches the number of chunks"));
+    }
+
+    let results = crate::runtime::Scheduler::new().run_parallel(&mut queue, worker_count);
+    for result in results {
+        match result {
+            Ok(()) => {}
+            Err(never) => match never {},
+        }
+    }
+    Ok(())
+}
+
 /// Maps a borrowed slice into a newly allocated vector, preserving input order.
 ///
 /// The returned vector contains one output per input element. This operation
@@ -150,7 +241,9 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::{for_each, for_each_batch, map, try_reduce, BatchError};
+    use super::{
+        for_each, for_each_batch, for_each_parallel, map, try_reduce, BatchError, ParallelError,
+    };
 
     #[test]
     fn for_each_visits_every_element_once_in_order() {
@@ -210,6 +303,35 @@ mod tests {
         let mut lengths = Vec::new();
         for_each_batch(&mut values, 10, |batch| lengths.push(batch.len())).unwrap();
         assert_eq!(lengths, [3]);
+    }
+
+    #[test]
+    fn for_each_parallel_visits_each_element_once() {
+        let mut values = [0_u32; 257];
+        for_each_parallel(&mut values, 4, |value| *value += 1).unwrap();
+        assert!(values.iter().all(|value| *value == 1));
+    }
+
+    #[test]
+    fn for_each_parallel_rejects_zero_workers_before_mutation() {
+        let mut values = [1, 2, 3];
+        let result = for_each_parallel(&mut values, 0, |value| *value += 10);
+        assert_eq!(result, Err(ParallelError::ZeroWorkers));
+        assert_eq!(values, [1, 2, 3]);
+    }
+
+    #[test]
+    fn for_each_parallel_accepts_empty_input() {
+        let mut values: [u8; 0] = [];
+        for_each_parallel(&mut values, 4, |value| *value += 1).unwrap();
+        assert!(values.is_empty());
+    }
+
+    #[test]
+    fn for_each_parallel_caps_workers_to_input_length() {
+        let mut values = [1, 2, 3];
+        for_each_parallel(&mut values, 64, |value| *value *= 2).unwrap();
+        assert_eq!(values, [2, 4, 6]);
     }
 
     #[test]
