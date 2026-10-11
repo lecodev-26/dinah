@@ -11,6 +11,9 @@ path = "src/lib.rs"
 
 [dependencies]
 
+[dev-dependencies]
+wide = "=1.7.1"
+
 [[bench]]
 name = "runtime"
 path = "benches/runtime.rs"

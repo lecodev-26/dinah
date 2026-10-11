@@ -59,7 +59,7 @@ La investigación recomienda **no implementar SIMD manual todavía**. El punto 0
 
 ## Punto 084 — medición inicial del kernel y decisión provisional
 
-Se añadió `benches/compute.rs` y el harness de benchmarks lo ejecuta en CI como `cargo bench --bench compute`. Compara dos bucles seguros que aplican exactamente la misma transformación in-place (`x = x * 1.0001 + 0.25`): un bucle directo sobre el slice y `compute::for_each`. Comprueba que los resultados finales coinciden y mide cuatro tamaños (64, 1.024, 16.384 y 262.144 elementos), con 11 muestras por caso y mediana. Este benchmark mide el coste relativo del bucle/API; **no compara todavía una implementación SIMD manual contra una escalar**.
+Se añadió `benches/compute.rs` y el harness de benchmarks lo ejecuta en CI como `cargo bench --bench compute`. Compara un bucle escalar directo, `compute::for_each` y un candidato vectorial basado en la API segura `wide::f32x4` (dependencia de desarrollo, no usada por el runtime). Todos aplican la transformación in-place `x = x * 1.0001 + 0.25`; el candidato vectorial procesa cuatro lanes y trata el resto con una cola escalar. Se comprueba igualdad exacta entre las dos rutas escalares y equivalencia numérica con tolerancia relativa explícita para la ruta vectorial. Se miden tamaños pequeños y grandes, incluidos tamaños no divisibles por cuatro, con 11 muestras por caso y mediana. La prueba de rendimiento no convierte al candidato en parte de la API pública.
 
 ### Entorno exploratorio registrado
 
@@ -80,9 +80,27 @@ Se añadió `benches/compute.rs` y el harness de benchmarks lo ejecuta en CI com
 
 La inspección del ensamblado release confirma instrucciones de carga/almacenamiento vectorial en partes del binario, pero también operaciones aritméticas escalares en el kernel inspeccionado. Esa inspección preliminar no basta para atribuir vectorización a una función específica ni para afirmar que el compilador ya vectoriza el kernel de extremo a extremo.
 
+### Candidato SIMD seguro y primera medición local
+
+Para probar una alternativa real sin relajar `#![forbid(unsafe_code)]` en DINAH, se añadió `wide = 1.7.1` solo como dependencia de desarrollo. `wide::f32x4` proporciona operaciones vectoriales seguras; el runtime y la API pública no dependen de ella. El harness ahora incluye longitudes que no son múltiplos de cuatro para ejercitar el tail escalar.
+
+Primera medición local con el harness estabilizado (Samsung SM-A165F, Termux, AArch64; perfil release; mediana de 11 muestras, cada muestra mide 10 transformaciones y reporta tiempo por transformación):
+
+| Elementos | Bucle directo (ns/op) | `compute::for_each` (ns/op) | Candidato `wide::f32x4` (ns/op) | Lectura prudente |
+|---:|---:|---:|---:|---|
+| 64 | 30 | 30 | 30 | Sin diferencia a esta resolución |
+| 1.024 | 246 | 246 | 246 | Sin diferencia medible |
+| 1.027 | 215 | 215 | 246 | El tail de 3 elementos no mejora |
+| 16.384 | 3.161 | 3.169 | 3.761 | Vectorial ~19 % más lento que el escalar directo |
+| 16.387 | 3.146 | 3.176 | 3.776 | Vectorial ~20 % más lento; incluye tail |
+| 262.144 | 59.607 | 68.492 | 68.092 | Vectorial ~14 % más lento que el escalar directo |
+| 262.147 | 62.084 | 60.800 | 68.300 | Vectorial ~10 % más lento; incluye tail |
+
+Estos valores son una muestra exploratoria de un dispositivo y no constituyen una conclusión multiplataforma. El candidato paga preparación/lectura/escritura de lanes y no muestra ventaja en los tamaños medianos y grandes de esta medición. Se conserva en el harness de investigación para obtener medidas comparables en los cinco runners, pero no se introduce en el runtime ni se expone como API.
+
 ### Decisión provisional
 
-No se añade SIMD manual, `unsafe`, intrinsics ni una dependencia nueva: las mediciones actuales no comparan una alternativa SIMD y no demuestran una mejora reproducible. El punto 084 permanece **en progreso** hasta que se evalúe una implementación vectorial segura y compatible, o se establezca con evidencia suficiente que no existe un beneficio que compense el coste. Próximos pasos: aislar el kernel en ensamblado, probar una alternativa vectorial estable/segura si encaja con la política del crate, medirla con el mismo harness y validar longitudes pequeñas, tails y equivalencia numérica.
+No añadir SIMD al runtime ni relajar la política de seguridad con estos datos: la alternativa segura probada es más lenta en los tamaños grandes de esta ejecución local. El punto 084 permanece **en progreso** hasta revisar las mediciones de la matriz CI y decidir con evidencia si existe algún target/tamaño donde la ventaja sea repetible y compense la complejidad. Si no la hay, el resultado correcto será documentar la ausencia de beneficio y mantener la ruta escalar.
 
 
 ## Matriz de benchmarks multiplataforma
