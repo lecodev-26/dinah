@@ -1,0 +1,14 @@
+[1m[92m   Compiling[0m dinah v0.1.0 (/Users/runner/work/dinah/dinah)
+[1m[92m    Finished[0m `bench` profile [optimized] target(s) in 0.50s
+[1m[92m     Running[0m benches/compute.rs (target/release/deps/compute-ee88a3269766620d)
+dinah compute SIMD investigation; build=release; statistic=median; samples=11
+Compares equivalent safe in-place scalar loops; no manual SIMD is claimed.
+target=x86_64
+case=direct_scalar_transform elements=64 samples=11 median_total_ns=45 ns_per_element=0.703 elements_per_second=1422222222
+case=compute_for_each_transform elements=64 samples=11 median_total_ns=44 ns_per_element=0.688 elements_per_second=1454545455
+case=direct_scalar_transform elements=1024 samples=11 median_total_ns=205 ns_per_element=0.200 elements_per_second=4995121951
+case=compute_for_each_transform elements=1024 samples=11 median_total_ns=212 ns_per_element=0.207 elements_per_second=4830188679
+case=direct_scalar_transform elements=16384 samples=11 median_total_ns=2390 ns_per_element=0.146 elements_per_second=6855230126
+case=compute_for_each_transform elements=16384 samples=11 median_total_ns=2378 ns_per_element=0.145 elements_per_second=6889823381
+case=direct_scalar_transform elements=262144 samples=11 median_total_ns=29602 ns_per_element=0.113 elements_per_second=8855617864
+case=compute_for_each_transform elements=262144 samples=11 median_total_ns=29679 ns_per_element=0.113 elements_per_second=8832642609

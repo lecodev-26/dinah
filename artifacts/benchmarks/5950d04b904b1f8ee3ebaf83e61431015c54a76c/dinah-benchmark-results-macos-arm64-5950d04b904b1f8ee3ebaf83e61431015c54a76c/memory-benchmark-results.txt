@@ -1,0 +1,21 @@
+[1m[92m   Compiling[0m dinah v0.1.0 (/Users/runner/work/dinah/dinah)
+[1m[92m    Finished[0m `bench` profile [optimized] target(s) in 0.26s
+[1m[92m     Running[0m benches/memory.rs (target/release/deps/memory-9eed1aec49b6d467)
+dinah memory benchmark; build=release; statistic=median; samples=7
+Note: results are machine-specific observations, not performance guarantees.
+case=buffer_push_preallocated operations=64 samples=7 median_total_ns=125 ns_per_operation=1.953 operations_per_second=512000000
+case=buffer_bulk_extend operations=64 samples=7 median_total_ns=84 ns_per_operation=1.312 operations_per_second=761904762
+case=soa_push_rows operations=64 samples=7 median_total_ns=292 ns_per_operation=4.562 operations_per_second=219178082
+case=soa_bulk_extend operations=64 samples=7 median_total_ns=167 ns_per_operation=2.609 operations_per_second=383233533
+case=soa_scan_two_columns operations=64 samples=7 median_total_ns=42 ns_per_operation=0.656 operations_per_second=1523809524
+case=buffer_push_preallocated operations=1024 samples=7 median_total_ns=584 ns_per_operation=0.570 operations_per_second=1753424658
+case=buffer_bulk_extend operations=1024 samples=7 median_total_ns=167 ns_per_operation=0.163 operations_per_second=6131736527
+case=soa_push_rows operations=1024 samples=7 median_total_ns=2500 ns_per_operation=2.441 operations_per_second=409600000
+case=soa_bulk_extend operations=1024 samples=7 median_total_ns=375 ns_per_operation=0.366 operations_per_second=2730666667
+case=soa_scan_two_columns operations=1024 samples=7 median_total_ns=167 ns_per_operation=0.163 operations_per_second=6131736527
+case=buffer_push_preallocated operations=16384 samples=7 median_total_ns=8042 ns_per_operation=0.491 operations_per_second=2037304153
+case=buffer_bulk_extend operations=16384 samples=7 median_total_ns=2375 ns_per_operation=0.145 operations_per_second=6898526316
+case=soa_push_rows operations=16384 samples=7 median_total_ns=31917 ns_per_operation=1.948 operations_per_second=513331453
+case=soa_bulk_extend operations=16384 samples=7 median_total_ns=4292 ns_per_operation=0.262 operations_per_second=3817334576
+case=soa_scan_two_columns operations=16384 samples=7 median_total_ns=2875 ns_per_operation=0.175 operations_per_second=5698782609
+case=shared_mutex_lock_update operations=10000 samples=7 median_total_ns=71791 ns_per_operation=7.179 operations_per_second=139293226
