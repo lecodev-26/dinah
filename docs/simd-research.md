@@ -96,11 +96,21 @@ Primera medición local con el harness estabilizado (Samsung SM-A165F, Termux, A
 | 262.144 | 59.607 | 68.492 | 68.092 | Vectorial ~14 % más lento que el escalar directo |
 | 262.147 | 62.084 | 60.800 | 68.300 | Vectorial ~10 % más lento; incluye tail |
 
-Estos valores son una muestra exploratoria de un dispositivo y no constituyen una conclusión multiplataforma. El candidato paga preparación/lectura/escritura de lanes y no muestra ventaja en los tamaños medianos y grandes de esta medición. Se conserva en el harness de investigación para obtener medidas comparables en los cinco runners, pero no se introduce en el runtime ni se expone como API.
+Estos valores son una muestra exploratoria de un dispositivo y no constituyen una conclusión multiplataforma. La matriz CI ejecutó después el mismo candidato en los cinco runners y se repitió una segunda vez en un commit de documentación/configuración sin cambios al kernel. Comparación del candidato `wide::f32x4` frente al bucle escalar directo en dos tamaños grandes; los porcentajes son variación de tiempo por runner, no promedios entre sistemas (negativo = el candidato fue más rápido):
+
+| Runner | 16.384 elementos: ejecución 1 / 2 | 262.144 elementos: ejecución 1 / 2 | Lectura |
+|---|---:|---:|---|
+| Linux x86-64 | -6,5 % / -15,2 % | -5,9 % / -11,1 % | Ventaja en ambas ejecuciones |
+| Linux ARM64 | +16,3 % / +15,9 % | +12,7 % / +14,0 % | Más lento en ambas ejecuciones |
+| macOS ARM64 | +68,7 % / +65,2 % | +25,9 % / +21,0 % | Regresión clara en ambas ejecuciones |
+| macOS x86-64 | -3,1 % / -2,5 % | -0,7 % / -0,9 % | Ventaja pequeña, posiblemente dentro del ruido |
+| Windows x86-64 | -4,4 % / -6,8 % | +7,8 % / -5,9 % | Resultado no repetible para el tamaño grande |
+
+La ruta vectorial tiene una ventaja repetible en el runner Linux x86-64, pero la misma implementación empeora en ARM64 y macOS ARM64, y Windows no repite el signo para el tamaño mayor. Los runners virtualizados tampoco bastan para decidir el rendimiento de todos los equipos de usuarios. Se conservan las dos matrices completas por SHA y run ID para que estos números se puedan revisar y comparar en el futuro.
 
 ### Decisión provisional
 
-No añadir SIMD al runtime ni relajar la política de seguridad con estos datos: la alternativa segura probada es más lenta en los tamaños grandes de esta ejecución local. El punto 084 permanece **en progreso** hasta revisar las mediciones de la matriz CI y decidir con evidencia si existe algún target/tamaño donde la ventaja sea repetible y compense la complejidad. Si no la hay, el resultado correcto será documentar la ausencia de beneficio y mantener la ruta escalar.
+No añadir SIMD al runtime ni introducir `wide` como dependencia de producción: DINAH todavía no tiene un kernel numérico real de producción que justifique una ruta especializada por arquitectura, y el candidato no tiene una ventaja portable. La evidencia sí deja una hipótesis concreta para un futuro kernel de `f32` especializado en x86-64, pero antes habrá que definir el caso de uso, repetir mediciones en hardware controlado y probar la semántica numérica. El punto 084 permanece **en progreso**; no se declara completado solo por tener un candidato de benchmark más rápido en un runner.
 
 
 ## Matriz de benchmarks multiplataforma
