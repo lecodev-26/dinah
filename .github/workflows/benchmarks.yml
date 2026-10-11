@@ -9,7 +9,9 @@ on:
       - 'src/runtime/**'
       - 'src/runtime.rs'
       - 'src/memory/**'
+      - 'src/compute.rs'
       - 'Cargo.toml'
+      - 'scripts/run_benchmarks.py'
       - '.github/workflows/benchmarks.yml'
 
 permissions:
@@ -20,25 +22,35 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  runtime-benchmarks:
-    name: Run Runtime benchmarks (release)
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+  benchmarks:
+    name: Benchmarks (${{ matrix.label }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: linux-x86_64
+            runner: ubuntu-latest
+          - label: linux-arm64
+            runner: ubuntu-24.04-arm
+          - label: windows-x86_64
+            runner: windows-latest
+          - label: macos-x86_64
+            runner: macos-15-intel
+          - label: macos-arm64
+            runner: macos-15
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Install stable Rust
         uses: dtolnay/rust-toolchain@stable
-      - name: Run reproducible runtime benchmark harness
-        run: cargo bench --bench runtime | tee runtime-benchmark-results.txt
-      - name: Run reproducible memory benchmark harness
-        run: cargo bench --bench memory | tee memory-benchmark-results.txt
-      - name: Run reproducible compute SIMD investigation
-        run: cargo bench --bench compute | tee compute-benchmark-results.txt
+      - name: Run release benchmarks and record environment
+        run: python scripts/run_benchmarks.py
       - name: Upload benchmark results
         uses: actions/upload-artifact@v4
         with:
-          name: dinah-benchmark-results-${{ github.sha }}
-          path: '*-benchmark-results.txt'
+          name: dinah-benchmark-results-${{ matrix.label }}-${{ github.sha }}
+          path: benchmark-results/*.txt
           if-no-files-found: error
           retention-days: 90

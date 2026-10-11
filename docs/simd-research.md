@@ -83,3 +83,10 @@ La inspección del ensamblado release confirma instrucciones de carga/almacenami
 ### Decisión provisional
 
 No se añade SIMD manual, `unsafe`, intrinsics ni una dependencia nueva: las mediciones actuales no comparan una alternativa SIMD y no demuestran una mejora reproducible. El punto 084 permanece **en progreso** hasta que se evalúe una implementación vectorial segura y compatible, o se establezca con evidencia suficiente que no existe un beneficio que compense el coste. Próximos pasos: aislar el kernel en ensamblado, probar una alternativa vectorial estable/segura si encaja con la política del crate, medirla con el mismo harness y validar longitudes pequeñas, tails y equivalencia numérica.
+
+
+## Matriz de benchmarks multiplataforma
+
+La CI de benchmarks usa una matriz independiente de la CI de corrección y ejecuta los tres harnesses en modo release en runners de Linux x86-64, Linux ARM64, Windows x86-64 y macOS ARM64. Cada runner produce artefactos separados con los resultados de Runtime, Memory y Compute, además de `environment.txt` con sistema, arquitectura, versión de Rust/Cargo, SHA y comando ejecutado. La matriz continúa en los demás runners si uno falla (`fail-fast: false`).
+
+Los valores deben compararse **dentro de cada entorno** antes de comparar entre sistemas: runners virtualizados, frecuencia/energía, compilador, target y ruido de máquina pueden variar. No se deben promediar nanosegundos entre arquitecturas ni tratar una diferencia Linux/Windows como efecto exclusivo del sistema operativo. La matriz actual cubre los tres sistemas solicitados y dos arquitecturas de CPU (x86-64 y ARM64), pero no todas las combinaciones OS/arquitectura. Si un runner ARM deja de estar disponible en el plan/repositorio, la CI lo mostrará como fallo de infraestructura; no se debe etiquetar un resultado de otra arquitectura como ARM64.
