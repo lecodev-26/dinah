@@ -7,9 +7,8 @@ on:
     branches: [main]
 
 permissions:
-  actions: write
+  actions: read
   contents: write
-  pull-requests: write
 
 concurrency:
   group: dinah-artifact-archive-${{ github.event.workflow_run.head_sha }}
@@ -60,11 +59,10 @@ jobs:
           run-id: ${{ steps.gate.outputs.benchmark_run_id }}
           path: artifacts/benchmarks/${{ github.event.workflow_run.head_sha }}/run-${{ steps.gate.outputs.benchmark_run_id }}
 
-      - name: Open a PR for archived artifacts (never push to main)
+      - name: Commit archived artifacts
         if: steps.gate.outputs.ready == 'true'
         shell: bash
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
           BENCHMARK_RUN_ID: ${{ steps.gate.outputs.benchmark_run_id }}
           BENCHMARK_RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ steps.gate.outputs.benchmark_run_id }}
@@ -72,46 +70,18 @@ jobs:
         run: |
           set -euo pipefail
           ARCHIVE_DIR="artifacts/benchmarks/${SOURCE_SHA}/run-${BENCHMARK_RUN_ID}"
-          BRANCH="automation/benchmark-archive-${SOURCE_SHA}-${BENCHMARK_RUN_ID}"
-
-          # workflow_run fires once for CI and once for benchmarks. Reuse an
-          # existing branch/PR instead of trying to push duplicate commits.
-          if git ls-remote --exit-code --heads origin "${BRANCH}" >/dev/null 2>&1; then
-            if [ "$(gh pr list --head "${BRANCH}" --state open --json number --jq 'length')" -gt 0 ]; then
-              echo "Archive PR already exists for ${BRANCH}; no duplicate PR will be created."
-              exit 0
-            fi
-            # Downloaded artifacts are untracked on the main checkout; remove
-            # that duplicate working copy before checking out the archived branch.
-            git clean -fd -- "${ARCHIVE_DIR}"
-            git fetch origin "${BRANCH}"
-            git switch --track -c "${BRANCH}" "origin/${BRANCH}"
-          else
-            cat > "${ARCHIVE_DIR}/archive-manifest.txt" <<EOF_MANIFEST
+          cat > "${ARCHIVE_DIR}/archive-manifest.txt" <<EOF_MANIFEST
           source_commit=${SOURCE_SHA}
           benchmark_workflow_run_id=${BENCHMARK_RUN_ID}
           benchmark_workflow_run_url=${BENCHMARK_RUN_URL}
           archive_trigger_workflow_run_id=${TRIGGER_RUN_ID}
           EOF_MANIFEST
-
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git switch -c "${BRANCH}"
-            git add "${ARCHIVE_DIR}"
-            if git diff --cached --quiet; then
-              echo "No new artifact files to archive."
-              exit 0
-            fi
-            git commit -m "chore(artifacts): archive successful benchmark run ${SOURCE_SHA}"
-            git push origin "HEAD:refs/heads/${BRANCH}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "${ARCHIVE_DIR}"
+          if git diff --cached --quiet; then
+            echo "No new artifact files to archive."
+            exit 0
           fi
-
-          gh pr create \
-            --base main \
-            --head "${BRANCH}" \
-            --title "chore(artifacts): archive benchmark run ${BENCHMARK_RUN_ID}" \
-            --body "Automated benchmark archive for commit ${SOURCE_SHA}.\n\n- Benchmark run: ${BENCHMARK_RUN_URL}\n- CI and benchmark workflows were verified successful for the same commit.\n- This PR does not merge itself; a maintainer must review and merge it."
-
-          # GITHUB_TOKEN-created PRs do not trigger pull_request workflows.
-          # Dispatch the existing CI against the exact PR branch instead.
-          gh workflow run ci.yml --ref "${BRANCH}"
+          git commit -m "chore(artifacts): archive successful benchmark run ${SOURCE_SHA}"
+          git push origin HEAD:main
