@@ -26,8 +26,8 @@ artifacts that would otherwise be available only for a limited time from CI.
 
 ## Automatic archive after green CI
 
-The `dinah artifact archive` GitHub Actions workflow archives benchmark artifacts under `artifacts/benchmarks/<commit-sha>/`, separated by runner and containing Runtime, Memory, and Compute output plus environment metadata.
+The `dinah artifact archive` GitHub Actions workflow archives benchmark artifacts under `artifacts/benchmarks/<commit-sha>/run-<benchmark-run-id>/`, separated by benchmark workflow run ID and then runner, with Runtime, Memory, and Compute output, environment metadata, and `archive-manifest.txt` containing the source SHA and run URL.
 
-It writes to the repository only when the latest `dinah CI` and `dinah benchmarks` runs for the exact same `main` commit have both completed with `success`. If either run fails, is still running, or does not exist, no artifact download or commit occurs. Repeated runs are idempotent when the archived files have not changed.
+It writes to the repository only when the latest `dinah CI` and `dinah benchmarks` runs for the exact same `main` commit have both completed with `success`. If either run fails, is still running, or does not exist, no artifact download or commit occurs. Each benchmark workflow run has its own immutable run-ID directory, so reruns of the same source commit do not overwrite earlier measurements. Repeating the same archival event is idempotent when files have not changed.
 
 The original Actions artifacts remain downloadable for 90 days. The version-controlled text copies preserve evidence in Git history. Do not archive build directories, secrets, credentials, or large binaries without an explicit policy.

@@ -57,18 +57,28 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ steps.gate.outputs.benchmark_run_id }}
-          path: artifacts/benchmarks/${{ github.event.workflow_run.head_sha }}
+          path: artifacts/benchmarks/${{ github.event.workflow_run.head_sha }}/run-${{ steps.gate.outputs.benchmark_run_id }}
 
       - name: Commit archived artifacts
         if: steps.gate.outputs.ready == 'true'
         shell: bash
         env:
           SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+          BENCHMARK_RUN_ID: ${{ steps.gate.outputs.benchmark_run_id }}
+          BENCHMARK_RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ steps.gate.outputs.benchmark_run_id }}
+          TRIGGER_RUN_ID: ${{ github.event.workflow_run.id }}
         run: |
           set -euo pipefail
+          ARCHIVE_DIR="artifacts/benchmarks/${SOURCE_SHA}/run-${BENCHMARK_RUN_ID}"
+          cat > "${ARCHIVE_DIR}/archive-manifest.txt" <<EOF_MANIFEST
+          source_commit=${SOURCE_SHA}
+          benchmark_workflow_run_id=${BENCHMARK_RUN_ID}
+          benchmark_workflow_run_url=${BENCHMARK_RUN_URL}
+          archive_trigger_workflow_run_id=${TRIGGER_RUN_ID}
+          EOF_MANIFEST
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add "artifacts/benchmarks/${SOURCE_SHA}"
+          git add "${ARCHIVE_DIR}"
           if git diff --cached --quiet; then
             echo "No new artifact files to archive."
             exit 0
