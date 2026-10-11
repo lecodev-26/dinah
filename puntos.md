@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 73
+- Completados: 74
 - En progreso: 2
-- Pendientes: 212
+- Pendientes: 211
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -97,7 +97,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 073 — Testear concurrencia
 - [x] 074 — Crear benchmarks
 - [x] 075 — Optimizar allocations
-- [ ] 076 — Documentar Memory
+- [x] 076 — Documentar Memory
 
 ## FASE 4 — Compute
 
@@ -359,3 +359,4 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado, en progreso u obsoleto. No borrar ni reutilizar IDs.
 
 - 2026-10-11 — Punto 075 completado: `SoaBuffer::try_extend_from_slices`, pruebas de errores/límites, benchmark comparable y resultados archivados en `artifacts/benchmarks/memory-soa-batch-2026-10-11.txt`; CI: https://github.com/lecodev-26/dinah/actions/runs/38096865096.
+- 2026-10-11 — Punto 076 completado: guía práctica `docs/memory.md`, enlaces desde `README.md` y `docs/memory-model.md`; CI verde: https://github.com/lecodev-26/dinah/actions/runs/38097226307.
