@@ -155,8 +155,10 @@ where
     }
 
     let active_workers = worker_count.get().min(items.len());
-    let chunk_size = items.len() / active_workers + usize::from(items.len() % active_workers != 0);
-    let chunk_count = items.len() / chunk_size + usize::from(items.len() % chunk_size != 0);
+    let chunk_size =
+        items.len() / active_workers + usize::from(!items.len().is_multiple_of(active_workers));
+    let chunk_count =
+        items.len() / chunk_size + usize::from(!items.len().is_multiple_of(chunk_size));
     let capacity =
         NonZeroUsize::new(chunk_count).expect("non-empty input creates at least one chunk");
     let mut queue = crate::runtime::TaskQueue::new(capacity);
