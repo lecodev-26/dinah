@@ -49,7 +49,7 @@ jobs:
       - name: Run release benchmarks and record environment
         run: python scripts/run_benchmarks.py
       - name: Upload benchmark results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dinah-benchmark-results-${{ matrix.label }}-${{ github.sha }}
           path: benchmark-results/*.txt
