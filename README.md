@@ -54,3 +54,7 @@ estable hasta completar la revisión y validación previstas en el roadmap.
 ## Generated artifacts
 
 - Generated benchmark artifacts are archived under `artifacts/benchmarks/<commit-sha>/run-<benchmark-run-id>/` only after both CI and the benchmark matrix succeed; see [artifact policy](artifacts/README.md).
+
+## Automatización y bots
+
+- [Política de automatización y bots](docs/automation-policy.md)
