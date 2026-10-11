@@ -19,7 +19,7 @@ dinah is a Rust-first project exploring a high-performance runtime and a modular
 - Dependencies must be justified and kept maintainable.
 - The roadmap describes intent; puntos.md is the numbered, living implementation checklist.
 - Point IDs are permanent. Do not renumber completed, pending, or obsolete items.
-- All compilation, tests, linting, and benchmarks run in GitHub Actions—not on the Termux device.
+- CI runs compilation, tests, and linting on GitHub Actions. Exploratory benchmarks may be run locally, but performance claims require recorded environment metadata, repeatable measurements, and CI artifacts.
 
 ## License
 

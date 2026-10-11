@@ -157,9 +157,9 @@ ComputePipeline::new(&mut values)
 
 La CI remota valida formato, tests, Clippy y documentación pública. Los benchmarks pesados y comparaciones de rendimiento deben archivarse bajo `artifacts/benchmarks/` con comando, entorno y fecha; nunca se inventan cifras para cerrar un punto.
 
-## SIMD y evidencia de rendimiento (punto 083)
+## SIMD y evidencia de rendimiento (puntos 083–084)
 
-La investigación de alternativas y restricciones está registrada en [`docs/simd-research.md`](simd-research.md). La decisión actual es conservar la ruta escalar segura: todavía no hay un kernel concreto ni mediciones CPU que justifiquen SIMD manual. No se prometen vectorización automática, alineación especial ni aceleración. El punto 084 debe añadir un kernel y una comparación reproducible solo si se identifica un beneficio real.
+La investigación de alternativas, restricciones y la primera medición exploratoria están registradas en [`docs/simd-research.md`](simd-research.md). `benches/compute.rs` compara el bucle directo con `compute::for_each` en un kernel numérico seguro; las diferencias observadas son pequeñas/variables y no comparan aún una implementación SIMD. Por ello no se añade SIMD manual ni se afirma aceleración: el punto 084 sigue en progreso hasta medir una alternativa vectorial frente a la referencia escalar con evidencia reproducible. No se prometen vectorización automática ni alineación especial.
 
 ## Decisiones aplazadas
 

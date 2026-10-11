@@ -55,3 +55,31 @@ Evaluar primero una operación numérica concreta sobre slices contiguos, por ej
 ## Criterio de salida del punto 083
 
 La investigación recomienda **no implementar SIMD manual todavía**. El punto 083 no incluye código vectorial ni números de rendimiento. El punto 084 deberá aportar un kernel concreto, tests de equivalencia, una comparación reproducible con la ruta escalar y evidencia de que el beneficio compensa el coste. Si no se encuentra ese beneficio, documentar y mantener la ruta escalar es un resultado válido.
+
+
+## Punto 084 — medición inicial del kernel y decisión provisional
+
+Se añadió `benches/compute.rs` y el harness de benchmarks lo ejecuta en CI como `cargo bench --bench compute`. Compara dos bucles seguros que aplican exactamente la misma transformación in-place (`x = x * 1.0001 + 0.25`): un bucle directo sobre el slice y `compute::for_each`. Comprueba que los resultados finales coinciden y mide cuatro tamaños (64, 1.024, 16.384 y 262.144 elementos), con 11 muestras por caso y mediana. Este benchmark mide el coste relativo del bucle/API; **no compara todavía una implementación SIMD manual contra una escalar**.
+
+### Entorno exploratorio registrado
+
+- Dispositivo: Samsung SM-A165F; Android 16 / Termux.
+- Arquitectura/target: `aarch64-linux-android`; CPU ARMv8, `CPU part 0xd05`, con `asimd` anunciado por el sistema.
+- Compilador: `rustc 1.99.0 (b940084d7 2026-09-28)`, LLVM 21.1.8.
+- Comando: `cargo bench --bench compute`; perfil release; tres ejecuciones del harness, cada una con 11 muestras por caso.
+- Los tiempos fluctúan de forma visible entre ejecuciones, por lo que son observaciones de este dispositivo, no resultados portables ni una afirmación de aceleración.
+
+### Resultados observados (mediana por ejecución)
+
+| Elementos | Bucle directo (ns) | `compute::for_each` (ns) | Lectura prudente |
+|---:|---:|---:|---|
+| 64 | 77, 77, 77 | 77, 77, 77 | Sin diferencia medible en la resolución observada |
+| 1.024 | 308, 385, 538 | 308, 385, 538 | Coinciden en las tres ejecuciones |
+| 16.384 | 3.693, 5.461, 5.308 | 3.693, 5.538, 5.154 | Diferencias pequeñas y con dirección variable |
+| 262.144 | 65.154, 92.923, 80.000 | 68.615, 93.462, 81.846 | La diferencia cambia entre aproximadamente +5,3 %, +0,6 % y +2,3 % de tiempo para `for_each`; no prueba una mejora SIMD |
+
+La inspección del ensamblado release confirma instrucciones de carga/almacenamiento vectorial en partes del binario, pero también operaciones aritméticas escalares en el kernel inspeccionado. Esa inspección preliminar no basta para atribuir vectorización a una función específica ni para afirmar que el compilador ya vectoriza el kernel de extremo a extremo.
+
+### Decisión provisional
+
+No se añade SIMD manual, `unsafe`, intrinsics ni una dependencia nueva: las mediciones actuales no comparan una alternativa SIMD y no demuestran una mejora reproducible. El punto 084 permanece **en progreso** hasta que se evalúe una implementación vectorial segura y compatible, o se establezca con evidencia suficiente que no existe un beneficio que compense el coste. Próximos pasos: aislar el kernel en ensamblado, probar una alternativa vectorial estable/segura si encaja con la política del crate, medirla con el mismo harness y validar longitudes pequeñas, tails y equivalencia numérica.
