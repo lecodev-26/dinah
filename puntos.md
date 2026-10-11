@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 80
+- Completados: 81
 - En progreso: 2
-- Pendientes: 205
+- Pendientes: 204
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -107,7 +107,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 080 — Crear parallel iteration (`for_each_parallel`, particiones disjuntas, integración con `Scheduler::run_parallel`, tests de cobertura/entrada vacía/cero workers; CI verde: https://github.com/lecodev-26/dinah/actions/runs/38153730624)
 - [x] 081 — Crear reducción paralela (`try_reduce_parallel`, identidad por partición, combinación en orden, propagación del primer error por orden de entrada; CI verde: https://github.com/lecodev-26/dinah/actions/runs/38154040501)
 - [x] 082 — Crear pipelines (`ComputePipeline` inmediato sobre slice prestado; etapas secuenciales, por lotes y paralelas; errores tipados y tests de orden/corte/ownership; CI verde: https://github.com/lecodev-26/dinah/actions/runs/38154774490)
-- [ ] 083 — Investigar SIMD
+- [x] 083 — Investigar SIMD (documentadas opciones, restricciones del crate y criterios de validación; se mantiene la ruta escalar hasta medir un caso real; CI verde: https://github.com/lecodev-26/dinah/actions/runs/38155044022)
 - [ ] 084 — Implementar SIMD donde aporte beneficio real
 - [ ] 085 — Optimizar estructuras data-oriented
 - [ ] 086 — Añadir métricas de rendimiento
