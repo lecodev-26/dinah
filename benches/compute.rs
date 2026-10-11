@@ -23,13 +23,13 @@ fn measure<F: FnMut()>(mut operation: F) -> Vec<Duration> {
 fn transform_wide(values: &mut [f32]) {
     let multiplier = f32x4::splat(1.0001);
     let offset = f32x4::splat(0.25);
-    let mut chunks = values.chunks_exact_mut(4);
-    for chunk in &mut chunks {
-        let lanes = f32x4::new([chunk[0], chunk[1], chunk[2], chunk[3]]);
+    let (chunks, remainder) = values.as_chunks_mut::<4>();
+    for chunk in chunks {
+        let lanes = f32x4::new(*chunk);
         let transformed = lanes * multiplier + offset;
-        chunk.copy_from_slice(&transformed.to_array());
+        *chunk = transformed.to_array();
     }
-    for value in chunks.into_remainder() {
+    for value in remainder {
         *value = *value * 1.0001 + 0.25;
     }
 }
