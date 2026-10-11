@@ -501,10 +501,9 @@ mod tests {
     #[test]
     fn pipeline_finish_returns_original_slice() {
         let mut values = [1, 2];
-        let returned = ComputePipeline::new(&mut values)
-            .for_each(|value| *value += 1)
-            .unwrap()
-            .finish();
+        let mut pipeline = ComputePipeline::new(&mut values);
+        pipeline.for_each(|value| *value += 1).unwrap();
+        let returned = pipeline.finish();
         assert_eq!(returned, [2, 3]);
     }
 
