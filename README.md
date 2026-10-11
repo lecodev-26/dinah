@@ -34,7 +34,7 @@ Unless a file states otherwise, `dinah` is dual-licensed under either the MIT Li
 - docs/runtime.md: initial Runtime execution model and deferred design decisions.
 - docs/memory-model.md: Memory ownership, capacity, alignment, and synchronization design.
 - docs/memory.md: practical guide to `Buffer<T>`, `SoaBuffer<A, B>`, limits, and benchmarks.
-- docs/compute.md: sequential Compute API (`for_each`, `map`, `try_reduce`), execution contracts, and future implementation sequence.
+- docs/compute.md: sequential Compute API (`for_each`, `for_each_batch`, `map`, `try_reduce`), execution contracts, and future implementation sequence.
 
 ## CI
 

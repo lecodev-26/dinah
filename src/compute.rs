@@ -29,6 +29,69 @@ where
     }
 }
 
+/// Error returned when a batch operation receives an invalid batch size.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BatchError {
+    /// Batch size must be greater than zero.
+    ZeroSize,
+}
+
+impl core::fmt::Display for BatchError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::ZeroSize => f.write_str("batch size must be greater than zero"),
+        }
+    }
+}
+
+impl std::error::Error for BatchError {}
+
+/// Applies an operation to successive mutable batches without allocating.
+///
+/// `batch_size` must be greater than zero. Validation happens before the first
+/// callback, so a zero size never partially mutates the input. Each callback
+/// receives a mutable slice into the original input; no temporary batch buffer
+/// is created. The final batch may be shorter than `batch_size`. Batches and
+/// elements within each batch are visited in input order. An empty input with a
+/// valid batch size invokes no callbacks. Panics propagate and prior mutations
+/// are not rolled back.
+///
+/// # Errors
+///
+/// Returns [`BatchError::ZeroSize`] when `batch_size` is zero.
+///
+/// # Examples
+///
+/// ```
+/// use dinah::compute::for_each_batch;
+///
+/// let mut values = [1, 2, 3, 4, 5];
+/// for_each_batch(&mut values, 2, |batch| {
+///     for value in batch {
+///         *value *= 10;
+///     }
+/// })?;
+/// assert_eq!(values, [10, 20, 30, 40, 50]);
+/// # Ok::<(), dinah::compute::BatchError>(())
+/// ```
+pub fn for_each_batch<T, F>(
+    items: &mut [T],
+    batch_size: usize,
+    mut operation: F,
+) -> Result<(), BatchError>
+where
+    F: FnMut(&mut [T]),
+{
+    if batch_size == 0 {
+        return Err(BatchError::ZeroSize);
+    }
+
+    for batch in items.chunks_mut(batch_size) {
+        operation(batch);
+    }
+    Ok(())
+}
+
 /// Maps a borrowed slice into a newly allocated vector, preserving input order.
 ///
 /// The returned vector contains one output per input element. This operation
@@ -87,7 +150,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::{for_each, map, try_reduce};
+    use super::{for_each, for_each_batch, map, try_reduce, BatchError};
 
     #[test]
     fn for_each_visits_every_element_once_in_order() {
@@ -106,6 +169,47 @@ mod tests {
         let mut values: [u8; 0] = [];
         for_each(&mut values, |value| *value += 1);
         assert_eq!(values, []);
+    }
+
+    #[test]
+    fn for_each_batch_visits_full_and_partial_batches_in_order() {
+        let mut values = [1, 2, 3, 4, 5];
+        let mut batch_lengths = Vec::new();
+        for_each_batch(&mut values, 2, |batch| {
+            batch_lengths.push(batch.len());
+            for value in batch {
+                *value *= 10;
+            }
+        })
+        .unwrap();
+        assert_eq!(batch_lengths, [2, 2, 1]);
+        assert_eq!(values, [10, 20, 30, 40, 50]);
+    }
+
+    #[test]
+    fn for_each_batch_rejects_zero_before_mutation() {
+        let mut values = [1, 2, 3];
+        let mut called = false;
+        let result = for_each_batch(&mut values, 0, |_| called = true);
+        assert_eq!(result, Err(BatchError::ZeroSize));
+        assert!(!called);
+        assert_eq!(values, [1, 2, 3]);
+    }
+
+    #[test]
+    fn for_each_batch_accepts_empty_input_with_valid_size() {
+        let mut values: [u8; 0] = [];
+        let mut called = false;
+        for_each_batch(&mut values, 4, |_| called = true).unwrap();
+        assert!(!called);
+    }
+
+    #[test]
+    fn for_each_batch_accepts_batch_larger_than_input() {
+        let mut values = [1, 2, 3];
+        let mut lengths = Vec::new();
+        for_each_batch(&mut values, 10, |batch| lengths.push(batch.len())).unwrap();
+        assert_eq!(lengths, [3]);
     }
 
     #[test]

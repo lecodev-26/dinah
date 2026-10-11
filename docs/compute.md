@@ -41,9 +41,23 @@ Estas funciones forman parte de la API pública `dinah::compute`. Las tres opera
 
 ### Etapa B — lotes explícitos
 
-El procesamiento por lotes debe describir claramente el tamaño de lote y qué sucede con el último lote incompleto. La primera implementación no debe copiar todos los datos a un buffer temporal ni crear una tarea por elemento. Las vistas de lote serán préstamos a segmentos del slice original cuando sea posible.
+La API secuencial de lotes está implementada como `for_each_batch`. Recibe un tamaño positivo y entrega a la closure slices mutables prestados de la entrada original. No crea buffers temporales ni tareas por elemento. El último lote puede ser más pequeño que el tamaño solicitado.
 
-Un tamaño de lote cero se rechazará antes de iniciar trabajo. Los errores de validación deben ocurrir antes de mutar datos siempre que la operación pueda validar el lote completo de antemano. No se prometerá rollback ante pánicos del código del usuario.
+```rust
+pub enum BatchError {
+    ZeroSize,
+}
+
+pub fn for_each_batch<T, F>(
+    items: &mut [T],
+    batch_size: usize,
+    operation: F,
+) -> Result<(), BatchError>
+where
+    F: FnMut(&mut [T]);
+```
+
+Un tamaño cero devuelve `BatchError::ZeroSize` antes de invocar la closure o mutar elementos. Con una entrada vacía y un tamaño válido no se invoca la closure. Los lotes y elementos conservan el orden original. No se promete rollback si la closure entra en pánico; el pánico se propaga.
 
 ### Etapa C — iteración y reducción paralelas
 
@@ -74,7 +88,7 @@ Un pipeline solo se incorporará cuando las operaciones básicas demuestren un c
 
 - **077 — Diseñar Compute API:** responsabilidades, familias de operaciones y contratos documentados; sin declarar funciones inexistentes.
 - **078 — Definir primitivas de procesamiento:** implementado con `for_each`, `map` y `try_reduce`, pruebas unitarias y ejemplos de documentación pública.
-- **079 — Crear procesamiento por lotes:** validar tamaño, último lote, errores y no asignación oculta.
+- **079 — Crear procesamiento por lotes:** implementado con `for_each_batch` y `BatchError`; tamaño cero validado antes de mutar, último lote parcial y slices prestados sin buffer temporal.
 - **080 — Crear parallel iteration:** particiones disjuntas, integración explícita con Runtime, pruebas de cobertura y errores.
 - **081 — Crear reducción paralela:** contrato del operador, orden de combinación, errores y límites de determinismo.
 - **082 — Crear pipelines:** solo después de las primitivas anteriores; semántica explícita de ejecución, ownership y errores.
