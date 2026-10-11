@@ -1,6 +1,6 @@
-# dinah Compute — diseño inicial de la API
+# dinah Compute — API secuencial y diseño evolutivo
 
-Estado: diseño para el punto 077. Este documento fija límites y decisiones para guiar la implementación; no declara que exista todavía un módulo `dinah::compute` ni una API pública de Compute.
+Estado: las primitivas secuenciales de la etapa A están implementadas y documentadas. Las etapas B–D siguen siendo diseño futuro; no se deben interpretar como APIs disponibles.
 
 ## Objetivo y límites
 
@@ -17,7 +17,7 @@ La primera versión será pequeña, genérica y sin dependencias externas. No ha
 
 ### Etapa A — primitivas secuenciales
 
-Empezar con funciones genéricas sobre slices prestados, sin asignaciones implícitas ni estado global. La forma conceptual inicial es:
+La API inicial usa funciones genéricas sobre slices prestados, sin estado global. `for_each` y `try_reduce` no asignan memoria propia; `map` asigna explícitamente el `Vec` de salida.
 
 ```rust
 pub fn for_each<T, F>(items: &mut [T], operation: F)
@@ -37,7 +37,7 @@ where
     F: FnMut(A, &T) -> Result<A, E>;
 ```
 
-Estas firmas son propuestas de diseño, no código compilable ni API publicada. Antes de implementarlas se revisarán nombres, errores, documentación de asignaciones y ergonomía. En particular, `map` asigna un `Vec` y debe documentarlo; una futura variante con salida prestada o buffer del llamador se evaluará solo si hace falta.
+Estas funciones forman parte de la API pública `dinah::compute`. Las tres operaciones son secuenciales y conservan el orden de entrada. `try_reduce` propaga el primer error del usuario y se detiene; `for_each` no ofrece rollback si la closure entra en pánico. Una futura variante de `map` con buffer del llamador se evaluará solo si hace falta.
 
 ### Etapa B — lotes explícitos
 
@@ -73,7 +73,7 @@ Un pipeline solo se incorporará cuando las operaciones básicas demuestren un c
 ## Secuencia de implementación y aceptación
 
 - **077 — Diseñar Compute API:** responsabilidades, familias de operaciones y contratos documentados; sin declarar funciones inexistentes.
-- **078 — Definir primitivas de procesamiento:** seleccionar e implementar la primera API secuencial, con tests y documentación pública.
+- **078 — Definir primitivas de procesamiento:** implementado con `for_each`, `map` y `try_reduce`, pruebas unitarias y ejemplos de documentación pública.
 - **079 — Crear procesamiento por lotes:** validar tamaño, último lote, errores y no asignación oculta.
 - **080 — Crear parallel iteration:** particiones disjuntas, integración explícita con Runtime, pruebas de cobertura y errores.
 - **081 — Crear reducción paralela:** contrato del operador, orden de combinación, errores y límites de determinismo.
