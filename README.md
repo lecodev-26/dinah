@@ -35,6 +35,7 @@ Unless a file states otherwise, `dinah` is dual-licensed under either the MIT Li
 - docs/memory-model.md: Memory ownership, capacity, alignment, and synchronization design.
 - docs/memory.md: practical guide to `Buffer<T>`, `SoaBuffer<A, B>`, limits, and benchmarks.
 - docs/compute.md: Compute API (`for_each`, `for_each_batch`, `for_each_parallel`, `map`, `try_reduce`, `try_reduce_parallel`, `ComputePipeline`), execution/ownership/error contracts, and future implementation sequence.
+- docs/simd-research.md: SIMD options, compatibility constraints, candidate validation matrix, and criteria before introducing vectorized kernels.
 
 ## CI
 
