@@ -185,6 +185,119 @@ where
     Ok(())
 }
 
+/// Error returned by parallel reduction.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ParallelReduceError<E> {
+    /// At least one worker must be requested.
+    ZeroWorkers,
+    /// The reduction operation failed in an input partition.
+    Operation(E),
+}
+
+impl<E: core::fmt::Display> core::fmt::Display for ParallelReduceError<E> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::ZeroWorkers => f.write_str("parallel reduction requires at least one worker"),
+            Self::Operation(error) => write!(f, "parallel reduction operation failed: {error}"),
+        }
+    }
+}
+
+impl<E: std::error::Error + 'static> std::error::Error for ParallelReduceError<E> {}
+
+/// Reduces a slice in parallel, then combines partial accumulators in input order.
+///
+/// `identity` is cloned once per partition and is expected to be a valid identity
+/// for both `operation` and `combine`. Each partition is reduced from that value;
+/// partial accumulators are then combined from left to right in partition order.
+/// For results independent of the partitioning, the operation/combine algebra
+/// must be associative and the identity must be valid. Floating-point operations
+/// may differ from sequential reduction because their grouping changes.
+///
+/// All partition tasks finish before a result is returned. If multiple partitions
+/// fail, the error from the earliest partition in input order is returned. The
+/// combine closure runs only if every partition succeeds. `worker_count` must be
+/// positive; zero is rejected before any operation or combination is invoked.
+/// Empty input returns `identity` without invoking either closure or spawning
+/// workers. Panics follow the Runtime scheduler contract and are propagated.
+///
+/// # Errors
+///
+/// Returns [`ParallelReduceError::ZeroWorkers`] for zero workers or
+/// [`ParallelReduceError::Operation`] for the first operation error in input order.
+///
+/// # Examples
+///
+/// ```
+/// use dinah::compute::try_reduce_parallel;
+///
+/// let values = [1_i64, 2, 3, 4, 5, 6];
+/// let sum = try_reduce_parallel(
+///     &values,
+///     3,
+///     0_i64,
+///     |sum, value| Ok::<_, &'static str>(sum + value),
+///     |left, right| left + right,
+/// )?;
+/// assert_eq!(sum, 21);
+/// # Ok::<(), dinah::compute::ParallelReduceError<&'static str>>(())
+/// ```
+pub fn try_reduce_parallel<T, A, E, F, C>(
+    items: &[T],
+    worker_count: usize,
+    identity: A,
+    operation: F,
+    combine: C,
+) -> Result<A, ParallelReduceError<E>>
+where
+    T: Sync,
+    A: Clone + Send,
+    E: Send,
+    F: Fn(A, &T) -> Result<A, E> + Sync,
+    C: Fn(A, A) -> A + Sync,
+{
+    use core::num::NonZeroUsize;
+
+    let worker_count = NonZeroUsize::new(worker_count).ok_or(ParallelReduceError::ZeroWorkers)?;
+    if items.is_empty() {
+        return Ok(identity);
+    }
+
+    let active_workers = worker_count.get().min(items.len());
+    let chunk_size =
+        items.len() / active_workers + usize::from(!items.len().is_multiple_of(active_workers));
+    let chunk_count =
+        items.len() / chunk_size + usize::from(!items.len().is_multiple_of(chunk_size));
+    let capacity =
+        NonZeroUsize::new(chunk_count).expect("non-empty input creates at least one chunk");
+    let mut queue = crate::runtime::TaskQueue::new(capacity);
+
+    for chunk in items.chunks(chunk_size) {
+        let operation = &operation;
+        let initial = identity.clone();
+        queue
+            .try_push(move || {
+                let mut accumulator = initial;
+                for item in chunk {
+                    accumulator = operation(accumulator, item)?;
+                }
+                Ok::<A, E>(accumulator)
+            })
+            .unwrap_or_else(|_| unreachable!("queue capacity matches the number of chunks"));
+    }
+
+    let partials = crate::runtime::Scheduler::new().run_parallel(&mut queue, worker_count);
+    let mut accumulator: Option<A> = None;
+    for partial in partials {
+        let partial = partial.map_err(ParallelReduceError::Operation)?;
+        accumulator = Some(match accumulator {
+            None => partial,
+            Some(previous) => combine(previous, partial),
+        });
+    }
+    Ok(accumulator.expect("non-empty input creates at least one partition"))
+}
+
 /// Maps a borrowed slice into a newly allocated vector, preserving input order.
 ///
 /// The returned vector contains one output per input element. This operation
@@ -244,7 +357,8 @@ where
 #[cfg(test)]
 mod tests {
     use super::{
-        for_each, for_each_batch, for_each_parallel, map, try_reduce, BatchError, ParallelError,
+        for_each, for_each_batch, for_each_parallel, map, try_reduce, try_reduce_parallel,
+        BatchError, ParallelError, ParallelReduceError,
     };
 
     #[test]
@@ -334,6 +448,64 @@ mod tests {
         let mut values = [1, 2, 3];
         for_each_parallel(&mut values, 64, |value| *value *= 2).unwrap();
         assert_eq!(values, [2, 4, 6]);
+    }
+
+    #[test]
+    fn try_reduce_parallel_combines_partition_results_in_input_order() {
+        let values = [1_i64, 2, 3, 4, 5, 6, 7];
+        let result = try_reduce_parallel(
+            &values,
+            3,
+            0_i64,
+            |sum, value| Ok::<_, ()>(sum + value),
+            |left, right| left + right,
+        );
+        assert_eq!(result, Ok(28));
+    }
+
+    #[test]
+    fn try_reduce_parallel_returns_identity_for_empty_input() {
+        let values: [u8; 0] = [];
+        let result = try_reduce_parallel(
+            &values,
+            2,
+            42_u32,
+            |sum, value| Ok::<_, ()>(sum + u32::from(*value)),
+            |left, right| left + right,
+        );
+        assert_eq!(result, Ok(42));
+    }
+
+    #[test]
+    fn try_reduce_parallel_rejects_zero_workers_before_calling_closures() {
+        let values = [1, 2, 3];
+        let result = try_reduce_parallel(
+            &values,
+            0,
+            0,
+            |sum, value| Ok::<_, ()>(sum + value),
+            |left, right| left + right,
+        );
+        assert_eq!(result, Err(ParallelReduceError::ZeroWorkers));
+    }
+
+    #[test]
+    fn try_reduce_parallel_returns_earliest_partition_error() {
+        let values = [1, 2, 3, 4, 5, 6];
+        let result = try_reduce_parallel(
+            &values,
+            3,
+            0,
+            |sum, value| {
+                if *value == 2 || *value == 5 {
+                    Err(*value)
+                } else {
+                    Ok(sum + value)
+                }
+            },
+            |left, right| left + right,
+        );
+        assert_eq!(result, Err(ParallelReduceError::Operation(2)));
     }
 
     #[test]

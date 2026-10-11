@@ -80,7 +80,30 @@ where
 
 Un `worker_count` de cero devuelve `ParallelError::ZeroWorkers` antes de mutar la entrada. Una entrada vacía con un valor positivo no crea workers. Cada elemento se procesa exactamente una vez en una ejecución normal, pero el orden de finalización no está definido. `T: Send` permite mover particiones a workers y `F: Sync` permite compartir la operación de forma segura. Los pánicos se propagan conforme al contrato de Runtime tras unirse las tareas del lote actual; las mutaciones previas no se revierten. No se garantiza aceleración para cargas pequeñas.
 
-La reducción paralela aún no está implementada y debe definir operador de combinación, errores y determinismo antes de publicarse.
+La reducción paralela está implementada como `try_reduce_parallel`. Cada partición empieza con una copia de `identity`; sus acumuladores parciales se combinan secuencialmente en el orden de entrada de las particiones. Para resultados independientes de la partición, `identity`, `operation` y `combine` deben respetar el contrato algebraico indicado (incluida asociatividad); las operaciones de punto flotante pueden variar por el reagrupamiento.
+
+```rust
+pub enum ParallelReduceError<E> {
+    ZeroWorkers,
+    Operation(E),
+}
+
+pub fn try_reduce_parallel<T, A, E, F, C>(
+    items: &[T],
+    worker_count: usize,
+    identity: A,
+    operation: F,
+    combine: C,
+) -> Result<A, ParallelReduceError<E>>
+where
+    T: Sync,
+    A: Clone + Send,
+    E: Send,
+    F: Fn(A, &T) -> Result<A, E> + Sync,
+    C: Fn(A, A) -> A + Sync;
+```
+
+Cero workers se rechaza antes de ejecutar las closures; la entrada vacía devuelve `identity`. Todas las particiones se completan antes de devolver el resultado. Si varias particiones fallan, se devuelve el error de la primera partición según el orden de entrada, no el primer error temporalmente observado. La combinación solo ocurre si todas las particiones tuvieron éxito. Los pánicos siguen el contrato de Runtime.
 
 - La iteración paralela no promete orden de finalización; sí garantiza que cada elemento se procesa exactamente una vez en una ejecución normal.
 - La reducción paralela requiere un operador de combinación explícito y asociativo para obtener resultados independientes de la partición. No se prometerá equivalencia bit a bit para operaciones de punto flotante reordenadas.
@@ -109,7 +132,7 @@ Un pipeline solo se incorporará cuando las operaciones básicas demuestren un c
 - **078 — Definir primitivas de procesamiento:** implementado con `for_each`, `map` y `try_reduce`, pruebas unitarias y ejemplos de documentación pública.
 - **079 — Crear procesamiento por lotes:** implementado con `for_each_batch` y `BatchError`; tamaño cero validado antes de mutar, último lote parcial y slices prestados sin buffer temporal.
 - **080 — Crear parallel iteration:** implementado con `for_each_parallel`, particiones disjuntas, `Scheduler::run_parallel`, pruebas de cobertura, entrada vacía y rechazo de cero workers.
-- **081 — Crear reducción paralela:** contrato del operador, orden de combinación, errores y límites de determinismo.
+- **081 — Crear reducción paralela:** implementado con `try_reduce_parallel` y `ParallelReduceError`; combinación en orden de partición, primer error según orden de entrada y documentación de identidad/asociatividad/determinismo.
 - **082 — Crear pipelines:** solo después de las primitivas anteriores; semántica explícita de ejecución, ownership y errores.
 - **083–089:** investigar SIMD, optimizar layouts, instrumentar y comparar secuencial/paralelo, y probar determinismo con resultados archivados.
 - **090 — Documentar Compute:** manual de usuario basado en APIs ya implementadas, no en propuestas.
