@@ -1,0 +1,52 @@
+name: dinah documentation audit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'benches/**'
+      - 'tests/**'
+      - 'examples/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'build.rs'
+      - 'scripts/*.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: dinah-documentation-audit-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    name: Check documentation drift and open review PR
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout main history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Generate documentation review report
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+        run: python3 scripts/documentation_audit.py
+      - name: Open or update documentation review PR
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: automation/documentation-audit
+          delete-branch: true
+          add-paths: docs/reports/documentation-audit.md
+          commit-message: 'docs: request documentation drift review'
+          title: 'docs: review documentation after implementation changes'
+          body: |
+            The documentation audit detected implementation changes without documentation changes in the same commit.
+
+            Review the generated checklist in `docs/reports/documentation-audit.md`. This is a rule-based review request, not a claim that documentation is definitely missing. Update the relevant docs if needed; if no update is needed, explain why and close this PR.
+          labels: documentation
