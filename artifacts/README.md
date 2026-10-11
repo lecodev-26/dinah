@@ -23,3 +23,11 @@ artifacts that would otherwise be available only for a limited time from CI.
 
 - `benchmarks/memory-baseline-2026-10-10.txt` — raw memory benchmark output captured from [GitHub Actions run 38096431710](https://github.com/lecodev-26/dinah/actions/runs/38096431710), source commit `fa1ec66`. Metadata and interpretation: `benchmarks/README.md`.
 - `benchmarks/memory-soa-batch-2026-10-11.txt` — raw output comparing SoA row-by-row and batch insertion from [GitHub Actions run 38096820914](https://github.com/lecodev-26/dinah/actions/runs/38096820914), source commit `1a80e01`. Summary and limits: `benchmarks/README.md`.
+
+## Automatic archive after green CI
+
+The `dinah artifact archive` GitHub Actions workflow archives benchmark artifacts under `artifacts/benchmarks/<commit-sha>/`, separated by runner and containing Runtime, Memory, and Compute output plus environment metadata.
+
+It writes to the repository only when the latest `dinah CI` and `dinah benchmarks` runs for the exact same `main` commit have both completed with `success`. If either run fails, is still running, or does not exist, no artifact download or commit occurs. Repeated runs are idempotent when the archived files have not changed.
+
+The original Actions artifacts remain downloadable for 90 days. The version-controlled text copies preserve evidence in Git history. Do not archive build directories, secrets, credentials, or large binaries without an explicit policy.

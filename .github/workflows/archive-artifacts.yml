@@ -1,0 +1,77 @@
+name: dinah artifact archive
+
+on:
+  workflow_run:
+    workflows: ["dinah CI", "dinah benchmarks"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: dinah-artifact-archive-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: false
+
+jobs:
+  archive:
+    name: Archive artifacts only after green CI and benchmarks
+    if: github.event.workflow_run.event == 'push' || github.event.workflow_run.event == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Verify both workflows passed for the same commit
+        id: gate
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const sha = context.payload.workflow_run.head_sha;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const [ciResponse, benchResponse] = await Promise.all([
+              github.rest.actions.listWorkflowRuns({ owner, repo, workflow_id: 'ci.yml', branch: 'main', head_sha: sha, per_page: 100 }),
+              github.rest.actions.listWorkflowRuns({ owner, repo, workflow_id: 'benchmarks.yml', branch: 'main', head_sha: sha, per_page: 100 }),
+            ]);
+            const latestForSha = (response) => response.data.workflow_runs.find((run) => run.head_sha === sha);
+            const ci = latestForSha(ciResponse);
+            const benchmarks = latestForSha(benchResponse);
+            core.info(`commit=${sha}`);
+            core.info(`CI: ${ci ? `${ci.status}/${ci.conclusion}` : 'not found'}`);
+            core.info(`Benchmarks: ${benchmarks ? `${benchmarks.status}/${benchmarks.conclusion}` : 'not found'}`);
+            const ready = Boolean(ci && benchmarks && ci.status === 'completed' && ci.conclusion === 'success' && benchmarks.status === 'completed' && benchmarks.conclusion === 'success');
+            core.setOutput('ready', String(ready));
+            if (ready) core.setOutput('benchmark_run_id', String(benchmarks.id));
+            else core.info('No archive will be written: both latest runs for this exact commit must be green.');
+
+      - name: Checkout main
+        if: steps.gate.outputs.ready == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Download benchmark artifacts
+        if: steps.gate.outputs.ready == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ steps.gate.outputs.benchmark_run_id }}
+          path: artifacts/benchmarks/${{ github.event.workflow_run.head_sha }}
+
+      - name: Commit archived artifacts
+        if: steps.gate.outputs.ready == 'true'
+        shell: bash
+        env:
+          SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "artifacts/benchmarks/${SOURCE_SHA}"
+          if git diff --cached --quiet; then
+            echo "No new artifact files to archive."
+            exit 0
+          fi
+          git commit -m "chore(artifacts): archive successful benchmark run ${SOURCE_SHA}"
+          git push origin HEAD:main
