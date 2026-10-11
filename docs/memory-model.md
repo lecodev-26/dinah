@@ -234,3 +234,7 @@ La implementación y las pruebas viven en `src/memory/soa.rs`. Es una primitiva 
 ## Fuera de alcance por ahora
 
 No se implementan aquí allocators personalizados, arenas, pools, SIMD, FFI ni garantías de tiempo real. El `Buffer<T>` inicial es una primitiva mínima experimental, no un subsistema Memory completo. Los puntos siguientes deben justificar y probar cada abstracción antes de incorporarla.
+
+## Guía práctica
+
+Para ejemplos de uso de `Buffer<T>` y `SoaBuffer<A, B>`, errores públicos, capacidad, lotes, ownership y enlaces a los resultados archivados, consulta la [guía práctica de Memory](memory.md). Este documento mantiene las decisiones de diseño e invariantes; la guía práctica describe la API disponible.

@@ -32,6 +32,8 @@ Unless a file states otherwise, `dinah` is dual-licensed under either the MIT Li
 - .github/workflows/ci.yml: remote continuous integration.
 - src/lib.rs: initial library entry point.
 - docs/runtime.md: initial Runtime execution model and deferred design decisions.
+- docs/memory-model.md: Memory ownership, capacity, alignment, and synchronization design.
+- docs/memory.md: practical guide to `Buffer<T>`, `SoaBuffer<A, B>`, limits, and benchmarks.
 
 ## CI
 
