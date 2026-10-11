@@ -1,6 +1,6 @@
 # dinah Compute — API secuencial y diseño evolutivo
 
-Estado: las primitivas secuenciales, los lotes y la iteración paralela están implementados y documentados. La reducción paralela y las etapas posteriores siguen siendo trabajo futuro; no se deben interpretar como APIs disponibles.
+Estado: las primitivas secuenciales, los lotes, la iteración y reducción paralelas, y la primera API de pipelines están implementados y documentados. Las optimizaciones y etapas posteriores siguen siendo trabajo futuro; no se deben interpretar como APIs disponibles.
 
 ## Objetivo y límites
 
@@ -113,7 +113,25 @@ Cero workers se rechaza antes de ejecutar las closures; la entrada vacía devuel
 
 ### Etapa D — pipelines
 
-Un pipeline solo se incorporará cuando las operaciones básicas demuestren un caso de uso real. La API deberá indicar si las etapas se ejecutan de forma inmediata o diferida, quién posee los datos intermedios, cómo se propagan errores y cómo se cancelan. La primera versión evitará ejecución diferida implícita, almacenamiento oculto y reordenación automática de etapas.
+La primera versión está implementada como `ComputePipeline<'a, T>`, una cadena de etapas mutables sobre un único slice prestado. `ComputePipeline::new(&mut items)` toma un préstamo mutable exclusivo; `for_each`, `for_each_batch` y `for_each_parallel` ejecutan cada etapa inmediatamente y devuelven `Result<&mut Self, PipelineError>` para poder encadenarlas. `finish(self)` consume el pipeline y devuelve el préstamo del slice original.
+
+```rust
+use dinah::compute::ComputePipeline;
+
+let mut values = [1, 2, 3, 4];
+ComputePipeline::new(&mut values)
+    .for_each(|value| *value += 1)?
+    .for_each_batch(2, |batch| batch.reverse())?
+    .for_each_parallel(2, |value| *value *= 2)?;
+# Ok::<(), dinah::compute::PipelineError>(())
+```
+
+- **Ejecución:** inmediata, en el orden de las llamadas; no se almacenan closures ni se difiere el trabajo.
+- **Ownership:** el pipeline mantiene un préstamo mutable exclusivo de la entrada. No posee ni crea una colección intermedia, y no asigna memoria propia.
+- **Errores:** `PipelineError::Batch` y `PipelineError::Parallel` preservan el error de configuración de la etapa correspondiente. Una etapa fallida corta la cadena: las siguientes no se ejecutan. Las mutaciones previas no se revierten.
+- **Paralelismo:** solo ocurre en la etapa que invoca explícitamente `for_each_parallel`; usa Runtime y conserva el contrato de concurrencia de esa función.
+- **Límites:** esta primera versión transforma in-place el mismo slice. `map` y las reducciones siguen siendo funciones independientes porque producen valores de salida/acumuladores con ownership distinto. No hay planificación, cancelación diferida ni reordenación automática.
+- **Pánicos:** se propagan según el contrato de la primitiva ejecutada; no se promete rollback.
 
 ## Contratos transversales
 
@@ -133,7 +151,7 @@ Un pipeline solo se incorporará cuando las operaciones básicas demuestren un c
 - **079 — Crear procesamiento por lotes:** implementado con `for_each_batch` y `BatchError`; tamaño cero validado antes de mutar, último lote parcial y slices prestados sin buffer temporal.
 - **080 — Crear parallel iteration:** implementado con `for_each_parallel`, particiones disjuntas, `Scheduler::run_parallel`, pruebas de cobertura, entrada vacía y rechazo de cero workers.
 - **081 — Crear reducción paralela:** implementado con `try_reduce_parallel` y `ParallelReduceError`; combinación en orden de partición, primer error según orden de entrada y documentación de identidad/asociatividad/determinismo.
-- **082 — Crear pipelines:** solo después de las primitivas anteriores; semántica explícita de ejecución, ownership y errores.
+- **082 — Crear pipelines:** implementado como `ComputePipeline` inmediato sobre slice prestado, con etapas secuenciales, por lotes y paralelas; errores tipados, detención tras fallo, sin buffers ocultos ni ejecución diferida.
 - **083–089:** investigar SIMD, optimizar layouts, instrumentar y comparar secuencial/paralelo, y probar determinismo con resultados archivados.
 - **090 — Documentar Compute:** manual de usuario basado en APIs ya implementadas, no en propuestas.
 

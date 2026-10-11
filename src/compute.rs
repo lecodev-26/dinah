@@ -354,12 +354,159 @@ where
     Ok(accumulator)
 }
 
+/// Error returned when a pipeline stage cannot be configured or executed.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PipelineError {
+    /// A batch stage was configured with a zero-sized batch.
+    Batch(BatchError),
+    /// A parallel stage was configured with zero workers.
+    Parallel(ParallelError),
+}
+
+impl core::fmt::Display for PipelineError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::Batch(error) => write!(f, "pipeline batch stage failed: {error}"),
+            Self::Parallel(error) => write!(f, "pipeline parallel stage failed: {error}"),
+        }
+    }
+}
+
+impl std::error::Error for PipelineError {}
+
+/// An immediate, allocation-free chain of mutable operations over one borrowed slice.
+///
+/// Each stage executes when its method is called; stages are never stored or
+/// deferred. The pipeline exclusively borrows the original slice, creates no
+/// intermediate collections, and preserves stage order. If a stage returns an
+/// error, the chain stops at that stage; mutations made by earlier stages are
+/// not rolled back. Panics propagate under the underlying operation's contract.
+///
+/// This first version deliberately supports in-place stages only. Use the free
+/// `map` and reduction functions when a newly owned output or an accumulator is
+/// required.
+///
+/// # Examples
+///
+/// ```
+/// use dinah::compute::ComputePipeline;
+///
+/// let mut values = [1, 2, 3, 4];
+/// ComputePipeline::new(&mut values)
+///     .for_each(|value| *value += 1)?
+///     .for_each_batch(2, |batch| batch.reverse())?
+///     .for_each(|value| *value *= 2)?;
+/// assert_eq!(values, [6, 4, 10, 8]);
+/// # Ok::<(), dinah::compute::PipelineError>(())
+/// ```
+pub struct ComputePipeline<'a, T> {
+    items: &'a mut [T],
+}
+
+impl<'a, T> ComputePipeline<'a, T> {
+    /// Starts a pipeline borrowing the supplied slice exclusively.
+    pub fn new(items: &'a mut [T]) -> Self {
+        Self { items }
+    }
+
+    /// Executes a sequential mutable stage immediately.
+    pub fn for_each<F>(&mut self, operation: F) -> Result<&mut Self, PipelineError>
+    where
+        F: FnMut(&mut T),
+    {
+        for_each(self.items, operation);
+        Ok(self)
+    }
+
+    /// Executes a batch stage immediately, without temporary batch buffers.
+    pub fn for_each_batch<F>(
+        &mut self,
+        batch_size: usize,
+        operation: F,
+    ) -> Result<&mut Self, PipelineError>
+    where
+        F: FnMut(&mut [T]),
+    {
+        for_each_batch(self.items, batch_size, operation).map_err(PipelineError::Batch)?;
+        Ok(self)
+    }
+
+    /// Executes a bounded parallel stage immediately using Runtime workers.
+    pub fn for_each_parallel<F>(
+        &mut self,
+        worker_count: usize,
+        operation: F,
+    ) -> Result<&mut Self, PipelineError>
+    where
+        T: Send,
+        F: Fn(&mut T) + Sync,
+    {
+        for_each_parallel(self.items, worker_count, operation).map_err(PipelineError::Parallel)?;
+        Ok(self)
+    }
+
+    /// Finishes the chain and returns the original slice borrow.
+    pub fn finish(self) -> &'a mut [T] {
+        self.items
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::{
         for_each, for_each_batch, for_each_parallel, map, try_reduce, try_reduce_parallel,
-        BatchError, ParallelError, ParallelReduceError,
+        BatchError, ComputePipeline, ParallelError, ParallelReduceError, PipelineError,
     };
+
+    #[test]
+    fn pipeline_runs_stages_immediately_in_chain_order() {
+        let mut values = [1, 2, 3, 4];
+        ComputePipeline::new(&mut values)
+            .for_each(|value| *value += 1)
+            .unwrap()
+            .for_each_batch(2, |batch| batch.reverse())
+            .unwrap()
+            .for_each(|value| *value *= 2)
+            .unwrap();
+        assert_eq!(values, [6, 4, 10, 8]);
+    }
+
+    #[test]
+    fn pipeline_stops_after_invalid_batch_stage_without_running_later_stage() {
+        let mut values = [1, 2, 3];
+        let mut later_stage_called = false;
+        let result = ComputePipeline::new(&mut values)
+            .for_each(|value| *value += 10)
+            .unwrap()
+            .for_each_batch(0, |_| {})
+            .map(|pipeline| {
+                pipeline.for_each(|_| later_stage_called = true).unwrap();
+            });
+        assert_eq!(result, Err(PipelineError::Batch(BatchError::ZeroSize)));
+        assert!(!later_stage_called);
+        assert_eq!(values, [11, 12, 13]);
+    }
+
+    #[test]
+    fn pipeline_parallel_stage_uses_bounded_runtime_workers() {
+        let mut values = [0_u32; 64];
+        ComputePipeline::new(&mut values)
+            .for_each_parallel(3, |value| *value += 1)
+            .unwrap()
+            .for_each(|value| *value *= 2)
+            .unwrap();
+        assert!(values.iter().all(|value| *value == 2));
+    }
+
+    #[test]
+    fn pipeline_finish_returns_original_slice() {
+        let mut values = [1, 2];
+        let returned = ComputePipeline::new(&mut values)
+            .for_each(|value| *value += 1)
+            .unwrap()
+            .finish();
+        assert_eq!(returned, [2, 3]);
+    }
 
     #[test]
     fn for_each_visits_every_element_once_in_order() {
