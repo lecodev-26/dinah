@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 76
+- Completados: 77
 - En progreso: 2
-- Pendientes: 209
+- Pendientes: 208
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -103,7 +103,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 
 - [x] 077 — Diseñar Compute API
 - [x] 078 — Definir primitivas de procesamiento (API secuencial `for_each`, `map` y `try_reduce`; tests y docs; CI verde: https://github.com/lecodev-26/dinah/actions/runs/38123834702)
-- [ ] 079 — Crear procesamiento por lotes
+- [x] 079 — Crear procesamiento por lotes (`for_each_batch`, `BatchError`, tests de tamaño cero y último lote parcial; CI verde: https://github.com/lecodev-26/dinah/actions/runs/38124079211)
 - [ ] 080 — Crear parallel iteration
 - [ ] 081 — Crear reducción paralela
 - [ ] 082 — Crear pipelines
