@@ -13,6 +13,7 @@ on:
       - 'Cargo.toml'
       - 'scripts/run_benchmarks.py'
       - '.github/workflows/benchmarks.yml'
+      - '.github/workflows/archive-artifacts.yml'
 
 permissions:
   contents: read
