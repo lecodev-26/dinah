@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 74
+- Completados: 75
 - En progreso: 2
-- Pendientes: 211
+- Pendientes: 210
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -101,7 +101,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 
 ## FASE 4 — Compute
 
-- [ ] 077 — Diseñar Compute API
+- [x] 077 — Diseñar Compute API
 - [ ] 078 — Definir primitivas de procesamiento
 - [ ] 079 — Crear procesamiento por lotes
 - [ ] 080 — Crear parallel iteration
@@ -360,3 +360,4 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 
 - 2026-10-11 — Punto 075 completado: `SoaBuffer::try_extend_from_slices`, pruebas de errores/límites, benchmark comparable y resultados archivados en `artifacts/benchmarks/memory-soa-batch-2026-10-11.txt`; CI: https://github.com/lecodev-26/dinah/actions/runs/38096865096.
 - 2026-10-11 — Punto 076 completado: guía práctica `docs/memory.md`, enlaces desde `README.md` y `docs/memory-model.md`; CI verde: https://github.com/lecodev-26/dinah/actions/runs/38097226307.
+- 2026-10-11 — Punto 077 completado: contrato inicial de Compute y secuencia de implementación en `docs/compute.md`; CI verde: https://github.com/lecodev-26/dinah/actions/runs/38097443705.
