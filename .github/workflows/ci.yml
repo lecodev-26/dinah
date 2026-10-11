@@ -20,7 +20,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Validate stable checklist IDs
         run: python3 scripts/check_points.py
       - name: Validate required project documents
@@ -53,7 +53,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Install stable Rust
         uses: dtolnay/rust-toolchain@stable
         with:
