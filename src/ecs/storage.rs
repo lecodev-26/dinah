@@ -1,0 +1,223 @@
+//! Contiguous component columns with a sparse entity-index lookup.
+
+use super::{Component, Entity};
+use core::fmt;
+
+/// Failure to grow a component storage without committing a partial row.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(super) enum StorageError {
+    /// The allocator could not reserve the requested storage.
+    AllocationFailed,
+}
+
+impl fmt::Display for StorageError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::AllocationFailed => f.write_str("failed to reserve component storage"),
+        }
+    }
+}
+
+impl std::error::Error for StorageError {}
+
+/// Stores one component value per entity in contiguous, index-aligned vectors.
+///
+/// This is an ECS implementation detail, not yet connected to `World`. The
+/// sparse index locates a candidate row; the complete `Entity` (including its
+/// generation) is checked before returning or removing a value.
+#[derive(Debug)]
+pub(super) struct ComponentStorage<T: Component> {
+    entities: Vec<Entity>,
+    components: Vec<T>,
+    sparse: Vec<Option<usize>>,
+}
+
+impl<T: Component> Default for ComponentStorage<T> {
+    fn default() -> Self {
+        Self {
+            entities: Vec::new(),
+            components: Vec::new(),
+            sparse: Vec::new(),
+        }
+    }
+}
+
+impl<T: Component> ComponentStorage<T> {
+    pub(super) fn new() -> Self {
+        Self::default()
+    }
+
+    /// Inserts or replaces a component. Reusing an entity index with a new
+    /// generation removes the old row before installing the new lifetime.
+    pub(super) fn insert(
+        &mut self,
+        entity: Entity,
+        component: T,
+    ) -> Result<Option<T>, StorageError> {
+        let sparse_index = entity.index() as usize;
+        let required_sparse_len = sparse_index
+            .checked_add(1)
+            .ok_or(StorageError::AllocationFailed)?;
+
+        // Reserve every potentially growing vector before changing logical
+        // contents, so allocation errors cannot leave columns misaligned.
+        self.entities
+            .try_reserve(1)
+            .map_err(|_| StorageError::AllocationFailed)?;
+        self.components
+            .try_reserve(1)
+            .map_err(|_| StorageError::AllocationFailed)?;
+        if required_sparse_len > self.sparse.len() {
+            self.sparse
+                .try_reserve(required_sparse_len - self.sparse.len())
+                .map_err(|_| StorageError::AllocationFailed)?;
+        }
+        self.sparse.resize_with(required_sparse_len, || None);
+
+        if let Some(row) = self.sparse[sparse_index] {
+            if self.entities[row] == entity {
+                return Ok(Some(core::mem::replace(
+                    &mut self.components[row],
+                    component,
+                )));
+            }
+
+            // Same index, different generation: the row belongs to an older
+            // lifetime. Remove it only after all fallible reservations passed.
+            self.remove_row(row);
+        }
+
+        let row = self.components.len();
+        self.entities.push(entity);
+        self.components.push(component);
+        self.sparse[sparse_index] = Some(row);
+        Ok(None)
+    }
+
+    pub(super) fn get(&self, entity: Entity) -> Option<&T> {
+        let row = self
+            .sparse
+            .get(entity.index() as usize)
+            .copied()
+            .flatten()?;
+        (self.entities[row] == entity).then(|| &self.components[row])
+    }
+
+    pub(super) fn get_mut(&mut self, entity: Entity) -> Option<&mut T> {
+        let row = self
+            .sparse
+            .get(entity.index() as usize)
+            .copied()
+            .flatten()?;
+        if self.entities[row] == entity {
+            Some(&mut self.components[row])
+        } else {
+            None
+        }
+    }
+
+    pub(super) fn remove(&mut self, entity: Entity) -> Option<T> {
+        let sparse_index = entity.index() as usize;
+        let row = self.sparse.get(sparse_index).copied().flatten()?;
+        if self.entities[row] != entity {
+            return None;
+        }
+        Some(self.remove_row(row))
+    }
+
+    fn remove_row(&mut self, row: usize) -> T {
+        let removed_entity = self.entities.swap_remove(row);
+        let removed_component = self.components.swap_remove(row);
+        self.sparse[removed_entity.index() as usize] = None;
+
+        if row < self.entities.len() {
+            let moved_entity = self.entities[row];
+            self.sparse[moved_entity.index() as usize] = Some(row);
+        }
+        removed_component
+    }
+
+    pub(super) fn len(&self) -> usize {
+        debug_assert_eq!(self.entities.len(), self.components.len());
+        self.components.len()
+    }
+
+    pub(super) fn is_empty(&self) -> bool {
+        self.components.is_empty()
+    }
+
+    pub(super) fn entities(&self) -> &[Entity] {
+        &self.entities
+    }
+
+    pub(super) fn components(&self) -> &[T] {
+        &self.components
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::ComponentStorage;
+    use crate::ecs::Entity;
+
+    fn entity(index: u32, generation: u32) -> Entity {
+        Entity::from_parts(index, generation)
+    }
+
+    #[test]
+    fn rows_are_contiguous_and_keep_entity_component_alignment() {
+        let mut storage = ComponentStorage::new();
+        assert!(storage.is_empty());
+        assert_eq!(storage.insert(entity(3, 0), "three"), Ok(None));
+        assert_eq!(storage.insert(entity(8, 1), "eight"), Ok(None));
+        assert_eq!(storage.entities(), &[entity(3, 0), entity(8, 1)]);
+        assert_eq!(storage.components(), &["three", "eight"]);
+        assert_eq!(storage.len(), 2);
+        assert_eq!(storage.get(entity(8, 1)), Some(&"eight"));
+    }
+
+    #[test]
+    fn insert_replaces_value_without_adding_a_row() {
+        let mut storage = ComponentStorage::new();
+        assert_eq!(storage.insert(entity(2, 0), 10), Ok(None));
+        assert_eq!(storage.insert(entity(2, 0), 20), Ok(Some(10)));
+        assert_eq!(storage.len(), 1);
+        assert_eq!(storage.get(entity(2, 0)), Some(&20));
+    }
+
+    #[test]
+    fn swap_remove_updates_moved_entity_sparse_index() {
+        let mut storage = ComponentStorage::new();
+        storage.insert(entity(1, 0), 10).unwrap();
+        storage.insert(entity(4, 0), 40).unwrap();
+        storage.insert(entity(7, 0), 70).unwrap();
+        assert_eq!(storage.remove(entity(4, 0)), Some(40));
+        assert_eq!(storage.len(), 2);
+        assert_eq!(storage.get(entity(1, 0)), Some(&10));
+        assert_eq!(storage.get(entity(7, 0)), Some(&70));
+        assert_eq!(storage.entities(), &[entity(1, 0), entity(7, 0)]);
+        assert_eq!(storage.components(), &[10, 70]);
+    }
+
+    #[test]
+    fn stale_generation_cannot_read_or_remove_reused_index() {
+        let mut storage = ComponentStorage::new();
+        let stale = entity(5, 0);
+        let current = entity(5, 1);
+        storage.insert(stale, 11).unwrap();
+        assert_eq!(storage.insert(current, 22), Ok(None));
+        assert_eq!(storage.get(stale), None);
+        assert_eq!(storage.remove(stale), None);
+        assert_eq!(storage.get(current), Some(&22));
+        assert_eq!(storage.len(), 1);
+    }
+
+    #[test]
+    fn mutable_access_changes_value_without_changing_row_shape() {
+        let mut storage = ComponentStorage::new();
+        storage.insert(entity(0, 0), 5).unwrap();
+        *storage.get_mut(entity(0, 0)).unwrap() = 9;
+        assert_eq!(storage.components(), &[9]);
+        assert_eq!(storage.len(), 1);
+    }
+}

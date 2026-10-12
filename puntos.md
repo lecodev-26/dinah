@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 89
+- Completados: 90
 - En progreso: 4
-- Pendientes: 194
+- Pendientes: 193
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -123,7 +123,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 093 — Definir Component (`dinah::ecs::Component` público con implementación blanket para todo tipo Rust `'static`; sin requisito prematuro `Send + Sync`, validado con tests unitarios y de integración)
 - [x] 094 — Definir World (`World::spawn/despawn/contains/len/is_empty`, errores tipados, reutilización con generación incrementada y retirada segura ante overflow; tests unitarios y públicos)
 - [x] 095 — Definir queries (contrato documentado: selección por componentes requeridos, semántica de resultados vacíos, préstamos/mutabilidad, orden no estable y casos de aceptación; implementación pendiente en 096–097)
-- [ ] 096 — Crear almacenamiento contiguo
+- [x] 096 — Crear almacenamiento contiguo (`ComponentStorage<T>` interno con columnas contiguas alineadas, sparse index validado por generación, reemplazo, eliminación `swap_remove` y reservas previas para evitar desalineación por fallo de asignación; aún no integrado con `World`)
 - [ ] 097 — Crear iteración eficiente
 - [ ] 098 — Integrar ECS con Runtime
 - [ ] 099 — Integrar ECS con Compute
@@ -397,3 +397,5 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 - 2026-10-12 — Punto 094 completado: `World` administra liveness, creación/destrucción, reutilización de índices y rechazo de handles obsoletos; los slots no reutilizables se retiran al desbordar la generación. Tests unitarios/de integración, documentación y checks CI añadidos; pendiente validación CI remota.
 
 - 2026-10-12 — Punto 095 completado como diseño: `docs/ecs.md` define el contrato de selección de queries, entidades vivas, resultados vacíos, préstamos, límites de mutabilidad, orden no garantizado, límites de rendimiento y casos de aceptación. No se declara implementada la API; almacenamiento e iteración siguen pendientes en 096–097. CI del punto 094 y auditoría documental previos verificados verdes.
+
+- 2026-10-12 — Punto 096 completado: añadido `src/ecs/storage.rs` con `ComponentStorage<T>` interno, columnas `Vec<Entity>`/`Vec<T>` alineadas, lookup sparse por índice y validación de generación, reemplazo, `swap_remove` con reparación del índice movido y reserva fallible previa a mutaciones. Tests unitarios cubren alineación, reemplazo, borrado/movimiento, handles obsoletos y acceso mutable. La API sigue interna y no se declara integrado el storage en `World`; punto 097 mantiene la iteración pendiente.

@@ -1,6 +1,6 @@
 # dinah ECS — diseño inicial
 
-Estado: diseño inicial aprobado; `Entity`, `Component` y el ciclo de vida inicial de `World` implementados. El almacenamiento de componentes y las queries siguen pendientes. Las decisiones de este documento son una propuesta inicial revisable, no una garantía de estabilidad pública.
+Estado: diseño inicial aprobado; `Entity`, `Component` y el ciclo de vida inicial de `World` implementados. El almacenamiento contiguo interno está implementado en el punto 096; todavía no está conectado a `World` ni expuesto como API pública. Las queries siguen pendientes. Las decisiones de este documento son una propuesta inicial revisable, no una garantía de estabilidad pública.
 
 ## Objetivos
 
@@ -49,6 +49,12 @@ Al borrar una fila se usa `swap_remove`; la última fila se mueve a la posición
 `dinah::ecs::Entity` es un handle `Copy` con dos campos privados `u32`: índice y generación. Expone `index()` y `generation()` como accesores de solo lectura y una representación diagnóstica `indexvgen` mediante `Display`. Su constructor es privado para usuarios externos; el `World` será responsable de emitir handles válidos. La implementación no asigna IDs, no prueba por sí sola que un handle esté vivo y no promete unicidad fuera del mundo propietario.
 
 Los tests verifican que igualdad y hashing distinguen generaciones distintas del mismo índice, que handles equivalentes se comparan igual, que los valores máximos se conservan y que el handle ocupa ocho bytes en la plataforma objetivo de Rust (dos `u32`). La validación de vida útil y reutilización queda pendiente de `World`, que aún no está implementado.
+
+### Almacenamiento contiguo inicial (punto 096)
+
+`ComponentStorage<T>` es un detalle interno del ECS con tres vectores: `entities` y `components` forman columnas contiguas alineadas por fila; `sparse` mapea el índice de entidad a una fila candidata. Antes de devolver o quitar un valor se comprueba la identidad completa de `Entity`, incluida la generación. Reemplazar el componente de la misma entidad conserva la fila; reutilizar un índice con otra generación elimina la fila antigua y añade la nueva. Al borrar una fila se usa `swap_remove` y se actualiza el índice disperso de la fila movida.
+
+Las inserciones reservan capacidad en todas las columnas que puedan crecer antes de modificar sus contenidos. Un error de reserva devuelve `StorageError::AllocationFailed` y no deja las columnas con longitudes diferentes. Esta estructura aún no valida por sí sola que el handle esté vivo en `World`; esa comprobación pertenece al propietario y la integración posterior. El punto 096 no afirma que `World::insert/get/remove` ni las queries estén implementadas.
 
 ## Componentes
 
@@ -121,7 +127,7 @@ La destrucción de una entidad debe dejar todos los storages coherentes. Las pru
 ## Secuencia de aceptación
 
 1. **091 — Diseño ECS:** decisiones, invariantes, límites y secuencia de integración documentados aquí.
-2. **092–094 — Entity, Component, World:** implementados los handles, el bound público y el ciclo de vida inicial de World; el storage de componentes permanece fuera de este punto.
-3. **095–097 — Queries, almacenamiento e iteración:** tests de consistencia antes de optimizar.
+2. **092–094 — Entity, Component, World:** implementados los handles, el bound público y el ciclo de vida inicial de World; el storage de componentes permanece fuera de estos puntos.
+3. **095–097 — Queries, almacenamiento e iteración:** contrato de queries y storage contiguo interno documentados/implementados incrementalmente; la integración con World y la iteración aún requieren sus propios puntos y tests de consistencia.
 4. **098–100 — Integración Runtime/Compute y sistemas paralelos:** solo con ownership y conflictos de acceso definidos.
 5. **101–104 — Consistencia, benchmarks, acceso a memoria y documentación:** medir antes de cambiar representación o prometer rendimiento.
