@@ -75,7 +75,7 @@ Las garantías de no modificación aplican a los errores normales de longitud/ca
 
 ## Cobertura de determinismo observable (punto 089)
 
-`tests/memory_determinism.rs` repite secuencias sobre la API pública de `Buffer` y `SoaBuffer`: inserción hasta el límite, rechazo sin pérdida de contenido, extracción del último elemento, `clear`, reutilización de la capacidad y alineación de columnas al insertar por lotes y extraer filas. Las comprobaciones validan estados observables deterministas para una misma secuencia de operaciones; no implican sincronización interna ni una garantía de orden entre hilos.
+`tests/memory_determinism.rs` repite secuencias sobre la API pública de `Buffer` y `SoaBuffer`: inserción hasta el límite, rechazo sin pérdida de contenido, extracción del último elemento, `clear`, reutilización de la capacidad y alineación de columnas al insertar por lotes y extraer filas. También repite errores de extensión por capacidad/longitud comprobando que el estado no cambia, y los contratos de buffer de capacidad cero (vacío y lleno simultáneamente). Las comprobaciones validan estados observables deterministas para una misma secuencia de operaciones; no implican sincronización interna ni una garantía de orden entre hilos.
 
 ## Ownership, reserva y concurrencia
 
