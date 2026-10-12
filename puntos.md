@@ -6,8 +6,8 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 
 - Total de puntos numerados: 287
 - Completados: 81
-- En progreso: 4
-- Pendientes: 202
+- En progreso: 5
+- Pendientes: 201
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -113,7 +113,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [ ] 086 — Añadir métricas de rendimiento
 - [ ] 087 — Crear benchmarks CPU
 - [ ] 088 — Comparar secuencial/paralelo
-- [ ] 089 — Testear determinismo
+- [>] 089 — Testear determinismo (tests públicos repetidos para reducción entera asociativa, resultado indexado de iteración paralela y selección determinista del error de partición; falta ampliar la matriz a otros subsistemas y contratos)
 - [ ] 090 — Documentar Compute
 
 ## FASE 5 — Data / ECS
@@ -368,3 +368,5 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 - 2026-10-12 — Punto 085: tercera ejecución completa de AoS/SoA archivada (run 38208067774; CI de benchmarks y archivado verdes). Se añadieron resultados de los cinco runners; se mantiene en progreso porque el microbenchmark no mide construcción/conversión ni escrituras de una carga real.
 
 - 2026-10-12 — Punto 035: auditoría de Core documentada en `docs/core.md`; se verificaron contratos, errores, matriz completa de transiciones y CI verde. Se mantiene en progreso porque `HasCoreId` aún no tiene un consumidor real que permita validar si merece formar parte del contrato estable.
+
+- 2026-10-12 — Punto 089 iniciado: añadidos tests de determinismo de Compute en la API pública con ejecuciones repetidas y distintos recuentos de workers; CI pendiente. El punto permanece en progreso porque el determinismo transversal de Runtime/Memory y otros subsistemas aún no está cubierto.
