@@ -6,8 +6,8 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 
 - Total de puntos numerados: 287
 - Completados: 81
-- En progreso: 5
-- Pendientes: 201
+- En progreso: 6
+- Pendientes: 200
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -112,7 +112,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [>] 085 — Optimizar estructuras data-oriented (benchmark AoS/SoA repetido tres veces en cinco runners; SoA pierde de forma consistente al leer un campo en Windows y al leer ambos en Linux ARM64, pero el resto de diferencias son pequeñas o variables; falta una carga real y medir construcción/conversión/escrituras)
 - [ ] 086 — Añadir métricas de rendimiento
 - [ ] 087 — Crear benchmarks CPU
-- [ ] 088 — Comparar secuencial/paralelo
+- [>] 088 — Comparar secuencial/paralelo (benchmark del mismo kernel y tamaños para bucle directo, API secuencial y API paralela con 2/4 workers; verificación de igualdad de salida; falta CI multiplataforma y análisis de resultados)
 - [>] 089 — Testear determinismo (tests públicos repetidos para reducción entera asociativa, resultado indexado de iteración paralela y selección determinista del error de partición; falta ampliar la matriz a otros subsistemas y contratos)
 - [ ] 090 — Documentar Compute
 
@@ -370,3 +370,5 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 - 2026-10-12 — Punto 035: auditoría de Core documentada en `docs/core.md`; se verificaron contratos, errores, matriz completa de transiciones y CI verde. Se mantiene en progreso porque `HasCoreId` aún no tiene un consumidor real que permita validar si merece formar parte del contrato estable.
 
 - 2026-10-12 — Punto 089 iniciado: añadidos tests de determinismo de Compute en la API pública con ejecuciones repetidas y distintos recuentos de workers; CI pendiente. El punto permanece en progreso porque el determinismo transversal de Runtime/Memory y otros subsistemas aún no está cubierto.
+
+- 2026-10-12 — Punto 088 iniciado: ampliado `benches/compute.rs` para comparar bucle directo, `for_each` y `for_each_parallel` con 2/4 workers en tamaños iguales; se comprueba equivalencia de salida y queda pendiente la evidencia de benchmarks en CI multiplataforma.

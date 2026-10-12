@@ -161,9 +161,11 @@ La CI remota valida formato, tests, Clippy y documentación pública. Los benchm
 
 `tests/compute_determinism.rs` valida el contrato público en ejecuciones repetidas: una suma entera asociativa devuelve el mismo resultado con 1, 2, 3, 7 y 64 workers; la iteración paralela produce el mismo vector indexado aunque el orden de finalización de las tareas no esté definido; y una reducción que falla en varias particiones devuelve siempre el error de la partición más temprana según el orden de entrada. Estos tests no implican determinismo temporal, orden de finalización ni equivalencia bit a bit para reducciones de punto flotante.
 
-## SIMD y evidencia de rendimiento (puntos 083–084)
+## Benchmarks secuencial/paralelo y SIMD (puntos 083–088)
 
-La investigación de alternativas, restricciones y la primera medición exploratoria están registradas en [`docs/simd-research.md`](simd-research.md). `benches/compute.rs` compara el bucle directo con `compute::for_each` en un kernel numérico seguro; las diferencias observadas son pequeñas/variables y no comparan aún una implementación SIMD. Por ello no se añade SIMD manual ni se afirma aceleración: el punto 084 sigue en progreso hasta medir una alternativa vectorial frente a la referencia escalar con evidencia reproducible. No se prometen vectorización automática ni alineación especial.
+`benches/compute.rs` compara el bucle escalar directo, `compute::for_each`, `compute::for_each_parallel` con 2 y 4 workers, y el candidato seguro `wide::f32x4` sobre el mismo kernel numérico y tamaños idénticos. El setup de los buffers se realiza fuera de las muestras; cada variante transforma repetidamente su propio buffer y el benchmark verifica la igualdad de resultados escalares/paralelos antes de informar tiempos. Las medianas permiten ver el coste de coordinación, pero no constituyen una carga de aplicación ni justifican paralelizar automáticamente operaciones pequeñas. Los resultados deben obtenerse en la CI multiplataforma y archivarse antes de concluir si la ruta paralela compensa.
+
+La investigación de alternativas SIMD y sus restricciones está registrada en [`docs/simd-research.md`](simd-research.md). No se añade SIMD manual ni se afirma aceleración: el punto 084 sigue en progreso hasta tener un kernel de producción que justifique la complejidad y evidencia reproducible. No se prometen vectorización automática ni alineación especial.
 
 ## Decisiones aplazadas
 

@@ -1,7 +1,7 @@
 use std::hint::black_box;
 use std::time::{Duration, Instant};
 
-use dinah::compute::for_each;
+use dinah::compute::{for_each, for_each_parallel};
 use wide::f32x4;
 
 const SAMPLES: usize = 11;
@@ -69,6 +69,8 @@ fn main() {
         let initial: Vec<f32> = (0..size).map(|i| (i as f32 * 0.25) - 10.0).collect();
         let mut direct = initial.clone();
         let mut api = initial.clone();
+        let mut parallel_two = initial.clone();
+        let mut parallel_four = initial.clone();
         let mut vector = initial;
 
         let direct_samples = measure(|| {
@@ -84,6 +86,20 @@ fn main() {
             black_box(&api);
         });
 
+        let parallel_two_samples = measure(|| {
+            for_each_parallel(black_box(&mut parallel_two), 2, |value| {
+                *value = *value * 1.0001 + 0.25;
+            })
+            .expect("worker count is non-zero");
+            black_box(&parallel_two);
+        });
+        let parallel_four_samples = measure(|| {
+            for_each_parallel(black_box(&mut parallel_four), 4, |value| {
+                *value = *value * 1.0001 + 0.25;
+            })
+            .expect("worker count is non-zero");
+            black_box(&parallel_four);
+        });
         let vector_samples = measure(|| {
             transform_wide(black_box(&mut vector));
             black_box(&vector);
@@ -93,9 +109,27 @@ fn main() {
             direct, api,
             "both scalar loops must implement the same transform"
         );
+        assert_eq!(
+            direct, parallel_two,
+            "parallel two-worker transform must match scalar output"
+        );
+        assert_eq!(
+            direct, parallel_four,
+            "parallel four-worker transform must match scalar output"
+        );
         assert_close(&direct, &vector);
         report("direct_scalar_transform", size, &direct_samples);
         report("compute_for_each_transform", size, &api_samples);
+        report(
+            "compute_for_each_parallel_2_workers",
+            size,
+            &parallel_two_samples,
+        );
+        report(
+            "compute_for_each_parallel_4_workers",
+            size,
+            &parallel_four_samples,
+        );
         report("wide_f32x4_candidate_transform", size, &vector_samples);
     }
 }
