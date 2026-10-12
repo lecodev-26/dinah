@@ -1,0 +1,26 @@
+DINAH benchmark environment
+timestamp_utc=2026-10-12T05:22:40.511213+00:00
+os=macOS-15.7.9-arm64-arm-64bit-Mach-O
+system=Darwin
+release=24.6.0
+machine=arm64
+processor=arm
+python=3.14.7
+runner_os=macOS
+runner_arch=ARM64
+github_sha=114e0f73e05d17bdfd6bb7002a52ee234b72f834
+command=python3 scripts/run_benchmarks.py
+profile=release (cargo bench)
+
+$ rustc -Vv
+rustc 1.99.0 (b940084d7 2026-09-28)
+binary: rustc
+commit-hash: b940084d7eb6a299eb4bfeb8e34901bc051e7ac4
+commit-date: 2026-09-28
+host: aarch64-apple-darwin
+release: 1.99.0
+LLVM version: 23.1.1
+
+$ cargo --version
+cargo 1.99.0 (5f94df478 2026-08-27)
+
