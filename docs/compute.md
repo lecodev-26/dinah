@@ -163,7 +163,21 @@ La CI remota valida formato, tests, Clippy y documentación pública. Los benchm
 
 ## Benchmarks secuencial/paralelo y SIMD (puntos 083–088)
 
-`benches/compute.rs` compara el bucle escalar directo, `compute::for_each`, `compute::for_each_parallel` con 2 y 4 workers, y el candidato seguro `wide::f32x4` sobre el mismo kernel numérico y tamaños idénticos. El setup de los buffers se realiza fuera de las muestras; cada variante transforma repetidamente su propio buffer y el benchmark verifica la igualdad de resultados escalares/paralelos antes de informar tiempos. Las medianas permiten ver el coste de coordinación, pero no constituyen una carga de aplicación ni justifican paralelizar automáticamente operaciones pequeñas. Los resultados deben obtenerse en la CI multiplataforma y archivarse antes de concluir si la ruta paralela compensa.
+`benches/compute.rs` compara el bucle escalar directo, `compute::for_each`, `compute::for_each_parallel` con 2 y 4 workers, y el candidato seguro `wide::f32x4` sobre el mismo kernel numérico y tamaños idénticos. El setup de los buffers se realiza fuera de las muestras; cada variante transforma repetidamente su propio buffer y el benchmark verifica la igualdad de resultados escalares/paralelos antes de informar tiempos. Se registran 11 muestras por caso y se informa la mediana. La ejecución release multiplataforma (run 38208860456, código `f728dba482d00450bb06a7e7b5f994e3f82152dc`) está archivada en [`artifacts/benchmarks/f728dba482d00450bb06a7e7b5f994e3f82152dc/run-38208860456/`](../artifacts/benchmarks/f728dba482d00450bb06a7e7b5f994e3f82152dc/run-38208860456/).
+
+### Resultado medido: kernel ligero secuencial/paralelo (punto 088)
+
+En el tamaño máximo de 262.144 elementos, las medianas de `for_each_parallel` con 2 workers fueron entre 4,0× y 10,3× el tiempo de `for_each` en los cinco runners; con 4 workers, entre 6,3× y 16,6×. Con 16.384 elementos, las rutas paralelas también fueron más lentas en todos los runners. Para tamaños de 64 y 1.024, el coste de coordinación domina ampliamente. En esta carga concreta no aparece un punto de equilibrio: la ruta secuencial es la opción adecuada y la paralela no debe activarse automáticamente para operaciones ligeras.
+
+| Runner | Secuencial, 262.144 elems. | 2 workers / secuencial | 4 workers / secuencial |
+|---|---:|---:|---:|
+| Linux x86-64 | 18.131 ns | 6,7× | 10,1× |
+| Linux ARM64 | 30.056 ns | 4,1× | 6,5× |
+| macOS ARM64 | 18.545 ns | 4,0× | 6,3× |
+| macOS x86-64 | 37.095 ns | 10,3× | 16,6× |
+| Windows x86-64 | 20.780 ns | 6,2× | 11,6× |
+
+Las cifras corresponden a un microbenchmark de transformación aritmética ligera, no a una aplicación representativa ni a una estimación universal del rendimiento paralelo. El resultado cierra la tarea de comparación, pero no invalida el paralelismo para kernels con mucho más trabajo por elemento, amortización por lotes o una estrategia de coordinación distinta. Los artefactos completos incluyen los ocho tamaños y los datos de entorno.
 
 La investigación de alternativas SIMD y sus restricciones está registrada en [`docs/simd-research.md`](simd-research.md). No se añade SIMD manual ni se afirma aceleración: el punto 084 sigue en progreso hasta tener un kernel de producción que justifique la complejidad y evidencia reproducible. No se prometen vectorización automática ni alineación especial.
 

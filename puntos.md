@@ -5,8 +5,8 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 81
-- En progreso: 6
+- Completados: 82
+- En progreso: 5
 - Pendientes: 200
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
@@ -112,7 +112,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [>] 085 — Optimizar estructuras data-oriented (benchmark AoS/SoA repetido tres veces en cinco runners; SoA pierde de forma consistente al leer un campo en Windows y al leer ambos en Linux ARM64, pero el resto de diferencias son pequeñas o variables; falta una carga real y medir construcción/conversión/escrituras)
 - [ ] 086 — Añadir métricas de rendimiento
 - [ ] 087 — Crear benchmarks CPU
-- [>] 088 — Comparar secuencial/paralelo (benchmark del mismo kernel y tamaños para bucle directo, API secuencial y API paralela con 2/4 workers; verificación de igualdad de salida; falta CI multiplataforma y análisis de resultados)
+- [x] 088 — Comparar secuencial/paralelo (benchmark release archivado en cinco runners; salida escalar/paralela verificada; análisis documentado: en el kernel ligero, 2 workers tardan 4,0–10,3× más incluso con 262.144 elementos y 4 workers 6,3–16,6× más; no se justifica paralelizar automáticamente este kernel)
 - [>] 089 — Testear determinismo (tests públicos repetidos para reducción entera asociativa, resultado indexado de iteración paralela y selección determinista del error de partición; falta ampliar la matriz a otros subsistemas y contratos)
 - [ ] 090 — Documentar Compute
 
@@ -371,4 +371,4 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 
 - 2026-10-12 — Punto 089 iniciado: añadidos tests de determinismo de Compute en la API pública con ejecuciones repetidas y distintos recuentos de workers; CI pendiente. El punto permanece en progreso porque el determinismo transversal de Runtime/Memory y otros subsistemas aún no está cubierto.
 
-- 2026-10-12 — Punto 088 iniciado: ampliado `benches/compute.rs` para comparar bucle directo, `for_each` y `for_each_parallel` con 2/4 workers en tamaños iguales; se comprueba equivalencia de salida y queda pendiente la evidencia de benchmarks en CI multiplataforma.
+- 2026-10-12 — Punto 088 completado: benchmark release y CI multiplataforma verdes en cinco runners (run 38208860456; CI https://github.com/lecodev-26/dinah/actions/runs/38208860464; benchmarks https://github.com/lecodev-26/dinah/actions/runs/38208860456; auditoría documental https://github.com/lecodev-26/dinah/actions/runs/38208860468). Resultados archivados en `artifacts/benchmarks/f728dba482d00450bb06a7e7b5f994e3f82152dc/run-38208860456/`. En 262.144 elementos, 2 workers tardaron 4,0–10,3× y 4 workers 6,3–16,6× que `for_each`; el kernel ligero no compensa el coste de coordinación. Esto cierra la comparación, no demuestra que todo workload paralelo sea más lento.
