@@ -563,3 +563,7 @@ baseline is preserved under `artifacts/benchmarks/runtime-baseline-2026-10-10.tx
 with provenance in `artifacts/benchmarks/README.md`. Future important generated
 reports should be archived in `artifacts/` with dated filenames and source-run
 metadata so they remain available after CI artifact retention expires.
+
+## Cobertura concurrente de determinismo (punto 089)
+
+`tests/runtime_determinism.rs` repite actualizaciones concurrentes a través de clones de `Shared<T>` y confirma el total final y la liberación de clones. También verifica los totales de métricas y la capacidad, drenaje y vaciado del `TraceBuffer` con productores concurrentes. No se afirma un orden determinista entre eventos de hilos distintos.

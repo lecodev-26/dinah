@@ -109,3 +109,91 @@ fn cancellation_task_state_metrics_and_trace_contracts_repeat() {
         assert_eq!(trace.snapshot().unwrap(), vec![TraceEvent::TaskCompleted]);
     }
 }
+
+#[test]
+fn shared_state_updates_are_repeatable_across_concurrent_clones() {
+    use dinah::runtime::Shared;
+    use std::sync::{Arc, Barrier};
+
+    const WORKERS: usize = 8;
+    const UPDATES_PER_WORKER: usize = 256;
+    const REPEATS: usize = 16;
+
+    for repetition in 0..REPEATS {
+        let shared = Shared::new(0_usize);
+        let barrier = Arc::new(Barrier::new(WORKERS + 1));
+        let mut threads = Vec::with_capacity(WORKERS);
+        for worker in 0..WORKERS {
+            let shared = shared.clone();
+            let barrier = Arc::clone(&barrier);
+            threads.push(std::thread::spawn(move || {
+                barrier.wait();
+                for update in 0..UPDATES_PER_WORKER {
+                    *shared.lock().expect("shared lock stays healthy") += 1;
+                    if (update + worker + repetition) % 31 == 0 {
+                        std::hint::black_box(update ^ worker);
+                    }
+                }
+            }));
+        }
+        assert_eq!(shared.strong_count(), WORKERS + 1);
+        barrier.wait();
+        for thread in threads {
+            thread.join().expect("worker must finish");
+        }
+        assert_eq!(
+            *shared.lock().expect("shared lock stays healthy"),
+            WORKERS * UPDATES_PER_WORKER,
+            "repetition={repetition}"
+        );
+        assert_eq!(shared.strong_count(), 1);
+    }
+}
+
+#[test]
+fn concurrent_metrics_and_trace_capacity_are_repeatable() {
+    use dinah::runtime::{RuntimeMetrics, TraceBuffer, TraceEvent};
+    use std::sync::Arc;
+
+    const WORKERS: usize = 8;
+    const EVENTS_PER_WORKER: usize = 64;
+    for _ in 0..16 {
+        let metrics = Arc::new(RuntimeMetrics::new());
+        let trace = Arc::new(TraceBuffer::new(
+            NonZeroUsize::new(WORKERS * EVENTS_PER_WORKER)
+                .expect("test trace capacity is positive"),
+        ));
+        let threads: Vec<_> = (0..WORKERS)
+            .map(|_| {
+                let metrics = Arc::clone(&metrics);
+                let trace = Arc::clone(&trace);
+                std::thread::spawn(move || {
+                    for _ in 0..EVENTS_PER_WORKER {
+                        metrics.record_submitted();
+                        trace
+                            .record(TraceEvent::TaskSubmitted)
+                            .expect("capacity equals total event count");
+                    }
+                })
+            })
+            .collect();
+        for thread in threads {
+            thread.join().expect("metrics/trace worker must finish");
+        }
+        let snapshot = metrics.snapshot();
+        assert_eq!(snapshot.submitted, (WORKERS * EVENTS_PER_WORKER) as u64);
+        assert_eq!(snapshot.started, 0);
+        assert_eq!(
+            trace.snapshot().expect("trace lock stays healthy").len(),
+            WORKERS * EVENTS_PER_WORKER
+        );
+        assert_eq!(
+            trace.drain().expect("trace lock stays healthy").len(),
+            WORKERS * EVENTS_PER_WORKER
+        );
+        assert!(trace
+            .snapshot()
+            .expect("trace lock stays healthy")
+            .is_empty());
+    }
+}
