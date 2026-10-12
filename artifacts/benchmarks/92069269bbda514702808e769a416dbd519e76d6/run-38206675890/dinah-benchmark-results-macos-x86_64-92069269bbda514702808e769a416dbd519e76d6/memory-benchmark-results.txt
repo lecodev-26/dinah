@@ -1,0 +1,33 @@
+[1m[92m   Compiling[0m dinah v0.1.0 (/Users/runner/work/dinah/dinah)
+[1m[92m    Finished[0m `bench` profile [optimized] target(s) in 1.08s
+[1m[92m     Running[0m benches/memory.rs (target/release/deps/memory-3b5667baac4c8515)
+dinah memory benchmark; build=release; statistic=median; samples=7
+Note: results are machine-specific observations, not performance guarantees.
+case=buffer_push_preallocated operations=64 samples=7 median_total_ns=242 ns_per_operation=3.781 operations_per_second=264462810
+case=buffer_bulk_extend operations=64 samples=7 median_total_ns=171 ns_per_operation=2.672 operations_per_second=374269006
+case=soa_push_rows operations=64 samples=7 median_total_ns=454 ns_per_operation=7.094 operations_per_second=140969163
+case=soa_bulk_extend operations=64 samples=7 median_total_ns=329 ns_per_operation=5.141 operations_per_second=194528875
+case=soa_scan_two_columns operations=64 samples=7 median_total_ns=97 ns_per_operation=1.516 operations_per_second=659793814
+case=layout_aos_scan_one_field operations=64 samples=7 median_total_ns=141 ns_per_operation=2.203 operations_per_second=453900709
+case=layout_soa_scan_one_field operations=64 samples=7 median_total_ns=134 ns_per_operation=2.094 operations_per_second=477611940
+case=layout_aos_scan_both_fields operations=64 samples=7 median_total_ns=139 ns_per_operation=2.172 operations_per_second=460431655
+case=layout_soa_scan_both_fields operations=64 samples=7 median_total_ns=110 ns_per_operation=1.719 operations_per_second=581818182
+case=buffer_push_preallocated operations=1024 samples=7 median_total_ns=4191 ns_per_operation=4.093 operations_per_second=244333095
+case=buffer_bulk_extend operations=1024 samples=7 median_total_ns=345 ns_per_operation=0.337 operations_per_second=2968115942
+case=soa_push_rows operations=1024 samples=7 median_total_ns=5990 ns_per_operation=5.850 operations_per_second=170951586
+case=soa_bulk_extend operations=1024 samples=7 median_total_ns=792 ns_per_operation=0.773 operations_per_second=1292929293
+case=soa_scan_two_columns operations=1024 samples=7 median_total_ns=362 ns_per_operation=0.354 operations_per_second=2828729282
+case=layout_aos_scan_one_field operations=1024 samples=7 median_total_ns=616 ns_per_operation=0.602 operations_per_second=1662337662
+case=layout_soa_scan_one_field operations=1024 samples=7 median_total_ns=719 ns_per_operation=0.702 operations_per_second=1424200278
+case=layout_aos_scan_both_fields operations=1024 samples=7 median_total_ns=1220 ns_per_operation=1.191 operations_per_second=839344262
+case=layout_soa_scan_both_fields operations=1024 samples=7 median_total_ns=1181 ns_per_operation=1.153 operations_per_second=867061812
+case=buffer_push_preallocated operations=16384 samples=7 median_total_ns=30796 ns_per_operation=1.880 operations_per_second=532017145
+case=buffer_bulk_extend operations=16384 samples=7 median_total_ns=3897 ns_per_operation=0.238 operations_per_second=4204259687
+case=soa_push_rows operations=16384 samples=7 median_total_ns=49107 ns_per_operation=2.997 operations_per_second=333638789
+case=soa_bulk_extend operations=16384 samples=7 median_total_ns=8484 ns_per_operation=0.518 operations_per_second=1931164545
+case=soa_scan_two_columns operations=16384 samples=7 median_total_ns=4365 ns_per_operation=0.266 operations_per_second=3753493700
+case=layout_aos_scan_one_field operations=16384 samples=7 median_total_ns=8366 ns_per_operation=0.511 operations_per_second=1958403060
+case=layout_soa_scan_one_field operations=16384 samples=7 median_total_ns=6893 ns_per_operation=0.421 operations_per_second=2376904106
+case=layout_aos_scan_both_fields operations=16384 samples=7 median_total_ns=13938 ns_per_operation=0.851 operations_per_second=1175491462
+case=layout_soa_scan_both_fields operations=16384 samples=7 median_total_ns=13378 ns_per_operation=0.817 operations_per_second=1224697264
+case=shared_mutex_lock_update operations=10000 samples=7 median_total_ns=257810 ns_per_operation=25.781 operations_per_second=38788255

@@ -1,0 +1,30 @@
+[1m[92m   Compiling[0m dinah v0.1.0 (/Users/runner/work/dinah/dinah)
+[1m[92m    Finished[0m `bench` profile [optimized] target(s) in 0.26s
+[1m[92m     Running[0m benches/compute.rs (target/release/deps/compute-55176ec2fbed2eb3)
+dinah compute SIMD investigation; build=release; statistic=median; samples=11; iterations_per_sample=10
+Compares scalar loops with a safe wide::f32x4 candidate; SIMD speedup is not assumed.
+target=aarch64
+case=direct_scalar_transform elements=64 samples=11 iterations_per_sample=10 median_op_ns=12 ns_per_element=0.188 elements_per_second=5333333333
+case=compute_for_each_transform elements=64 samples=11 iterations_per_sample=10 median_op_ns=12 ns_per_element=0.188 elements_per_second=5333333333
+case=wide_f32x4_candidate_transform elements=64 samples=11 iterations_per_sample=10 median_op_ns=12 ns_per_element=0.188 elements_per_second=5333333333
+case=direct_scalar_transform elements=65 samples=11 iterations_per_sample=10 median_op_ns=12 ns_per_element=0.185 elements_per_second=5416666667
+case=compute_for_each_transform elements=65 samples=11 iterations_per_sample=10 median_op_ns=12 ns_per_element=0.185 elements_per_second=5416666667
+case=wide_f32x4_candidate_transform elements=65 samples=11 iterations_per_sample=10 median_op_ns=16 ns_per_element=0.246 elements_per_second=4062500000
+case=direct_scalar_transform elements=1024 samples=11 iterations_per_sample=10 median_op_ns=66 ns_per_element=0.064 elements_per_second=15515151515
+case=compute_for_each_transform elements=1024 samples=11 iterations_per_sample=10 median_op_ns=66 ns_per_element=0.064 elements_per_second=15515151515
+case=wide_f32x4_candidate_transform elements=1024 samples=11 iterations_per_sample=10 median_op_ns=116 ns_per_element=0.113 elements_per_second=8827586207
+case=direct_scalar_transform elements=1027 samples=11 iterations_per_sample=10 median_op_ns=66 ns_per_element=0.064 elements_per_second=15560606061
+case=compute_for_each_transform elements=1027 samples=11 iterations_per_sample=10 median_op_ns=70 ns_per_element=0.068 elements_per_second=14671428571
+case=wide_f32x4_candidate_transform elements=1027 samples=11 iterations_per_sample=10 median_op_ns=116 ns_per_element=0.113 elements_per_second=8853448276
+case=direct_scalar_transform elements=16384 samples=11 iterations_per_sample=10 median_op_ns=733 ns_per_element=0.045 elements_per_second=22351978172
+case=compute_for_each_transform elements=16384 samples=11 iterations_per_sample=10 median_op_ns=741 ns_per_element=0.045 elements_per_second=22110661269
+case=wide_f32x4_candidate_transform elements=16384 samples=11 iterations_per_sample=10 median_op_ns=1187 ns_per_element=0.072 elements_per_second=13802864364
+case=direct_scalar_transform elements=16387 samples=11 iterations_per_sample=10 median_op_ns=737 ns_per_element=0.045 elements_per_second=22234735414
+case=compute_for_each_transform elements=16387 samples=11 iterations_per_sample=10 median_op_ns=745 ns_per_element=0.045 elements_per_second=21995973154
+case=wide_f32x4_candidate_transform elements=16387 samples=11 iterations_per_sample=10 median_op_ns=1187 ns_per_element=0.072 elements_per_second=13805391744
+case=direct_scalar_transform elements=262144 samples=11 iterations_per_sample=10 median_op_ns=16916 ns_per_element=0.065 elements_per_second=15496807756
+case=compute_for_each_transform elements=262144 samples=11 iterations_per_sample=10 median_op_ns=16920 ns_per_element=0.065 elements_per_second=15493144208
+case=wide_f32x4_candidate_transform elements=262144 samples=11 iterations_per_sample=10 median_op_ns=21562 ns_per_element=0.082 elements_per_second=12157684816
+case=direct_scalar_transform elements=262147 samples=11 iterations_per_sample=10 median_op_ns=16912 ns_per_element=0.065 elements_per_second=15500650426
+case=compute_for_each_transform elements=262147 samples=11 iterations_per_sample=10 median_op_ns=16933 ns_per_element=0.065 elements_per_second=15481426800
+case=wide_f32x4_candidate_transform elements=262147 samples=11 iterations_per_sample=10 median_op_ns=22300 ns_per_element=0.085 elements_per_second=11755470852
