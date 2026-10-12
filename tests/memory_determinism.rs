@@ -30,16 +30,15 @@ fn buffer_mutation_sequences_produce_identical_observable_states() {
 
         // Repetition intentionally varies inputs; verify each run against its own
         // deterministic reference rather than assuming different inputs match.
-        let expected_popped = Some((((CAPACITY - 1) * 3 + repetition % 5) as u32));
+        let expected_popped = Some(((CAPACITY - 1) * 3 + repetition % 5) as u32);
         assert_eq!(observed.1, expected_popped);
         assert_eq!(observed.2, vec![repetition as u32]);
         assert_eq!(observed.3, 1);
         assert_eq!(observed.4, CAPACITY);
-        assert_eq!(observed.0[0], (repetition % 5) as u32);
-        assert_eq!(observed.0.len(), CAPACITY);
-        assert!(baseline
-            .as_ref()
-            .is_some_and(|values| values.len() == CAPACITY));
+        let expected_rejected_state: Vec<u32> = (0..CAPACITY)
+            .map(|value| (value * 3 + repetition % 5) as u32)
+            .collect();
+        assert_eq!(observed.0, expected_rejected_state);
     }
 }
 
