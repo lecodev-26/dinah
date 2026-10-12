@@ -109,7 +109,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 082 — Crear pipelines (`ComputePipeline` inmediato sobre slice prestado; etapas secuenciales, por lotes y paralelas; errores tipados y tests de orden/corte/ownership; CI verde: https://github.com/lecodev-26/dinah/actions/runs/38154774490)
 - [x] 083 — Investigar SIMD (documentadas opciones, restricciones del crate y criterios de validación; se mantiene la ruta escalar hasta medir un caso real; CI verde: https://github.com/lecodev-26/dinah/actions/runs/38155044022)
 - [>] 084 — Implementar SIMD donde aporte beneficio real (benchmark directo/API y candidato seguro `wide::f32x4`; matriz repetida: mejora en Linux x86-64, regresión en ARM64 y resultados mixtos en otros runners; sin kernel de producción que justifique SIMD; detalles en `docs/simd-research.md`)
-- [>] 085 — Optimizar estructuras data-oriented (benchmark AoS/SoA repetido dos veces en cinco runners; la dirección varía y la estabilidad no está demostrada; falta más repetición y evaluar costes de construcción)
+- [>] 085 — Optimizar estructuras data-oriented (benchmark AoS/SoA repetido tres veces en cinco runners; SoA pierde de forma consistente al leer un campo en Windows y al leer ambos en Linux ARM64, pero el resto de diferencias son pequeñas o variables; falta una carga real y medir construcción/conversión/escrituras)
 - [ ] 086 — Añadir métricas de rendimiento
 - [ ] 087 — Crear benchmarks CPU
 - [ ] 088 — Comparar secuencial/paralelo
@@ -364,3 +364,5 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 - 2026-10-12 — Punto 085 iniciado: añadido benchmark comparativo AoS/SoA para recorrer un campo o ambos campos con datos equivalentes; los resultados reproducibles quedan pendientes de CI multiplataforma.
 2026-10-12 — Punto 085: CI multiplataforma completada; resultados AoS/SoA archivados para cinco runners y documentados en docs/data-oriented-research.md. La señal es mixta y se mantiene en progreso hasta repetir mediciones y valorar costes de construcción/conversión.
 - 2026-10-12 — Punto 085: segunda ejecución de benchmarks completada y archivada (run 38207649616; CI: https://github.com/lecodev-26/dinah/actions/runs/38207649616). Se compararon ambas ejecuciones en cinco runners; cambió la dirección en macOS ARM64 y se mantiene evidencia mixta. Documentación actualizada; el punto sigue en progreso por falta de evidencia estadística y medición de construcción/conversión/escrituras.
+
+- 2026-10-12 — Punto 085: tercera ejecución completa de AoS/SoA archivada (run 38208067774; CI de benchmarks y archivado verdes). Se añadieron resultados de los cinco runners; se mantiene en progreso porque el microbenchmark no mide construcción/conversión ni escrituras de una carga real.
