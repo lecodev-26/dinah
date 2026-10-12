@@ -1,6 +1,6 @@
 # dinah ECS — diseño inicial
 
-Estado: diseño aprobado para orientar la implementación; todavía no existe una API ECS implementada. Las decisiones de este documento son una propuesta inicial revisable, no una garantía de estabilidad pública.
+Estado: diseño inicial aprobado y `dinah::ecs::Entity` implementado. Component storage, `World` y queries siguen pendientes. Las decisiones de este documento son una propuesta inicial revisable, no una garantía de estabilidad pública.
 
 ## Objetivos
 
@@ -34,6 +34,13 @@ Al borrar una fila se usa `swap_remove`; la última fila se mueve a la posición
 - Destruir una entidad invalida el handle, elimina sus componentes de todos los storages y solo después permite reutilizar el índice con una generación nueva.
 - El overflow de generación debe tener una política explícita y probada; nunca debe permitir que un handle antiguo se valide silenciosamente. La implementación podrá retirar ese índice si no puede incrementar la generación.
 - Los handles son locales a un `World`; no implican unicidad global ni estabilidad entre procesos, serializaciones o sesiones.
+
+
+### Primer contrato implementado: `Entity` (punto 092)
+
+`dinah::ecs::Entity` es un handle `Copy` con dos campos privados `u32`: índice y generación. Expone `index()` y `generation()` como accesores de solo lectura y una representación diagnóstica `indexvgen` mediante `Display`. Su constructor es privado para usuarios externos; el `World` será responsable de emitir handles válidos. La implementación no asigna IDs, no prueba por sí sola que un handle esté vivo y no promete unicidad fuera del mundo propietario.
+
+Los tests verifican que igualdad y hashing distinguen generaciones distintas del mismo índice, que handles equivalentes se comparan igual, que los valores máximos se conservan y que el handle ocupa ocho bytes en la plataforma objetivo de Rust (dos `u32`). La validación de vida útil y reutilización queda pendiente de `World`, que aún no está implementado.
 
 ## Componentes
 

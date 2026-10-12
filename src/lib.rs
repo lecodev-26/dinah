@@ -7,6 +7,7 @@
 
 pub mod compute;
 pub mod core;
+pub mod ecs;
 pub mod memory;
 pub mod runtime;
 

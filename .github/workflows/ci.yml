@@ -31,6 +31,9 @@ jobs:
           test -s Cargo.toml
           test -s src/lib.rs
           test -s src/memory/mod.rs
+          test -s src/ecs/mod.rs
+          test -s src/ecs/entity.rs
+          test -s docs/ecs.md
           test -s src/memory/buffer.rs
           test -s docs/memory-model.md
           test -s src/runtime.rs

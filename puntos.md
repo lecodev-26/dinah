@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 85
+- Completados: 86
 - En progreso: 4
-- Pendientes: 198
+- Pendientes: 197
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -119,7 +119,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 ## FASE 5 — Data / ECS
 
 - [x] 091 — Diseñar modelo ECS (decisiones iniciales documentadas en `docs/ecs.md`: sparse sets tipados, Entity con generación, ownership de World, contratos de query, seguridad sin `unsafe`, invariantes y secuencia de integración; todavía no declara APIs implementadas)
-- [ ] 092 — Definir Entity
+- [x] 092 — Definir Entity (`dinah::ecs::Entity` con índice/generación privados, accesores públicos, identidad/hash sensible a generación y pruebas de tamaño/valores límite; la validación de handles vivos queda para World)
 - [ ] 093 — Definir Component
 - [ ] 094 — Definir World
 - [ ] 095 — Definir queries
