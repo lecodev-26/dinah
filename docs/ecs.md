@@ -1,6 +1,6 @@
 # dinah ECS — diseño inicial
 
-Estado: diseño inicial aprobado y `dinah::ecs::Entity` implementado. Component storage, `World` y queries siguen pendientes. Las decisiones de este documento son una propuesta inicial revisable, no una garantía de estabilidad pública.
+Estado: diseño inicial aprobado; `dinah::ecs::Entity` y el contrato `dinah::ecs::Component` implementados. Storage, `World` y queries siguen pendientes. Las decisiones de este documento son una propuesta inicial revisable, no una garantía de estabilidad pública.
 
 ## Objetivos
 
@@ -36,6 +36,10 @@ Al borrar una fila se usa `swap_remove`; la última fila se mueve a la posición
 - Los handles son locales a un `World`; no implican unicidad global ni estabilidad entre procesos, serializaciones o sesiones.
 
 
+### Contrato implementado: `Component` (punto 093)
+
+`dinah::ecs::Component` es un trait marcador público con `Component for T` para todo `T: 'static`. No aporta métodos ni exige derive/manual boilerplate; hace explícito el bound conceptual en las futuras APIs de storage y `World`. La implementación blanket es intencional: el contrato inicial es la duración de vida requerida por `Any`/`TypeId`, no la capacidad de enviar o compartir el valor entre hilos. Tests unitarios y de integración comprueban tipos comunes y `Rc<Cell<u32>>`, que no es `Send` ni `Sync`.
+
 ### Primer contrato implementado: `Entity` (punto 092)
 
 `dinah::ecs::Entity` es un handle `Copy` con dos campos privados `u32`: índice y generación. Expone `index()` y `generation()` como accesores de solo lectura y una representación diagnóstica `indexvgen` mediante `Display`. Su constructor es privado para usuarios externos; el `World` será responsable de emitir handles válidos. La implementación no asigna IDs, no prueba por sí sola que un handle esté vivo y no promete unicidad fuera del mundo propietario.
@@ -44,7 +48,7 @@ Los tests verifican que igualdad y hashing distinguen generaciones distintas del
 
 ## Componentes
 
-Un componente es cualquier tipo Rust que cumpla el bound mínimo acordado por la implementación inicial (`'static`; `Send + Sync` solo si la API concurrente concreta lo necesita). No se requiere una trait `Component` vacía salvo que aparezca una restricción real que esa trait pueda expresar.
+Un componente es cualquier tipo Rust `'static`. El punto 093 expone `dinah::ecs::Component` como trait marcador con implementación blanket para todos los tipos `'static`: los usuarios no necesitan implementar nada manualmente y la trait sirve como bound legible en APIs ECS. No se exige `Send + Sync`: `World` es inicialmente single-owner y tipos como `Rc<Cell<T>>` siguen siendo componentes válidos. Si una API concurrente futura necesita límites más estrictos, los impondrá en esa API en vez de restringir prematuramente todos los componentes.
 
 Cada `TypeId` identifica el storage del tipo en un `World`. El almacenamiento se mantendrá detrás de un registro privado type-erased (`Any`) y cada acceso tipado comprobará el downcast; un desacuerdo de tipos se tratará como un error/invariante interna, nunca mediante punteros crudos. No se expondrán referencias que sobrevivan a una mutación estructural incompatible del `World`.
 
@@ -86,7 +90,7 @@ La destrucción de una entidad debe dejar todos los storages coherentes. Las pru
 ## Secuencia de aceptación
 
 1. **091 — Diseño ECS:** decisiones, invariantes, límites y secuencia de integración documentados aquí.
-2. **092–094 — Entity, Component, World:** fijar las firmas reales y los errores antes de declararlos API pública.
+2. **092–094 — Entity, Component, World:** Entity y el bound público Component ya están definidos; fijar las firmas de World y sus errores antes de declararlos API pública.
 3. **095–097 — Queries, almacenamiento e iteración:** tests de consistencia antes de optimizar.
 4. **098–100 — Integración Runtime/Compute y sistemas paralelos:** solo con ownership y conflictos de acceso definidos.
 5. **101–104 — Consistencia, benchmarks, acceso a memoria y documentación:** medir antes de cambiar representación o prometer rendimiento.
