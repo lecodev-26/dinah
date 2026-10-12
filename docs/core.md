@@ -37,6 +37,10 @@ or imply runtime registration.
 preserve. These are descriptive contracts, not a substitute for module-level
 checks or synchronization.
 
+## Repeatable public-contract coverage (roadmap point 089)
+
+`tests/core_determinism.rs` repeatedly exercises the public Core surface: configuration validation and error precedence, validation through `Validate`, caller-supplied non-zero IDs and their value/format, and every lifecycle transition predicate. These tests assert repeatable observable results; they do not imply ID allocation or global uniqueness, state mutation, synchronization, or cross-process determinism.
+
 ## Core v0.1 readiness gate
 
 The Core is not considered stable merely because its crate version is `0.1.0` or CI is green. Before marking roadmap point 035 complete, review each item below against the implementation and CI evidence:
