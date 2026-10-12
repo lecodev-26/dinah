@@ -5,8 +5,8 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 82
-- En progreso: 5
+- Completados: 83
+- En progreso: 4
 - Pendientes: 200
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
@@ -113,7 +113,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [ ] 086 — Añadir métricas de rendimiento
 - [ ] 087 — Crear benchmarks CPU
 - [x] 088 — Comparar secuencial/paralelo (benchmark release archivado en cinco runners; salida escalar/paralela verificada; análisis documentado: en el kernel ligero, 2 workers tardan 4,0–10,3× más incluso con 262.144 elementos y 4 workers 6,3–16,6× más; no se justifica paralelizar automáticamente este kernel)
-- [>] 089 — Testear determinismo (tests públicos repetidos para Core, Compute secuencial/paralelo/pipelines, orden FIFO/resultados, cancelación, estados, métricas y trazas de Runtime, y secuencias observables de Buffer/SoaBuffer incluyendo errores de extensión sin mutación y capacidad cero; se amplió además a los contratos públicos de `TaskQueue` y `TaskFailure`; revisión final y CI de esta ampliación pendientes)
+- [x] 089 — Testear determinismo (tests públicos repetidos en Core, Compute secuencial/paralelo/pipelines, Runtime —orden FIFO/resultados, cancelación, estados, métricas, trazas, `Shared<T>`, `TaskQueue` y `TaskFailure`— y Memory —secuencias de Buffer/SoaBuffer, errores sin mutación, alineación y capacidad cero—; CI y auditoría documental verdes para el commit `7171343`)
 - [ ] 090 — Documentar Compute
 
 ## FASE 5 — Data / ECS
@@ -387,3 +387,5 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 - 2026-10-12 — Punto 089 ampliado en Runtime: repetidas actualizaciones concurrentes mediante `Shared<T>` y comprobaciones de totales de métricas/capacidad, drenaje y vaciado de trazas bajo productores concurrentes. El orden entre eventos de hilos distintos queda explícitamente fuera de la garantía. Pendiente CI.
 
 - 2026-10-12 — Punto 089 ampliado en Runtime: se añaden pruebas repetidas de la API pública `TaskQueue` (FIFO, rechazo sin mutación, capacidad y reutilización) y `TaskFailure` (clasificación estable y mapeo del error); documentación actualizada. Pendiente CI.
+
+- 2026-10-12 — Punto 089 completado: cobertura repetida de contratos públicos de Core, Compute, Runtime y Memory, incluyendo resultados paralelos en orden de entrada, errores deterministas, estructuras acotadas, estado compartido, métricas y trazas concurrentes sin afirmar orden entre eventos concurrentes. Validación local de formato/diff/checklist y CI + auditoría documental + archivo de artefactos verdes para `7171343c90304a500f8944e3b2871c59bb3479ce` (CI: https://github.com/lecodev-26/dinah/actions/runs/38210712872; auditoría: https://github.com/lecodev-26/dinah/actions/runs/38210712967; archivo: https://github.com/lecodev-26/dinah/actions/runs/38210745109).
