@@ -1,0 +1,26 @@
+DINAH benchmark environment
+timestamp_utc=2026-10-12T05:28:52.014551+00:00
+os=Windows-2025Server-10.0.26100-SP0
+system=Windows
+release=2025Server
+machine=AMD64
+processor=AMD64 Family 25 Model 1 Stepping 1, AuthenticAMD
+python=3.12.10
+runner_os=Windows
+runner_arch=X64
+github_sha=8854d3794dfda846f7465920930b6c403a1d3ab8
+command=python3 scripts/run_benchmarks.py
+profile=release (cargo bench)
+
+$ rustc -Vv
+rustc 1.99.0 (b940084d7 2026-09-28)
+binary: rustc
+commit-hash: b940084d7eb6a299eb4bfeb8e34901bc051e7ac4
+commit-date: 2026-09-28
+host: x86_64-pc-windows-msvc
+release: 1.99.0
+LLVM version: 23.1.1
+
+$ cargo --version
+cargo 1.99.0 (5f94df478 2026-08-27)
+

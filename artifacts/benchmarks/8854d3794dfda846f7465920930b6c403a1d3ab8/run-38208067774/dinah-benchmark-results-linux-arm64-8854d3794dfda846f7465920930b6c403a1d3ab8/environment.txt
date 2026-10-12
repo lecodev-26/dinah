@@ -1,0 +1,26 @@
+DINAH benchmark environment
+timestamp_utc=2026-10-12T05:28:29.568236+00:00
+os=Linux-6.17.0-1022-azure-aarch64-with-glibc2.39
+system=Linux
+release=6.17.0-1022-azure
+machine=aarch64
+processor=aarch64
+python=3.12.3
+runner_os=Linux
+runner_arch=ARM64
+github_sha=8854d3794dfda846f7465920930b6c403a1d3ab8
+command=python3 scripts/run_benchmarks.py
+profile=release (cargo bench)
+
+$ rustc -Vv
+rustc 1.99.0 (b940084d7 2026-09-28)
+binary: rustc
+commit-hash: b940084d7eb6a299eb4bfeb8e34901bc051e7ac4
+commit-date: 2026-09-28
+host: aarch64-unknown-linux-gnu
+release: 1.99.0
+LLVM version: 23.1.1
+
+$ cargo --version
+cargo 1.99.0 (5f94df478 2026-08-27)
+
