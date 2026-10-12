@@ -48,13 +48,15 @@ Al borrar una fila se usa `swap_remove`; la última fila se mueve a la posición
 
 `dinah::ecs::Entity` es un handle `Copy` con dos campos privados `u32`: índice y generación. Expone `index()` y `generation()` como accesores de solo lectura y una representación diagnóstica `indexvgen` mediante `Display`. Su constructor es privado para usuarios externos; el `World` será responsable de emitir handles válidos. La implementación no asigna IDs, no prueba por sí sola que un handle esté vivo y no promete unicidad fuera del mundo propietario.
 
-Los tests verifican que igualdad y hashing distinguen generaciones distintas del mismo índice, que handles equivalentes se comparan igual, que los valores máximos se conservan y que el handle ocupa ocho bytes en la plataforma objetivo de Rust (dos `u32`). La validación de vida útil y reutilización queda pendiente de `World`, que aún no está implementado.
+Los tests verifican que igualdad y hashing distinguen generaciones distintas del mismo índice, que handles equivalentes se comparan igual, que los valores máximos se conservan y que el handle ocupa ocho bytes en la plataforma objetivo de Rust (dos `u32`). La validación de vida útil y reutilización la realiza `World`; el handle por sí solo no demuestra que la entidad siga viva.
 
-### Almacenamiento contiguo inicial (punto 096)
+### Almacenamiento contiguo e iteración (puntos 096–097)
 
 `ComponentStorage<T>` es un detalle interno del ECS con tres vectores: `entities` y `components` forman columnas contiguas alineadas por fila; `sparse` mapea el índice de entidad a una fila candidata. Antes de devolver o quitar un valor se comprueba la identidad completa de `Entity`, incluida la generación. Reemplazar el componente de la misma entidad conserva la fila; reutilizar un índice con otra generación elimina la fila antigua y añade la nueva. Al borrar una fila se usa `swap_remove` y se actualiza el índice disperso de la fila movida.
 
 Las inserciones reservan capacidad en todas las columnas que puedan crecer antes de modificar sus contenidos. Un error de reserva devuelve `StorageError::AllocationFailed` y no deja las columnas con longitudes diferentes. Esta estructura aún no valida por sí sola que el handle esté vivo en `World`; esa comprobación pertenece al propietario y la integración posterior. El punto 096 no afirma que `World::insert/get/remove` ni las queries estén implementadas.
+
+El punto 097 añade `iter()` e `iter_mut()`, que recorren linealmente las dos columnas alineadas y producen pares `(Entity, &T)` o `(Entity, &mut T)` sin buscar cada fila en el índice disperso. La iteración mutable solo concede préstamos mutables de filas distintas y no ofrece operaciones estructurales sobre el storage. Ambos recorridos siguen el orden físico actual de las filas, que puede cambiar después de inserciones o eliminaciones; no es un orden estable de entidades. Las pruebas comprueban pares alineados, storage vacío y actualización mutable sin alterar la forma de las columnas.
 
 ## Componentes
 
@@ -119,7 +121,7 @@ La destrucción de una entidad debe dejar todos los storages coherentes. Las pru
 ## Integración futura
 
 - **Memory (096):** reutilizar las lecciones de `Buffer<T>` y `SoaBuffer<A, B>`, pero no forzar el buffer fijo actual a ser un storage de tamaño dinámico sin evidencia de que sus contratos encajen.
-- **Compute (097, 099):** primero iteración segura y secuencial; luego ofrecer slices o particiones disjuntas cuando el layout y los préstamos lo permitan.
+- **Compute (099):** integrar más adelante la iteración segura con primitivas de procesamiento; ofrecer slices o particiones disjuntas solo cuando el layout y los préstamos lo permitan.
 - **Runtime (098, 100):** los sistemas se ejecutarán explícitamente; no se introducirá scheduling oculto en operaciones de `World`. Dependencias de lectura/escritura entre sistemas se deben modelar antes de permitir ejecución concurrente.
 - **Consistencia (101):** invariantes para generaciones, lista libre, alineación de columnas e índices dispersos, y ausencia de componentes en entidades muertas.
 - **Benchmarks (102–103):** comparar sparse sets con un baseline simple, registrar tamaño de entidad/componentes, composición, lecturas/escrituras, inserciones/borrados y distribución de queries. No afirmar superioridad universal ni adoptar archetypes solo por intuición.
@@ -128,6 +130,6 @@ La destrucción de una entidad debe dejar todos los storages coherentes. Las pru
 
 1. **091 — Diseño ECS:** decisiones, invariantes, límites y secuencia de integración documentados aquí.
 2. **092–094 — Entity, Component, World:** implementados los handles, el bound público y el ciclo de vida inicial de World; el storage de componentes permanece fuera de estos puntos.
-3. **095–097 — Queries, almacenamiento e iteración:** contrato de queries y storage contiguo interno documentados/implementados incrementalmente; la integración con World y la iteración aún requieren sus propios puntos y tests de consistencia.
+3. **095–097 — Queries, almacenamiento e iteración:** contrato de queries, storage contiguo e iteradores seguros secuenciales implementados/documentados incrementalmente; la integración con World y las queries públicas aún requieren sus propios puntos y tests de consistencia.
 4. **098–100 — Integración Runtime/Compute y sistemas paralelos:** solo con ownership y conflictos de acceso definidos.
 5. **101–104 — Consistencia, benchmarks, acceso a memoria y documentación:** medir antes de cambiar representación o prometer rendimiento.

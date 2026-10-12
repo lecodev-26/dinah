@@ -153,6 +153,23 @@ impl<T: Component> ComponentStorage<T> {
     pub(super) fn components(&self) -> &[T] {
         &self.components
     }
+
+    /// Iterates over entity/component pairs in contiguous storage order.
+    ///
+    /// Structural changes may reorder rows; callers must not rely on a stable
+    /// order across insertions or removals.
+    pub(super) fn iter(&self) -> impl Iterator<Item = (Entity, &T)> {
+        self.entities.iter().copied().zip(self.components.iter())
+    }
+
+    /// Mutably iterates over distinct entity/component rows without exposing
+    /// structural mutation while any yielded borrow is alive.
+    pub(super) fn iter_mut(&mut self) -> impl Iterator<Item = (Entity, &mut T)> {
+        self.entities
+            .iter()
+            .copied()
+            .zip(self.components.iter_mut())
+    }
 }
 
 #[cfg(test)]
@@ -210,6 +227,29 @@ mod tests {
         assert_eq!(storage.remove(stale), None);
         assert_eq!(storage.get(current), Some(&22));
         assert_eq!(storage.len(), 1);
+    }
+
+    #[test]
+    fn iteration_yields_aligned_entity_component_pairs_in_storage_order() {
+        let mut storage = ComponentStorage::new();
+        storage.insert(entity(6, 2), "six").unwrap();
+        storage.insert(entity(1, 4), "one").unwrap();
+
+        let rows: Vec<_> = storage.iter().map(|(e, value)| (e, *value)).collect();
+        assert_eq!(rows, vec![(entity(6, 2), "six"), (entity(1, 4), "one")]);
+        assert_eq!(ComponentStorage::<u32>::new().iter().count(), 0);
+    }
+
+    #[test]
+    fn mutable_iteration_updates_values_without_changing_row_shape() {
+        let mut storage = ComponentStorage::new();
+        storage.insert(entity(0, 0), 5).unwrap();
+        storage.insert(entity(3, 1), 7).unwrap();
+        for (entity, value) in storage.iter_mut() {
+            *value += entity.index();
+        }
+        assert_eq!(storage.components(), &[5, 10]);
+        assert_eq!(storage.len(), 2);
     }
 
     #[test]
