@@ -52,3 +52,60 @@ fn parallel_dispatch_returns_fifo_results_despite_different_task_workloads() {
         }
     }
 }
+
+#[test]
+fn cancellation_task_state_metrics_and_trace_contracts_repeat() {
+    use dinah::runtime::{
+        CancellationToken, RuntimeMetrics, TaskState, TraceBuffer, TraceEvent, TraceRecordError,
+    };
+
+    for _ in 0..64 {
+        let token = CancellationToken::new();
+        let observer = token.clone();
+        assert!(!token.is_cancellation_requested());
+        assert!(observer.request_cancellation());
+        assert!(token.is_cancellation_requested());
+        assert!(!token.request_cancellation());
+
+        let mut state = TaskState::Pending;
+        assert!(state.transition_to(TaskState::Running).is_ok());
+        assert!(state.transition_to(TaskState::Completed).is_ok());
+        assert!(state.is_terminal());
+        let invalid = state.transition_to(TaskState::Running).unwrap_err();
+        assert_eq!(invalid.from(), TaskState::Completed);
+        assert_eq!(invalid.to(), TaskState::Running);
+        assert_eq!(state, TaskState::Completed);
+
+        let metrics = RuntimeMetrics::new();
+        metrics.record_submitted();
+        metrics.record_started();
+        metrics.record_completed();
+        metrics.record_cancellation_requested();
+        let snapshot = metrics.snapshot();
+        assert_eq!(snapshot.submitted, 1);
+        assert_eq!(snapshot.started, 1);
+        assert_eq!(snapshot.completed, 1);
+        assert_eq!(snapshot.failed, 0);
+        assert_eq!(snapshot.cancellation_requested, 1);
+        assert_eq!(snapshot.cancellation_acknowledged, 0);
+
+        let trace = TraceBuffer::new(NonZeroUsize::new(2).expect("positive trace capacity"));
+        trace.record(TraceEvent::TaskSubmitted).unwrap();
+        trace.record(TraceEvent::TaskStarted).unwrap();
+        assert_eq!(
+            trace.record(TraceEvent::TaskFailed),
+            Err(TraceRecordError::Full(TraceEvent::TaskFailed))
+        );
+        assert_eq!(
+            trace.snapshot().unwrap(),
+            vec![TraceEvent::TaskSubmitted, TraceEvent::TaskStarted]
+        );
+        assert_eq!(
+            trace.drain().unwrap(),
+            vec![TraceEvent::TaskSubmitted, TraceEvent::TaskStarted]
+        );
+        assert!(trace.snapshot().unwrap().is_empty());
+        trace.record(TraceEvent::TaskCompleted).unwrap();
+        assert_eq!(trace.snapshot().unwrap(), vec![TraceEvent::TaskCompleted]);
+    }
+}

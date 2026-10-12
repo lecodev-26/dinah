@@ -315,7 +315,7 @@ background progress, panic recovery, or a persistent scheduler lifecycle.
 
 ## Determinism regression coverage (point 089)
 
-`tests/runtime_determinism.rs` exercises the public `Scheduler::run_parallel` contract with 64 queued tasks, five worker limits (1, 2, 3, 7, 64), and 16 repetitions per limit. Tasks have different deterministic amounts of work and a subset returns errors. Each run must return the same FIFO-indexed `Result` vector and drain the queue. The test deliberately avoids wall-clock assertions: it checks stable result ordering and error placement, not completion order, fairness, or timing determinism.
+`tests/runtime_determinism.rs` exercises the public `Scheduler::run_parallel` contract with 64 queued tasks, five worker limits (1, 2, 3, 7, 64), and 16 repetitions per limit. Tasks have different deterministic amounts of work and a subset returns errors. Each run must return the same FIFO-indexed `Result` vector and drain the queue. A second repeated contract test checks cancellation request idempotence across cloned tokens, stable task-state transition errors, independent metric counters, and trace-buffer FIFO snapshots, full-buffer rejection, draining, and reuse. The tests deliberately avoid wall-clock assertions: they check stable observable results, not completion order, fairness, or timing determinism.
 
 ## Bounded parallel execution (point 047)
 
