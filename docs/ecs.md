@@ -68,14 +68,41 @@ Cada `TypeId` identifica el storage del tipo en un `World`. El almacenamiento se
 
 Los nombres y tipos exactos de error se fijarán en los puntos 092–094, junto con pruebas de handle inválido, entidad muerta, duplicación/reemplazo, falta de componente y capacidad. `World` será inicialmente single-owner y no sincronizado internamente; la concurrencia se añadirá por APIs explícitas que puedan demostrar préstamos disjuntos.
 
-## Queries e iteración
+## Contrato de queries (punto 095)
 
-La primera query se limitará a un conjunto pequeño de componentes tipados y existentes. El diseño preferido es iterar sobre el storage más pequeño disponible y comprobar la presencia de los demás, pero esta optimización solo se implementará cuando los tipos de préstamo y el contrato de mutabilidad estén claros.
+Esta sección fija la semántica de la primera API de queries; no afirma que las queries ni el almacenamiento estén implementados. La API concreta se incorporará junto con los storages en los puntos 096–097, de modo que el compilador pueda validar los préstamos reales.
 
-- Iteración de lectura puede devolver referencias compartidas mientras el préstamo del `World` lo permita.
-- Iteración mutable debe impedir aliasing de un mismo componente y no permitir operaciones estructurales sobre el `World` durante el préstamo.
-- Las queries no prometen orden estable tras inserciones/eliminaciones; el orden será el del storage conductor y podrá cambiar por `swap_remove`.
-- Si una query no puede expresar con seguridad combinaciones de préstamos disjuntos en Rust estable, se empieza por queries de lectura o una API más limitada; no se usará `unsafe` como atajo.
+### Selección y resultados
+
+- Una query selecciona entidades vivas que tienen todos los tipos de componente requeridos. Una entidad que carece de cualquiera de ellos no aparece en el resultado.
+- La primera versión se limita a una combinación pequeña y explícita de componentes tipados; no incluye filtros arbitrarios, expresiones dinámicas, joins generales ni generación de código.
+- El conjunto consultado pertenece a un único `World`. Los `Entity` devueltos son handles de ese mundo y deben validarse por índice, generación y liveness.
+- Las queries no crean entidades ni componentes y no realizan cambios estructurales implícitos.
+- Una query sin coincidencias es un resultado vacío válido, no un error.
+
+### Préstamos y mutabilidad
+
+- Las queries de solo lectura pueden exponer `&T` mientras se mantenga el préstamo compartido de `World`.
+- Una query con escritura debe expresar los componentes mutables en el tipo de su API y excluir aliasing mutable. No se permitirá combinar accesos incompatibles al mismo tipo mediante parámetros de query duplicados.
+- Mientras existan referencias de una query, el sistema de tipos debe impedir mutaciones estructurales del `World` que invaliden esas referencias.
+- Si la API genérica para combinar préstamos no puede implementarse de forma segura en Rust estable, se empezará con una superficie menor (incluyendo solo lectura) en lugar de introducir `unsafe` o prometer una capacidad no demostrada.
+- No se promete `Send`/`Sync` para resultados de query: los componentes y `World` iniciales son single-owner, y el paralelismo se definirá por separado.
+
+### Orden y complejidad
+
+- El orden de resultados no forma parte del contrato estable y puede cambiar tras inserciones, eliminaciones o reutilización de filas.
+- La implementación inicial puede recorrer un storage conductor y comprobar los demás componentes; elegir el storage más pequeño es una optimización posterior, no una garantía observable.
+- Las queries no prometen complejidad constante por entidad ni rendimiento específico hasta que los puntos de almacenamiento, iteración y benchmarks aporten evidencia.
+
+### Casos que deben cubrir las pruebas
+
+1. Coincidencia completa, componente ausente y query vacía.
+2. Entidades destruidas y handles obsoletos excluidos después de reutilizar un índice.
+3. Varias entidades coincidentes y componentes alineados con su entidad, incluso tras `swap_remove`.
+4. Préstamos de lectura coexistentes y rechazo en compilación de accesos incompatibles cuando la forma de la API lo permita.
+5. Ausencia de cambios estructurales como efecto secundario de iterar.
+
+Estos casos son criterios de aceptación para la implementación futura; el punto 095 solo queda cerrado como contrato de diseño documentado.
 
 ## Límites de seguridad y errores
 
