@@ -159,7 +159,7 @@ La CI remota valida formato, tests, Clippy y documentación pública. Los benchm
 
 ## Determinismo probado (punto 089)
 
-`tests/compute_determinism.rs` valida el contrato público en ejecuciones repetidas: una suma entera asociativa devuelve el mismo resultado con 1, 2, 3, 7 y 64 workers; la iteración paralela produce el mismo vector indexado aunque el orden de finalización de las tareas no esté definido; y una reducción que falla en varias particiones devuelve siempre el error de la partición más temprana según el orden de entrada. Estos tests no implican determinismo temporal, orden de finalización ni equivalencia bit a bit para reducciones de punto flotante.
+`tests/compute_determinism.rs` valida el contrato público en ejecuciones repetidas: una suma entera asociativa devuelve el mismo resultado con 1, 2, 3, 7 y 64 workers; la iteración paralela produce el mismo vector indexado aunque el orden de finalización de las tareas no esté definido; y una reducción que falla en varias particiones devuelve siempre el error de la partición más temprana según el orden de entrada. También repite el orden de visita secuencial, el orden de salida de `map`, la división por lotes con lote final parcial, el rechazo de tamaño cero sin mutaciones ni callbacks, la parada de `try_reduce` en el primer error y la interrupción de `ComputePipeline` cuando falla una etapa. Los casos de entrada vacía se comprueban explícitamente. Estos tests no implican determinismo temporal, orden de finalización ni equivalencia bit a bit para reducciones de punto flotante.
 
 ## Benchmarks secuencial/paralelo y SIMD (puntos 083–088)
 

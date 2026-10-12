@@ -113,7 +113,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [ ] 086 — Añadir métricas de rendimiento
 - [ ] 087 — Crear benchmarks CPU
 - [x] 088 — Comparar secuencial/paralelo (benchmark release archivado en cinco runners; salida escalar/paralela verificada; análisis documentado: en el kernel ligero, 2 workers tardan 4,0–10,3× más incluso con 262.144 elementos y 4 workers 6,3–16,6× más; no se justifica paralelizar automáticamente este kernel)
-- [>] 089 — Testear determinismo (tests públicos repetidos para Core, Compute, orden FIFO/resultados de Runtime y secuencias observables de Buffer/SoaBuffer; falta evaluar otros contratos y confirmar CI final)
+- [>] 089 — Testear determinismo (tests públicos repetidos para Core, Compute secuencial/paralelo/pipelines, orden FIFO/resultados de Runtime y secuencias observables de Buffer/SoaBuffer; falta evaluar otros contratos y confirmar CI final)
 - [ ] 090 — Documentar Compute
 
 ## FASE 5 — Data / ECS
@@ -377,3 +377,5 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 - 2026-10-12 — Punto 089 ampliado a Memory: `tests/memory_determinism.rs` repite secuencias de inserción, rechazo por capacidad, pop, clear/reutilización y alineación SoA; documentación actualizada en `docs/memory.md`. CI pendiente.
 
 - 2026-10-12 — Punto 089 ampliado a Core: pruebas de API pública repetidas para configuración/errores, Validate, IDs suministrados por el llamador y matriz completa de transiciones. Documentado en `docs/core.md`; validación CI pendiente.
+
+- 2026-10-12 — Punto 089 ampliado en Compute secuencial: tests públicos repetidos de orden de visita/salida, lotes parciales, validación antes de mutar, primer error, entradas vacías y detención de pipeline tras fallo; documentación actualizada. CI pendiente.
