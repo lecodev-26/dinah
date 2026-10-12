@@ -567,3 +567,5 @@ metadata so they remain available after CI artifact retention expires.
 ## Cobertura concurrente de determinismo (punto 089)
 
 `tests/runtime_determinism.rs` repite actualizaciones concurrentes a través de clones de `Shared<T>` y confirma el total final y la liberación de clones. También verifica los totales de métricas y la capacidad, drenaje y vaciado del `TraceBuffer` con productores concurrentes. No se afirma un orden determinista entre eventos de hilos distintos.
+
+La misma suite comprueba también la API pública de `TaskQueue`: rechazo con devolución del elemento original cuando está llena, ausencia de mutación tras el rechazo, orden FIFO y reutilización tras extraer elementos. `TaskFailure` conserva la clasificación `ReturnedError` al consultar, transformar y consumir el error original.

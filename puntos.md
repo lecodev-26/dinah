@@ -113,7 +113,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [ ] 086 — Añadir métricas de rendimiento
 - [ ] 087 — Crear benchmarks CPU
 - [x] 088 — Comparar secuencial/paralelo (benchmark release archivado en cinco runners; salida escalar/paralela verificada; análisis documentado: en el kernel ligero, 2 workers tardan 4,0–10,3× más incluso con 262.144 elementos y 4 workers 6,3–16,6× más; no se justifica paralelizar automáticamente este kernel)
-- [>] 089 — Testear determinismo (tests públicos repetidos para Core, Compute secuencial/paralelo/pipelines, orden FIFO/resultados, cancelación, estados, métricas y trazas de Runtime, y secuencias observables de Buffer/SoaBuffer incluyendo errores de extensión sin mutación y capacidad cero; falta decidir si la cobertura transversal restante justifica cerrar el punto y confirmar CI final)
+- [>] 089 — Testear determinismo (tests públicos repetidos para Core, Compute secuencial/paralelo/pipelines, orden FIFO/resultados, cancelación, estados, métricas y trazas de Runtime, y secuencias observables de Buffer/SoaBuffer incluyendo errores de extensión sin mutación y capacidad cero; se amplió además a los contratos públicos de `TaskQueue` y `TaskFailure`; revisión final y CI de esta ampliación pendientes)
 - [ ] 090 — Documentar Compute
 
 ## FASE 5 — Data / ECS
@@ -385,3 +385,5 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 - 2026-10-12 — Punto 089 ampliado en Memory: pruebas repetidas de errores de extensión de Buffer/SoaBuffer (longitud/capacidad sin mutación ni desalineación) y capacidad cero; actualizada la guía pública. Pendiente CI del commit.
 
 - 2026-10-12 — Punto 089 ampliado en Runtime: repetidas actualizaciones concurrentes mediante `Shared<T>` y comprobaciones de totales de métricas/capacidad, drenaje y vaciado de trazas bajo productores concurrentes. El orden entre eventos de hilos distintos queda explícitamente fuera de la garantía. Pendiente CI.
+
+- 2026-10-12 — Punto 089 ampliado en Runtime: se añaden pruebas repetidas de la API pública `TaskQueue` (FIFO, rechazo sin mutación, capacidad y reutilización) y `TaskFailure` (clasificación estable y mapeo del error); documentación actualizada. Pendiente CI.

@@ -197,3 +197,43 @@ fn concurrent_metrics_and_trace_capacity_are_repeatable() {
             .is_empty());
     }
 }
+
+#[test]
+fn public_task_queue_capacity_fifo_and_reuse_contracts_repeat() {
+    use dinah::runtime::QueuePushError;
+
+    for repetition in 0..64 {
+        let mut queue = TaskQueue::new(NonZeroUsize::new(3).expect("positive capacity"));
+        assert!(queue.is_empty());
+        assert!(!queue.is_full());
+        assert_eq!(queue.capacity(), 3);
+        for value in 0..3 {
+            queue.try_push(value + repetition * 10).unwrap();
+        }
+        assert!(queue.is_full());
+        assert_eq!(queue.try_push(999), Err(QueuePushError::Full(999)));
+        assert_eq!(queue.len(), 3, "failed push must not mutate queue");
+        assert_eq!(queue.pop(), Some(repetition * 10));
+        assert!(queue.try_push(777).is_ok());
+        assert_eq!(queue.pop(), Some(repetition * 10 + 1));
+        assert_eq!(queue.pop(), Some(repetition * 10 + 2));
+        assert_eq!(queue.pop(), Some(777));
+        assert_eq!(queue.pop(), None);
+        assert!(queue.is_empty());
+    }
+}
+
+#[test]
+fn public_task_failure_classification_and_error_mapping_repeat() {
+    use dinah::runtime::{TaskFailure, TaskFailureKind};
+
+    for code in [0_u16, 1, 17, u16::MAX] {
+        let failure = TaskFailure::returned(code);
+        assert_eq!(failure.kind(), TaskFailureKind::ReturnedError);
+        assert_eq!(failure.error(), &code);
+        let mapped = failure.map_error(|value| format!("error-code={value}"));
+        assert_eq!(mapped.kind(), TaskFailureKind::ReturnedError);
+        assert_eq!(mapped.error(), &format!("error-code={code}"));
+        assert_eq!(mapped.into_error(), format!("error-code={code}"));
+    }
+}
