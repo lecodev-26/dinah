@@ -37,7 +37,7 @@ fn parallel_dispatch_returns_fifo_results_despite_different_task_workloads() {
                             Ok(index)
                         }
                     })
-                    .expect("queue capacity matches task count");
+                    .unwrap_or_else(|_| panic!("queue capacity matches task count"));
             }
 
             let results = scheduler.run_parallel(
