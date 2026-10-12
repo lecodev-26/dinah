@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 84
+- Completados: 85
 - En progreso: 4
-- Pendientes: 199
+- Pendientes: 198
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -118,7 +118,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 
 ## FASE 5 — Data / ECS
 
-- [ ] 091 — Diseñar modelo ECS
+- [x] 091 — Diseñar modelo ECS (decisiones iniciales documentadas en `docs/ecs.md`: sparse sets tipados, Entity con generación, ownership de World, contratos de query, seguridad sin `unsafe`, invariantes y secuencia de integración; todavía no declara APIs implementadas)
 - [ ] 092 — Definir Entity
 - [ ] 093 — Definir Component
 - [ ] 094 — Definir World
