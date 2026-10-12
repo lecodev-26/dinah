@@ -6,8 +6,8 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 
 - Total de puntos numerados: 287
 - Completados: 81
-- En progreso: 3
-- Pendientes: 203
+- En progreso: 4
+- Pendientes: 202
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -109,7 +109,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 082 — Crear pipelines (`ComputePipeline` inmediato sobre slice prestado; etapas secuenciales, por lotes y paralelas; errores tipados y tests de orden/corte/ownership; CI verde: https://github.com/lecodev-26/dinah/actions/runs/38154774490)
 - [x] 083 — Investigar SIMD (documentadas opciones, restricciones del crate y criterios de validación; se mantiene la ruta escalar hasta medir un caso real; CI verde: https://github.com/lecodev-26/dinah/actions/runs/38155044022)
 - [>] 084 — Implementar SIMD donde aporte beneficio real (benchmark directo/API y candidato seguro `wide::f32x4`; matriz repetida: mejora en Linux x86-64, regresión en ARM64 y resultados mixtos en otros runners; sin kernel de producción que justifique SIMD; detalles en `docs/simd-research.md`)
-- [ ] 085 — Optimizar estructuras data-oriented
+- [>] 085 — Optimizar estructuras data-oriented (añadida comparación AoS/SoA de lectura de un campo frente a ambos campos; resultados pendientes de CI multiplataforma)
 - [ ] 086 — Añadir métricas de rendimiento
 - [ ] 087 — Crear benchmarks CPU
 - [ ] 088 — Comparar secuencial/paralelo
@@ -361,3 +361,4 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 - 2026-10-11 — Punto 075 completado: `SoaBuffer::try_extend_from_slices`, pruebas de errores/límites, benchmark comparable y resultados archivados en `artifacts/benchmarks/memory-soa-batch-2026-10-11.txt`; CI: https://github.com/lecodev-26/dinah/actions/runs/38096865096.
 - 2026-10-11 — Punto 076 completado: guía práctica `docs/memory.md`, enlaces desde `README.md` y `docs/memory-model.md`; CI verde: https://github.com/lecodev-26/dinah/actions/runs/38097226307.
 - 2026-10-11 — Punto 077 completado: contrato inicial de Compute y secuencia de implementación en `docs/compute.md`; CI verde: https://github.com/lecodev-26/dinah/actions/runs/38097443705.
+- 2026-10-12 — Punto 085 iniciado: añadido benchmark comparativo AoS/SoA para recorrer un campo o ambos campos con datos equivalentes; los resultados reproducibles quedan pendientes de CI multiplataforma.

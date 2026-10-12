@@ -2,6 +2,12 @@ use std::hint::black_box;
 use std::time::{Duration, Instant};
 
 use dinah::memory::{Buffer, SoaBuffer};
+
+#[derive(Clone, Copy)]
+struct DataRow {
+    first: usize,
+    second: usize,
+}
 use dinah::runtime::Shared;
 
 const SAMPLES: usize = 7;
@@ -96,6 +102,62 @@ fn main() {
             })
         };
         report("soa_scan_two_columns", size, &soa_scan);
+
+        // Compare data layouts on identical prebuilt values. Construction and
+        // conversion costs are intentionally excluded from these access-only
+        // cases and should be measured separately for a concrete workload.
+        let aos: Vec<DataRow> = (0..size)
+            .map(|first| DataRow {
+                first,
+                second: first.wrapping_add(1),
+            })
+            .collect();
+        let soa = {
+            let mut rows =
+                SoaBuffer::try_with_capacity(size).expect("capacity reservation succeeds");
+            let first: Vec<usize> = (0..size).collect();
+            let second: Vec<usize> = (0..size).map(|value| value.wrapping_add(1)).collect();
+            rows.try_extend_from_slices(&first, &second)
+                .expect("both columns fit buffer");
+            rows
+        };
+
+        let aos_one_field = measure(|| {
+            let checksum = black_box(&aos)
+                .iter()
+                .fold(0usize, |sum, row| sum.wrapping_add(black_box(row.first)));
+            black_box(checksum);
+        });
+        report("layout_aos_scan_one_field", size, &aos_one_field);
+
+        let soa_one_field = measure(|| {
+            let (first, _) = soa.as_slices();
+            let checksum = black_box(first)
+                .iter()
+                .fold(0usize, |sum, value| sum.wrapping_add(black_box(*value)));
+            black_box(checksum);
+        });
+        report("layout_soa_scan_one_field", size, &soa_one_field);
+
+        let aos_both_fields = measure(|| {
+            let checksum = black_box(&aos).iter().fold(0usize, |sum, row| {
+                sum.wrapping_add(black_box(row.first).wrapping_add(black_box(row.second)))
+            });
+            black_box(checksum);
+        });
+        report("layout_aos_scan_both_fields", size, &aos_both_fields);
+
+        let soa_both_fields = measure(|| {
+            let (first, second) = soa.as_slices();
+            let checksum = black_box(first)
+                .iter()
+                .zip(black_box(second))
+                .fold(0usize, |sum, (a, b)| {
+                    sum.wrapping_add(black_box(*a).wrapping_add(black_box(*b)))
+                });
+            black_box(checksum);
+        });
+        report("layout_soa_scan_both_fields", size, &soa_both_fields);
     }
 
     let shared = Shared::new(0usize);
