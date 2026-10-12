@@ -34,6 +34,7 @@ jobs:
           test -s src/ecs/mod.rs
           test -s src/ecs/entity.rs
           test -s src/ecs/component.rs
+          test -s src/ecs/world.rs
           test -s tests/ecs_contract.rs
           test -s docs/ecs.md
           test -s src/memory/buffer.rs

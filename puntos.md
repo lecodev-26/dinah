@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 87
+- Completados: 88
 - En progreso: 4
-- Pendientes: 196
+- Pendientes: 195
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -121,7 +121,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 091 — Diseñar modelo ECS (decisiones iniciales documentadas en `docs/ecs.md`: sparse sets tipados, Entity con generación, ownership de World, contratos de query, seguridad sin `unsafe`, invariantes y secuencia de integración; todavía no declara APIs implementadas)
 - [x] 092 — Definir Entity (`dinah::ecs::Entity` con índice/generación privados, accesores públicos, identidad/hash sensible a generación y pruebas de tamaño/valores límite; la validación de handles vivos queda para World)
 - [x] 093 — Definir Component (`dinah::ecs::Component` público con implementación blanket para todo tipo Rust `'static`; sin requisito prematuro `Send + Sync`, validado con tests unitarios y de integración)
-- [ ] 094 — Definir World
+- [x] 094 — Definir World (`World::spawn/despawn/contains/len/is_empty`, errores tipados, reutilización con generación incrementada y retirada segura ante overflow; tests unitarios y públicos)
 - [ ] 095 — Definir queries
 - [ ] 096 — Crear almacenamiento contiguo
 - [ ] 097 — Crear iteración eficiente
@@ -393,3 +393,5 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 - 2026-10-12 — Punto 090 completado: auditada la guía `docs/compute.md` contra la API implementada y enlazada desde `README.md`; incluye ejemplos ejecutables de operaciones públicas, contratos de lotes y paralelismo, reducción, pipeline, errores, ownership, pánicos, determinismo, rendimiento y límites de lo aún no implementado. La auditoría documental y CI de la guía pasaron en el commit `7171343c90304a500f8944e3b2871c59bb3479ce` (CI: https://github.com/lecodev-26/dinah/actions/runs/38210712872; auditoría: https://github.com/lecodev-26/dinah/actions/runs/38210712967).
 
 - 2026-10-12 — Punto 093 completado: se define `dinah::ecs::Component` como marcador público con implementación blanket para todo tipo `'static`, sin imponer `Send + Sync` mientras `World` sea single-owner. Añadidos tests unitarios/de integración y checks de presencia en CI; checklist validado localmente, pendiente CI remoto.
+
+- 2026-10-12 — Punto 094 completado: `World` administra liveness, creación/destrucción, reutilización de índices y rechazo de handles obsoletos; los slots no reutilizables se retiran al desbordar la generación. Tests unitarios/de integración, documentación y checks CI añadidos; pendiente validación CI remota.

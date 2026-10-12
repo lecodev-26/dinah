@@ -1,6 +1,6 @@
 # dinah ECS — diseño inicial
 
-Estado: diseño inicial aprobado; `dinah::ecs::Entity` y el contrato `dinah::ecs::Component` implementados. Storage, `World` y queries siguen pendientes. Las decisiones de este documento son una propuesta inicial revisable, no una garantía de estabilidad pública.
+Estado: diseño inicial aprobado; `Entity`, `Component` y el ciclo de vida inicial de `World` implementados. El almacenamiento de componentes y las queries siguen pendientes. Las decisiones de este documento son una propuesta inicial revisable, no una garantía de estabilidad pública.
 
 ## Objetivos
 
@@ -35,6 +35,10 @@ Al borrar una fila se usa `swap_remove`; la última fila se mueve a la posición
 - El overflow de generación debe tener una política explícita y probada; nunca debe permitir que un handle antiguo se valide silenciosamente. La implementación podrá retirar ese índice si no puede incrementar la generación.
 - Los handles son locales a un `World`; no implican unicidad global ni estabilidad entre procesos, serializaciones o sesiones.
 
+
+### Contrato implementado: `World` (punto 094)
+
+`dinah::ecs::World` es el propietario single-owner de la tabla de entidades. `spawn()` devuelve `Result<Entity, WorldError>`; `despawn(entity)` invalida un handle vivo o devuelve `EntityNotAlive` para handles inexistentes, obsoletos o ya destruidos. `contains`, `len` e `is_empty` permiten inspeccionar el estado. Los índices liberados se reutilizan con generación incrementada; si una generación llega a `u32::MAX`, el slot se retira para impedir el wraparound. La saturación del espacio de índices devuelve `EntityIndexExhausted`. Este punto aún no implementa almacenamiento ni eliminación de componentes, que pertenecen a los puntos posteriores. Tests unitarios y de integración cubren liveness, conteos, reutilización, rechazo de handles obsoletos y retirada por overflow.
 
 ### Contrato implementado: `Component` (punto 093)
 
@@ -90,7 +94,7 @@ La destrucción de una entidad debe dejar todos los storages coherentes. Las pru
 ## Secuencia de aceptación
 
 1. **091 — Diseño ECS:** decisiones, invariantes, límites y secuencia de integración documentados aquí.
-2. **092–094 — Entity, Component, World:** Entity y el bound público Component ya están definidos; fijar las firmas de World y sus errores antes de declararlos API pública.
+2. **092–094 — Entity, Component, World:** implementados los handles, el bound público y el ciclo de vida inicial de World; el storage de componentes permanece fuera de este punto.
 3. **095–097 — Queries, almacenamiento e iteración:** tests de consistencia antes de optimizar.
 4. **098–100 — Integración Runtime/Compute y sistemas paralelos:** solo con ownership y conflictos de acceso definidos.
 5. **101–104 — Consistencia, benchmarks, acceso a memoria y documentación:** medir antes de cambiar representación o prometer rendimiento.
