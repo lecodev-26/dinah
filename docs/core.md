@@ -41,14 +41,18 @@ checks or synchronization.
 
 The Core is not considered stable merely because its crate version is `0.1.0` or CI is green. Before marking roadmap point 035 complete, review each item below against the implementation and CI evidence:
 
-- [ ] Public types and methods have documented contracts, including invalid inputs and state transitions.
-- [ ] Error types preserve actionable detail at the API where the error originates; conversions to `CoreError` are documented as intentionally coarse.
-- [ ] Tests cover valid and invalid configuration (including precedence and numeric boundaries), non-zero IDs, ID trait behavior, every lifecycle transition, and stable error messages where callers may rely on them.
-- [ ] The public API has been reviewed for unnecessary commitments, misleading names, and unused abstractions.
-- [ ] `cargo fmt`, the full workspace test suite, Clippy, and warning-free public documentation build pass in GitHub Actions.
-- [ ] No stability promise, release tag, or benchmark claim is made without separate review and evidence.
+- [x] Public types and methods have documented contracts, including invalid inputs and state transitions. The lifecycle helper is explicitly a predicate, not a state mutator.
+- [x] Error types preserve actionable detail at the API where the error originates; conversion from `CoreConfigError` to `CoreError` is documented and tested as intentionally coarse.
+- [ ] Tests cover the complete contract, including concrete `HasCoreId` behavior. Configuration boundaries and precedence, non-zero IDs, the full lifecycle transition matrix, and stable error messages are covered; `HasCoreId` has no implementor to test yet.
+- [x] Initial public API review completed: no concrete consumer currently needs `HasCoreId`, and its contract remains provisional rather than a reason to build a resource abstraction prematurely.
+- [x] `cargo fmt`, the workspace library/integration test suite, Clippy, and warning-free public documentation build passed in GitHub Actions run [38208309238](https://github.com/lecodev-26/dinah/actions/runs/38208309238).
+- [x] No stability promise, release tag, or unsupported benchmark claim is made; Core v0.1 remains gated on unresolved API evidence.
 
 `HasCoreId` is currently an extension contract for future resource types; it has no concrete implementor yet. Its stability decision remains open: keep it only if the first real resource type can use the contract without awkward adapters or extra constraints. Until then, do not treat it as proof of a complete resource model.
+
+### Audit result (2026-10-12)
+
+The documented Core surface was checked against implementation and tests. The configuration error conversion intentionally loses field-level detail only when callers explicitly choose the coarse `CoreError`; `CoreConfig::new` and `Validate` retain `CoreConfigError`. The full 4×4 lifecycle transition matrix is tested. The principal unresolved v0.1 question is whether `HasCoreId` is useful for the first real resource type; adding a synthetic implementor just to satisfy the checklist would create false confidence, so that test remains blocked until a real consumer exists.
 
 ### Benchmark policy for the initial Core
 

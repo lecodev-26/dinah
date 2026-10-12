@@ -50,7 +50,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 032 — Crear documentación del Core
 - [>] 033 — Crear primeros benchmarks
 - [x] 034 — Revisar API pública
-- [>] 035 — Estabilizar Core v0.1
+- [>] 035 — Estabilizar Core v0.1 (auditoría inicial de API/documentación/tests registrada en `docs/core.md`; siguen abiertos el primer consumidor real de `HasCoreId` y la decisión de estabilidad que depende de él)
 
 ## FASE 2 — Runtime
 
@@ -366,3 +366,5 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 - 2026-10-12 — Punto 085: segunda ejecución de benchmarks completada y archivada (run 38207649616; CI: https://github.com/lecodev-26/dinah/actions/runs/38207649616). Se compararon ambas ejecuciones en cinco runners; cambió la dirección en macOS ARM64 y se mantiene evidencia mixta. Documentación actualizada; el punto sigue en progreso por falta de evidencia estadística y medición de construcción/conversión/escrituras.
 
 - 2026-10-12 — Punto 085: tercera ejecución completa de AoS/SoA archivada (run 38208067774; CI de benchmarks y archivado verdes). Se añadieron resultados de los cinco runners; se mantiene en progreso porque el microbenchmark no mide construcción/conversión ni escrituras de una carga real.
+
+- 2026-10-12 — Punto 035: auditoría de Core documentada en `docs/core.md`; se verificaron contratos, errores, matriz completa de transiciones y CI verde. Se mantiene en progreso porque `HasCoreId` aún no tiene un consumidor real que permita validar si merece formar parte del contrato estable.
