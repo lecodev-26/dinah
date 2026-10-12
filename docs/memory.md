@@ -73,6 +73,10 @@ fn main() -> Result<(), SoaCreateError> {
 
 Las garantías de no modificación aplican a los errores normales de longitud/capacidad. `Clone` puede ejecutar código del usuario y entrar en pánico; estas operaciones no prometen rollback frente a un pánico durante la clonación.
 
+## Cobertura de determinismo observable (punto 089)
+
+`tests/memory_determinism.rs` repite secuencias sobre la API pública de `Buffer` y `SoaBuffer`: inserción hasta el límite, rechazo sin pérdida de contenido, extracción del último elemento, `clear`, reutilización de la capacidad y alineación de columnas al insertar por lotes y extraer filas. Las comprobaciones validan estados observables deterministas para una misma secuencia de operaciones; no implican sincronización interna ni una garantía de orden entre hilos.
+
 ## Ownership, reserva y concurrencia
 
 Los buffers son propietarios y no incorporan sincronización interna. Las reservas usan contenedores estándar y operaciones fallibles de reserva; no hay allocator personalizado, crecimiento automático ni acceso a punteros crudos. La capacidad solicitada no representa un límite exacto de bytes.

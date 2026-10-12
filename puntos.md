@@ -113,7 +113,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [ ] 086 — Añadir métricas de rendimiento
 - [ ] 087 — Crear benchmarks CPU
 - [x] 088 — Comparar secuencial/paralelo (benchmark release archivado en cinco runners; salida escalar/paralela verificada; análisis documentado: en el kernel ligero, 2 workers tardan 4,0–10,3× más incluso con 262.144 elementos y 4 workers 6,3–16,6× más; no se justifica paralelizar automáticamente este kernel)
-- [>] 089 — Testear determinismo (tests públicos repetidos para reducción e iteración de Compute y orden FIFO/resultados de Runtime con distintos workers y errores; falta ampliar la matriz a Memory/Core y otros contratos)
+- [>] 089 — Testear determinismo (tests públicos repetidos para Compute, orden FIFO/resultados de Runtime y secuencias observables de Buffer/SoaBuffer; falta ampliar la matriz a Core y otros contratos)
 - [ ] 090 — Documentar Compute
 
 ## FASE 5 — Data / ECS
@@ -374,3 +374,4 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 - 2026-10-12 — Punto 088 completado: benchmark release y CI multiplataforma verdes en cinco runners (run 38208860456; CI https://github.com/lecodev-26/dinah/actions/runs/38208860464; benchmarks https://github.com/lecodev-26/dinah/actions/runs/38208860456; auditoría documental https://github.com/lecodev-26/dinah/actions/runs/38208860468). Resultados archivados en `artifacts/benchmarks/f728dba482d00450bb06a7e7b5f994e3f82152dc/run-38208860456/`. En 262.144 elementos, 2 workers tardaron 4,0–10,3× y 4 workers 6,3–16,6× que `for_each`; el kernel ligero no compensa el coste de coordinación. Esto cierra la comparación, no demuestra que todo workload paralelo sea más lento.
 
 - 2026-10-12 — Punto 089 ampliado: `tests/runtime_determinism.rs` repite 64 tareas con carga determinista variable, cinco límites de workers y errores intercalados; verifica que Runtime devuelve resultados/errores en orden FIFO y vacía la cola. Documentado en `docs/runtime.md`; CI pendiente. El punto sigue en progreso porque Memory/Core y otros contratos aún no están cubiertos.
+- 2026-10-12 — Punto 089 ampliado a Memory: `tests/memory_determinism.rs` repite secuencias de inserción, rechazo por capacidad, pop, clear/reutilización y alineación SoA; documentación actualizada en `docs/memory.md`. CI pendiente.
