@@ -54,3 +54,23 @@ fn public_world_tracks_empty_state_and_multiple_entities() {
     world.despawn(b).unwrap();
     assert!(world.is_empty());
 }
+
+#[test]
+fn public_world_runs_explicit_systems_through_runtime() {
+    use dinah::ecs::World;
+    use dinah::runtime::Scheduler;
+
+    let scheduler = Scheduler::new();
+    let mut world = World::new();
+    let entity = world
+        .run_system(&scheduler, |world| {
+            world.spawn().map_err(|_| "spawn failed")
+        })
+        .expect("the synchronous scheduler accepts the system")
+        .expect("system should spawn an entity");
+    assert!(world.contains(entity));
+
+    let failure = world.run_system(&scheduler, |_| Err::<(), _>("expected failure"));
+    assert_eq!(failure, Ok(Err("expected failure")));
+    assert_eq!(world.len(), 1);
+}

@@ -1,6 +1,7 @@
 //! Entity allocation and lifetime tracking for the initial single-owner ECS.
 
 use super::Entity;
+use crate::runtime::{ScheduleError, Scheduler};
 use core::fmt;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -114,11 +115,29 @@ impl World {
     pub const fn is_empty(&self) -> bool {
         self.alive_count == 0
     }
+
+    /// Executes one explicit system closure against this world through Runtime.
+    ///
+    /// Runtime v0.1 dispatches `Scheduler::schedule` synchronously on the caller
+    /// thread. The nested result keeps scheduler rejection separate from the
+    /// system's own error. No background execution or parallel ECS access is
+    /// implied by this adapter.
+    pub fn run_system<T, E, F>(
+        &mut self,
+        scheduler: &Scheduler,
+        system: F,
+    ) -> Result<Result<T, E>, ScheduleError>
+    where
+        F: FnOnce(&mut World) -> Result<T, E>,
+    {
+        scheduler.schedule(|| system(self))
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::{World, WorldError};
+    use crate::runtime::Scheduler;
 
     #[test]
     fn spawn_and_despawn_track_liveness_and_counts() {
@@ -158,5 +177,29 @@ mod tests {
         let next = world.spawn().unwrap();
         assert_ne!(next.index(), max_generation.index());
         assert!(!world.contains(max_generation));
+    }
+
+    #[test]
+    fn runtime_system_can_mutate_world_synchronously() {
+        let scheduler = Scheduler::new();
+        let mut world = World::new();
+        let result = world
+            .run_system(&scheduler, |world| {
+                let entity = world.spawn().map_err(|_| "spawn failed")?;
+                Ok::<_, &'static str>(entity)
+            })
+            .unwrap();
+        let entity = result.unwrap();
+        assert!(world.contains(entity));
+        assert_eq!(world.len(), 1);
+    }
+
+    #[test]
+    fn runtime_system_error_is_preserved_separately() {
+        let scheduler = Scheduler::new();
+        let mut world = World::new();
+        let result = world.run_system(&scheduler, |_| Err::<(), _>("system failed"));
+        assert_eq!(result, Ok(Err("system failed")));
+        assert!(world.is_empty());
     }
 }

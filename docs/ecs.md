@@ -1,6 +1,6 @@
 # dinah ECS — diseño inicial
 
-Estado: diseño inicial aprobado; `Entity`, `Component` y el ciclo de vida inicial de `World` implementados. El almacenamiento contiguo interno está implementado en el punto 096; todavía no está conectado a `World` ni expuesto como API pública. Las queries siguen pendientes. Las decisiones de este documento son una propuesta inicial revisable, no una garantía de estabilidad pública.
+Estado: diseño inicial aprobado; `Entity`, `Component`, el ciclo de vida inicial de `World` y el adaptador explícito de sistemas a Runtime están implementados. El almacenamiento contiguo interno de los puntos 096–097 todavía no está conectado a `World` ni expuesto como API pública. Las queries siguen pendientes. Las decisiones de este documento son una propuesta inicial revisable, no una garantía de estabilidad pública.
 
 ## Objetivos
 
@@ -39,6 +39,10 @@ Al borrar una fila se usa `swap_remove`; la última fila se mueve a la posición
 ### Contrato implementado: `World` (punto 094)
 
 `dinah::ecs::World` es el propietario single-owner de la tabla de entidades. `spawn()` devuelve `Result<Entity, WorldError>`; `despawn(entity)` invalida un handle vivo o devuelve `EntityNotAlive` para handles inexistentes, obsoletos o ya destruidos. `contains`, `len` e `is_empty` permiten inspeccionar el estado. Los índices liberados se reutilizan con generación incrementada; si una generación llega a `u32::MAX`, el slot se retira para impedir el wraparound. La saturación del espacio de índices devuelve `EntityIndexExhausted`. Este punto aún no implementa almacenamiento ni eliminación de componentes, que pertenecen a los puntos posteriores. Tests unitarios y de integración cubren liveness, conteos, reutilización, rechazo de handles obsoletos y retirada por overflow.
+
+### Adaptador explícito de sistemas a Runtime (punto 098)
+
+`World::run_system(&mut self, &Scheduler, closure)` permite ejecutar una operación de sistema que recibe acceso exclusivo a `World` mediante el Runtime público. En Runtime v0.1, `Scheduler::schedule` ejecuta la closure inmediatamente en el hilo llamador; por tanto, el adaptador no crea hilos, no retiene el mundo ni promete ejecución en background. El resultado anidado distingue un rechazo del scheduler (`ScheduleError`) del error propio del sistema. El préstamo exclusivo impide ejecutar simultáneamente dos closures mutables sobre el mismo `World` a través de esta API. La integración es explícita y síncrona; los sistemas paralelos quedan fuera de este punto.
 
 ### Contrato implementado: `Component` (punto 093)
 
@@ -122,7 +126,7 @@ La destrucción de una entidad debe dejar todos los storages coherentes. Las pru
 
 - **Memory (096):** reutilizar las lecciones de `Buffer<T>` y `SoaBuffer<A, B>`, pero no forzar el buffer fijo actual a ser un storage de tamaño dinámico sin evidencia de que sus contratos encajen.
 - **Compute (099):** integrar más adelante la iteración segura con primitivas de procesamiento; ofrecer slices o particiones disjuntas solo cuando el layout y los préstamos lo permitan.
-- **Runtime (098, 100):** los sistemas se ejecutarán explícitamente; no se introducirá scheduling oculto en operaciones de `World`. Dependencias de lectura/escritura entre sistemas se deben modelar antes de permitir ejecución concurrente.
+- **Runtime (098, 100):** `World::run_system` conecta explícitamente un sistema síncrono con `Scheduler`; los sistemas paralelos siguen pendientes y no se introduce scheduling oculto en operaciones de `World`. Dependencias de lectura/escritura entre sistemas se deben modelar antes de permitir ejecución concurrente.
 - **Consistencia (101):** invariantes para generaciones, lista libre, alineación de columnas e índices dispersos, y ausencia de componentes en entidades muertas.
 - **Benchmarks (102–103):** comparar sparse sets con un baseline simple, registrar tamaño de entidad/componentes, composición, lecturas/escrituras, inserciones/borrados y distribución de queries. No afirmar superioridad universal ni adoptar archetypes solo por intuición.
 
@@ -131,5 +135,5 @@ La destrucción de una entidad debe dejar todos los storages coherentes. Las pru
 1. **091 — Diseño ECS:** decisiones, invariantes, límites y secuencia de integración documentados aquí.
 2. **092–094 — Entity, Component, World:** implementados los handles, el bound público y el ciclo de vida inicial de World; el storage de componentes permanece fuera de estos puntos.
 3. **095–097 — Queries, almacenamiento e iteración:** contrato de queries, storage contiguo e iteradores seguros secuenciales implementados/documentados incrementalmente; la integración con World y las queries públicas aún requieren sus propios puntos y tests de consistencia.
-4. **098–100 — Integración Runtime/Compute y sistemas paralelos:** solo con ownership y conflictos de acceso definidos.
+4. **098–100 — Integración Runtime/Compute y sistemas paralelos:** adaptador síncrono explícito de `World` a Runtime implementado; integración con Compute y ejecución paralela requieren ownership y conflictos de acceso definidos.
 5. **101–104 — Consistencia, benchmarks, acceso a memoria y documentación:** medir antes de cambiar representación o prometer rendimiento.

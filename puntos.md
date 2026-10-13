@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 91
+- Completados: 92
 - En progreso: 4
-- Pendientes: 192
+- Pendientes: 191
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -125,7 +125,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 095 — Definir queries (contrato documentado: selección por componentes requeridos, semántica de resultados vacíos, préstamos/mutabilidad, orden no estable y casos de aceptación; queries públicas aún pendientes)
 - [x] 096 — Crear almacenamiento contiguo (`ComponentStorage<T>` interno con columnas contiguas alineadas, sparse index validado por generación, reemplazo, eliminación `swap_remove` y reservas previas para evitar desalineación por fallo de asignación; aún no integrado con `World`)
 - [x] 097 — Crear iteración eficiente (`ComponentStorage::iter/iter_mut` recorren simultáneamente las columnas contiguas, devuelven pares entidad/componente alineados y permiten mutación segura de filas sin cambio estructural; tests para orden físico, storage vacío y actualización mutable)
-- [ ] 098 — Integrar ECS con Runtime
+- [x] 098 — Integrar ECS con Runtime (`World::run_system` despacha una closure con préstamo exclusivo de `World` mediante `Scheduler::schedule`; conserva separados el error del scheduler y el del sistema, con tests unitarios y públicos; integración síncrona, sin prometer paralelismo)
 - [ ] 099 — Integrar ECS con Compute
 - [ ] 100 — Crear sistemas paralelos
 - [ ] 101 — Testear consistencia
@@ -401,3 +401,5 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 - 2026-10-12 — Punto 096 completado: añadido `src/ecs/storage.rs` con `ComponentStorage<T>` interno, columnas `Vec<Entity>`/`Vec<T>` alineadas, lookup sparse por índice y validación de generación, reemplazo, `swap_remove` con reparación del índice movido y reserva fallible previa a mutaciones. Tests unitarios cubren alineación, reemplazo, borrado/movimiento, handles obsoletos y acceso mutable. La API sigue interna y no se declara integrado el storage en `World`; punto 097 mantiene la iteración pendiente.
 
 - 2026-10-12 — Punto 097 completado: iteradores secuenciales `iter()`/`iter_mut()` sobre las columnas contiguas del storage, pruebas de alineación, vacío y mutación; corregida documentación obsoleta sobre `World` y aclarado que el orden físico no es estable. CI, auditoría documental y archivado del punto 096 verificados verdes antes de estos cambios; el nuevo commit requiere su propia validación CI.
+
+- 2026-10-13 — Punto 098 completado: `World::run_system` integra explícitamente una operación de sistema con `runtime::Scheduler`; el adaptador conserva la ejecución síncrona actual y diferencia el resultado del scheduler del error del sistema. Tests unitarios y de integración pública añadidos; documentación ECS/Runtime actualizada. Checks locales de formato, diff y checklist pendientes de CI remota.
