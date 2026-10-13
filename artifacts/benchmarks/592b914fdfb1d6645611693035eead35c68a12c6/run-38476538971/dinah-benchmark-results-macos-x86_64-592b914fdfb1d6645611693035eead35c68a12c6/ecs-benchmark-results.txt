@@ -1,0 +1,18 @@
+[1m[92m   Compiling[0m dinah v0.1.0 (/Users/runner/work/dinah/dinah)
+[1m[92m    Finished[0m `bench` profile [optimized] target(s) in 0.70s
+[1m[92m     Running[0m benches/ecs.rs (target/release/deps/ecs-8abc8d752f8adec1)
+dinah ECS benchmark; build=release; statistic=median; samples=7
+Scope: public World entity lifecycle only; component storage and queries are not integrated yet.
+Results are machine-specific observations, not performance guarantees.
+case=world_spawn_fresh operations=64 samples=7 median_total_ns=1551 ns_per_operation=24.234 operations_per_second=41263701
+case=world_despawn_after_spawn operations=64 samples=7 median_total_ns=3140 ns_per_operation=49.062 operations_per_second=20382166
+case=world_spawn_despawn_reuse operations=192 samples=7 median_total_ns=3396 ns_per_operation=17.688 operations_per_second=56537102
+case=world_contains_scan operations=64 samples=7 median_total_ns=269 ns_per_operation=4.203 operations_per_second=237918216
+case=world_spawn_fresh operations=1024 samples=7 median_total_ns=10219 ns_per_operation=9.979 operations_per_second=100205500
+case=world_despawn_after_spawn operations=1024 samples=7 median_total_ns=20895 ns_per_operation=20.405 operations_per_second=49006939
+case=world_spawn_despawn_reuse operations=3072 samples=7 median_total_ns=26381 ns_per_operation=8.588 operations_per_second=116447443
+case=world_contains_scan operations=1024 samples=7 median_total_ns=2652 ns_per_operation=2.590 operations_per_second=386123680
+case=world_spawn_fresh operations=16384 samples=7 median_total_ns=143363 ns_per_operation=8.750 operations_per_second=114283323
+case=world_despawn_after_spawn operations=16384 samples=7 median_total_ns=189973 ns_per_operation=11.595 operations_per_second=86243835
+case=world_spawn_despawn_reuse operations=49152 samples=7 median_total_ns=296908 ns_per_operation=6.041 operations_per_second=165546230
+case=world_contains_scan operations=16384 samples=7 median_total_ns=25553 ns_per_operation=1.560 operations_per_second=641177161

@@ -1,0 +1,18 @@
+[1m[92m   Compiling[0m dinah v0.1.0 (/home/runner/work/dinah/dinah)
+[1m[92m    Finished[0m `bench` profile [optimized] target(s) in 0.27s
+[1m[92m     Running[0m benches/ecs.rs (target/release/deps/ecs-cb384e7372636975)
+dinah ECS benchmark; build=release; statistic=median; samples=7
+Scope: public World entity lifecycle only; component storage and queries are not integrated yet.
+Results are machine-specific observations, not performance guarantees.
+case=world_spawn_fresh operations=64 samples=7 median_total_ns=742 ns_per_operation=11.594 operations_per_second=86253369
+case=world_despawn_after_spawn operations=64 samples=7 median_total_ns=1473 ns_per_operation=23.016 operations_per_second=43448744
+case=world_spawn_despawn_reuse operations=192 samples=7 median_total_ns=1894 ns_per_operation=9.865 operations_per_second=101372756
+case=world_contains_scan operations=64 samples=7 median_total_ns=170 ns_per_operation=2.656 operations_per_second=376470588
+case=world_spawn_fresh operations=1024 samples=7 median_total_ns=8746 ns_per_operation=8.541 operations_per_second=117082095
+case=world_despawn_after_spawn operations=1024 samples=7 median_total_ns=15388 ns_per_operation=15.027 operations_per_second=66545360
+case=world_spawn_despawn_reuse operations=3072 samples=7 median_total_ns=23374 ns_per_operation=7.609 operations_per_second=131428082
+case=world_contains_scan operations=1024 samples=7 median_total_ns=1874 ns_per_operation=1.830 operations_per_second=546424760
+case=world_spawn_fresh operations=16384 samples=7 median_total_ns=133679 ns_per_operation=8.159 operations_per_second=122562257
+case=world_despawn_after_spawn operations=16384 samples=7 median_total_ns=364561 ns_per_operation=22.251 operations_per_second=44941724
+case=world_spawn_despawn_reuse operations=49152 samples=7 median_total_ns=495495 ns_per_operation=10.081 operations_per_second=99197772
+case=world_contains_scan operations=16384 samples=7 median_total_ns=29064 ns_per_operation=1.774 operations_per_second=563721442
