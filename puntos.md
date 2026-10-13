@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 103
+- Completados: 104
 - En progreso: 6
-- Pendientes: 178
+- Pendientes: 177
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -147,7 +147,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 114 — Integrar Simulation con ECS (`SimulationEntityBindings` conecta IDs simulados con `ecs::Entity`, valida entidades vivas, evita asociaciones duplicadas y rechaza handles obsoletos al resolver)
 - [x] 115 — Integrar Simulation con Compute (`SimulationEntities::for_each_mut` delega en `compute::for_each`, conserva el orden de inserción y mantiene ejecución secuencial explícita)
 - [x] 116 — Crear pruebas deterministas (replay de una secuencia explícita de entradas en dos ejecuciones, compara la traza de ticks y el estado por ID; sin reloj real ni aleatoriedad implícita)
-- [ ] 117 — Crear benchmarks
+- [x] 117 — Crear benchmarks (suite ejecutada en CI y resultados/entornos archivados para Linux x86-64, Linux ARM64, Windows x86-64, macOS x86-64 y macOS ARM64)
 - [ ] 118 — Crear ejemplos
 - [ ] 119 — Documentar Simulation
 
@@ -448,4 +448,6 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 
 - 2026-10-14 — Punto 115 validado por CI (`38de8bf`): DINAH CI y auditoría documental terminaron correctamente. Punto 116 implementado: test de replay ejecuta dos veces la misma secuencia de entradas explícitas sobre Simulation y SimulationEntities, y compara traza por tick, estado por ID y estado final. Sin dependencia de wall-clock ni aleatoriedad implícita. Checks locales de formato, diff y checklist; CI remoto pendiente.
 
-- 2026-10-14 — Punto 116 validado por CI en `cf19fde` (DINAH CI, auditoría documental y archivo de artefactos correctos). El ajuste de alias de tipos resolvió `clippy::type_complexity`. PR #7 del bot documental revisado y cerrado sin merge: solo contenía una lista generada; la documentación de Simulation ya cubría el cambio y el arreglo era interno al test. Punto 117 iniciado: añadido `benches/simulation.rs` con casos de reloj, paso de simulación y recorrido/búsqueda de entidades. La primera ejecución CI pasó, pero la revisión de artefactos detectó que el runner no invocaba el nuevo binario; se corrige el script de benchmarks, el disparador del workflow y se limita la muestra de búsquedas lineales a 16 IDs para mantener un coste acotado. Pendiente nueva CI con resultados archivados de Simulation.
+- 2026-10-14 — Punto 116 validado por CI en `cf19fde` (DINAH CI, auditoría documental y archivo de artefactos correctos). El ajuste de alias de tipos resolvió `clippy::type_complexity`. PR #7 del bot documental revisado y cerrado sin merge: solo contenía una lista generada; la documentación de Simulation ya cubría el cambio y el arreglo era interno al test. Punto 117 iniciado: añadido `benches/simulation.rs` con casos de reloj, paso de simulación y recorrido/búsqueda de entidades. La primera ejecución CI pasó, pero la revisión de artefactos detectó que el runner no invocaba el nuevo binario; se corrige el script de benchmarks, el disparador del workflow y se limita la muestra de búsquedas lineales a 16 IDs para mantener un coste acotado. La nueva ejecución `38484605568` pasó en los cinco runners; el workflow de archivo `38484770738` archivó las salidas y entornos en `artifacts/benchmarks/83cbcc3f3a36bd38ee661ae12075a0e27b654414/run-38484605568/`. Punto 117 completado: `docs/simulation.md` registra medianas de referencia y aclara sus límites; no se infieren mejoras ni se cambia la representación basándose solo en estos microbenchmarks.
+
+- 2026-10-14 — Punto 117 validado: DINAH CI, auditoría documental y benchmarks de `83cbcc3` pasaron. Se inspeccionaron los cinco artefactos de Simulation y se verificó su archivo en el commit automático `c860fc7`; se documentaron las medianas medidas y se marcó el punto 117 como completado. Checks locales de formato, diff y checklist pendientes tras esta actualización documental.

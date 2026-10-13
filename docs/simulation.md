@@ -105,9 +105,19 @@ El test `deterministic_replay_reproduces_tick_trace_and_entity_state` ejecuta do
 
 ## Benchmarks (punto 117)
 
-`benches/simulation.rs` proporciona un benchmark ejecutable con `cargo bench --bench simulation`. Informa la arquitectura, usa nueve muestras y la mediana, y separa estos casos: 256 avances de `SimulationClock` (incluye construcción), 256 pasos de `Simulation` con una actualización pequeña (incluye construcción), recorrido mutable de `SimulationEntities<T>` y 16 búsquedas `get` distribuidas sobre colecciones de 64, 1.024 y 16.384 entidades. Cada muestra repite la operación 32 veces y normaliza el tiempo; la columna `ns_per_operation` divide además por ticks/entidades cuando corresponde.
+**Punto 117 completado con mediciones reales de CI** en el commit `83cbcc3f3a36bd38ee661ae12075a0e27b654414`, workflow [dinah benchmarks, ejecución 38484605568](https://github.com/lecodev-26/dinah/actions/runs/38484605568). Las salidas completas y los entornos están archivados en [`artifacts/benchmarks/83cbcc3f3a36bd38ee661ae12075a0e27b654414/run-38484605568/`](../artifacts/benchmarks/83cbcc3f3a36bd38ee661ae12075a0e27b654414/run-38484605568/), con resultados para Linux x86-64, Linux ARM64, Windows x86-64, macOS x86-64 y macOS ARM64.
 
-El benchmark no contiene resultados archivados ni afirma una mejora de rendimiento: primero debe ejecutarse en runners de referencia y guardar el entorno y salida antes de extraer conclusiones. Los casos de entidades incluyen el coste de actualizar estados acumulativamente; las búsquedas `get` miden la búsqueda lineal actual sobre 16 IDs repartidos por la colección, no una query ECS. El workflow de benchmarks ejecuta este binario y archiva su salida junto con las otras suites. Los resultados son específicos de máquina y compilación release.
+`benches/simulation.rs` se ejecuta en release, usa nueve muestras y reporta medianas; cada muestra repite la operación 32 veces. Incluye 256 avances de `SimulationClock` (con construcción), 256 pasos de `Simulation` con actualización pequeña (con construcción), recorrido mutable de colecciones de 64, 1.024 y 16.384 entidades y 16 búsquedas `get` distribuidas por colección. Tabla de referencia para los casos temporales y el tamaño de 16.384 entidades:
+
+| Plataforma | Reloj (ns/avance) | Paso (ns/paso) | Recorrido mutable (ns/entidad) | 16 búsquedas lineales (ns/búsqueda) |
+| --- | ---: | ---: | ---: | ---: |
+| Linux x86-64 | 7,801 | 12,547 | 0,368 | 2.437,000 |
+| Linux ARM64 | 5,855 | 8,000 | 0,438 | 1.792,938 |
+| Windows x86-64 | 7,836 | 12,242 | 0,346 | 2.446,062 |
+| macOS x86-64 | 10,488 | 10,305 | 0,823 | 4.990,062 |
+| macOS ARM64 | 2,395 | 6,012 | 0,281 | 1.533,875 |
+
+Son observaciones específicas de máquinas y compilaciones concretas, no garantías ni comparaciones controladas entre sistemas operativos. La construcción está incluida en los casos de reloj y paso, por lo que no deben interpretarse como coste aislado por tick en régimen estable. El caso de búsquedas mide la búsqueda lineal actual sobre 16 IDs repartidos por la colección; no es una query ECS. Estos datos establecen una línea base, no prueban una mejora frente a una versión anterior ni justifican por sí solos cambiar la representación de almacenamiento. El workflow de benchmarks ejecuta la suite y archiva la salida y el entorno de los cinco runners.
 
 ## Criterios de aceptación
 
