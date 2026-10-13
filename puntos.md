@@ -5,8 +5,8 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 114
-- En progreso: 13
+- Completados: 119
+- En progreso: 8
 - Pendientes: 160
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
@@ -136,11 +136,11 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 ## FASE 6 — Simulation
 
 - [x] 105 — Diseñar Simulation API (`docs/simulation.md` fija responsabilidades, contrato temporal propuesto, errores, determinismo, integración por etapas y criterios de aceptación; las firmas se identifican explícitamente como conceptuales)
-- [>] 106 — Integrar física ASCII: módulo `simulation::ascii_physics` con rejilla acotada, partículas discretas, obstáculos, rebote y renderizado; tests de límites y colisiones. Pendiente CI y revisión final.
-- [>] 107 — Integrar simulación de fluidos acotada: `simulation::fluid::ScalarFluid` implementa difusión escalar 2D explícita, buffer doble y borde sin flujo; tests de estabilidad, finitud y conservación aproximada. No es CFD general; pendiente CI y revisión final.
-- [>] 108 — Integrar autómatas celulares: `simulation::cellular::CellularGrid` implementa Conway Life, vecindad Moore, bordes muertos o wrap y actualización síncrona con buffer doble; tests de blinker, límites y validación. Pendiente CI y revisión final.
-- [>] 109 — Integrar raycasting 2D: `simulation::raycast` ofrece rayos y AABB con intersección por slabs, distancia paramétrica, origen interior y miss; tests de impacto, paralelo, miss y dirección cero. Pendiente CI y revisión final.
-- [>] 110 — Integrar enjambres: `simulation::swarm::Flock2D` implementa flocking 2D acotado con vecindad por radio, actualización desde snapshot y límite de velocidad; tests de replay, velocidad y valores finitos. Pendiente CI y revisión final.
+- [x] 106 — Integrar física ASCII: `simulation::ascii_physics` ofrece rejilla acotada, partículas discretas, obstáculos, rebote y renderizado; tests de límites y colisiones. CI, tests, Clippy y documentación pública verificados en `f7591b2`.
+- [x] 107 — Integrar simulación de fluidos acotada: `simulation::fluid::ScalarFluid` implementa difusión escalar 2D explícita, buffer doble y borde sin flujo; tests de estabilidad, finitud y conservación aproximada. No es CFD general. CI, tests, Clippy y documentación pública verificados en `f7591b2`.
+- [x] 108 — Integrar autómatas celulares: `simulation::cellular::CellularGrid` implementa Conway Life, vecindad Moore, bordes muertos o wrap y actualización síncrona con buffer doble; tests de blinker, límites y validación. CI, tests, Clippy y documentación pública verificados en `f7591b2`.
+- [x] 109 — Integrar raycasting 2D: `simulation::raycast` ofrece rayos y AABB con intersección por slabs, distancia paramétrica, origen interior y miss; tests de impacto, paralelo, miss y dirección cero. CI, tests, Clippy y documentación pública verificados en `f7591b2`.
+- [x] 110 — Integrar enjambres: `simulation::swarm::Flock2D` implementa flocking 2D acotado con vecindad por radio, actualización desde snapshot y límite de velocidad; tests de replay, velocidad y valores finitos. CI, tests, Clippy y documentación pública verificados en `f7591b2`.
 - [x] 111 — Definir timestep (`src/simulation.rs`: `SimulationClock` con delta fijo validado, tick y elapsed explícitos, overflow comprobado y tests de avance atómico)
 - [x] 112 — Definir actualización determinista (`Simulation<S>::step` ejecuta una actualización síncrona por tick; conserva el reloj ante error y documenta que no revierte mutaciones del estado)
 - [x] 113 — Crear sistema de entidades simuladas (`SimulationEntities<T>` con IDs monotónicos, acceso/mutación/eliminación, orden de iteración estable y error de agotamiento)
@@ -471,5 +471,5 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 - Confirmada CI verde para la auditoría previa `e87549d`: CI https://github.com/lecodev-26/dinah/actions/runs/38485862573 y archivo de artefactos https://github.com/lecodev-26/dinah/actions/runs/38485917858.
 - Añadidos cinco módulos sin dependencias externas: `simulation::ascii_physics`, `simulation::fluid`, `simulation::cellular`, `simulation::raycast` y `simulation::swarm`. Cada módulo contiene tests de dominio y valida entradas básicas.
 - 106 es una física discreta de rejilla (no un motor rígido general); 107 es difusión escalar explícita (no CFD); 108 es Conway Life con buffer doble; 109 es raycasting 2D contra AABB; 110 es flocking 2D basado en snapshot. Las limitaciones están documentadas en `docs/simulation.md`.
-- Estado: los cinco puntos pasan a en progreso mientras se espera CI remota; no marcar como completados antes de confirmar compilación, tests, Clippy y documentación pública.
+- CI confirmada verde en `f7591b2`: tests, Clippy, documentación pública y checklist pasaron (https://github.com/lecodev-26/dinah/actions/runs/38486267990); auditoría documental pasó (https://github.com/lecodev-26/dinah/actions/runs/38486267997). Los cinco puntos se marcan completados con el alcance acotado descrito arriba.
 - No se inició Networking ni la siguiente fase.
