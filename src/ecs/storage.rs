@@ -162,6 +162,25 @@ impl<T: Component> ComponentStorage<T> {
         self.entities.iter().copied().zip(self.components.iter())
     }
 
+    /// Mutates each component through the shared sequential Compute primitive,
+    /// retaining the entity handle aligned with its contiguous component row.
+    ///
+    /// This deliberately exposes no structural storage operations to the
+    /// callback. It is sequential and makes no claim about parallel execution.
+    pub(super) fn for_each_mut<F>(&mut self, mut operation: F)
+    where
+        F: FnMut(Entity, &mut T),
+    {
+        let entities = &self.entities;
+        let mut row = 0;
+        crate::compute::for_each(&mut self.components, |component| {
+            let entity = entities[row];
+            row += 1;
+            operation(entity, component);
+        });
+        debug_assert_eq!(row, entities.len());
+    }
+
     /// Mutably iterates over distinct entity/component rows without exposing
     /// structural mutation while any yielded borrow is alive.
     pub(super) fn iter_mut(&mut self) -> impl Iterator<Item = (Entity, &mut T)> {
@@ -238,6 +257,31 @@ mod tests {
         let rows: Vec<_> = storage.iter().map(|(e, value)| (e, *value)).collect();
         assert_eq!(rows, vec![(entity(6, 2), "six"), (entity(1, 4), "one")]);
         assert_eq!(ComponentStorage::<u32>::new().iter().count(), 0);
+    }
+
+    #[test]
+    fn compute_for_each_mut_preserves_entity_alignment_and_row_shape() {
+        let mut storage = ComponentStorage::new();
+        storage.insert(entity(6, 2), 10_u32).unwrap();
+        storage.insert(entity(1, 4), 20_u32).unwrap();
+
+        let mut visited = Vec::new();
+        storage.for_each_mut(|entity, value| {
+            visited.push(entity);
+            *value += entity.index();
+        });
+
+        assert_eq!(visited, vec![entity(6, 2), entity(1, 4)]);
+        assert_eq!(storage.entities(), &[entity(6, 2), entity(1, 4)]);
+        assert_eq!(storage.components(), &[16, 21]);
+        assert_eq!(storage.len(), 2);
+    }
+
+    #[test]
+    fn compute_for_each_mut_accepts_empty_storage() {
+        let mut storage = ComponentStorage::<u32>::new();
+        storage.for_each_mut(|_, value| *value += 1);
+        assert!(storage.is_empty());
     }
 
     #[test]

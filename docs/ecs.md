@@ -1,6 +1,6 @@
 # dinah ECS — diseño inicial
 
-Estado: diseño inicial aprobado; `Entity`, `Component`, el ciclo de vida inicial de `World` y el adaptador explícito de sistemas a Runtime están implementados. El almacenamiento contiguo interno de los puntos 096–097 todavía no está conectado a `World` ni expuesto como API pública. Las queries siguen pendientes. Las decisiones de este documento son una propuesta inicial revisable, no una garantía de estabilidad pública.
+Estado: diseño inicial aprobado; `Entity`, `Component`, el ciclo de vida inicial de `World` y el adaptador explícito de sistemas a Runtime están implementados. El punto 099 añade un adaptador interno que procesa secuencialmente los componentes contiguos mediante `compute::for_each`, manteniendo alineados los handles de entidad. El almacenamiento todavía no está conectado a `World` ni expuesto como API pública. Las queries siguen pendientes. Las decisiones de este documento son una propuesta inicial revisable, no una garantía de estabilidad pública.
 
 ## Objetivos
 
@@ -125,7 +125,7 @@ La destrucción de una entidad debe dejar todos los storages coherentes. Las pru
 ## Integración futura
 
 - **Memory (096):** reutilizar las lecciones de `Buffer<T>` y `SoaBuffer<A, B>`, pero no forzar el buffer fijo actual a ser un storage de tamaño dinámico sin evidencia de que sus contratos encajen.
-- **Compute (099):** integrar más adelante la iteración segura con primitivas de procesamiento; ofrecer slices o particiones disjuntas solo cuando el layout y los préstamos lo permitan.
+- **Compute (099):** `ComponentStorage::for_each_mut` reutiliza `compute::for_each` sobre la columna contigua de componentes y empareja cada elemento con su `Entity` en el mismo índice. La operación es secuencial, no permite mutaciones estructurales desde el callback y conserva el tamaño/alineación de las columnas. No es todavía una API pública de `World`: conectar los storages a `World`, añadir queries y diseñar particiones paralelas son tareas separadas; no se promete paralelismo ni speedup.
 - **Runtime (098, 100):** `World::run_system` conecta explícitamente un sistema síncrono con `Scheduler`; los sistemas paralelos siguen pendientes y no se introduce scheduling oculto en operaciones de `World`. Dependencias de lectura/escritura entre sistemas se deben modelar antes de permitir ejecución concurrente.
 - **Consistencia (101):** invariantes para generaciones, lista libre, alineación de columnas e índices dispersos, y ausencia de componentes en entidades muertas.
 - **Benchmarks (102–103):** comparar sparse sets con un baseline simple, registrar tamaño de entidad/componentes, composición, lecturas/escrituras, inserciones/borrados y distribución de queries. No afirmar superioridad universal ni adoptar archetypes solo por intuición.
@@ -135,5 +135,5 @@ La destrucción de una entidad debe dejar todos los storages coherentes. Las pru
 1. **091 — Diseño ECS:** decisiones, invariantes, límites y secuencia de integración documentados aquí.
 2. **092–094 — Entity, Component, World:** implementados los handles, el bound público y el ciclo de vida inicial de World; el storage de componentes permanece fuera de estos puntos.
 3. **095–097 — Queries, almacenamiento e iteración:** contrato de queries, storage contiguo e iteradores seguros secuenciales implementados/documentados incrementalmente; la integración con World y las queries públicas aún requieren sus propios puntos y tests de consistencia.
-4. **098–100 — Integración Runtime/Compute y sistemas paralelos:** adaptador síncrono explícito de `World` a Runtime implementado; integración con Compute y ejecución paralela requieren ownership y conflictos de acceso definidos.
+4. **098–100 — Integración Runtime/Compute y sistemas paralelos:** adaptador síncrono explícito de `World` a Runtime e integración secuencial interna del storage con `compute::for_each` implementados; la API pública de componentes/queries y la ejecución paralela requieren trabajo adicional sobre ownership y conflictos de acceso.
 5. **101–104 — Consistencia, benchmarks, acceso a memoria y documentación:** medir antes de cambiar representación o prometer rendimiento.
