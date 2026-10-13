@@ -27,3 +27,14 @@ The first five-runner release run completed successfully: [benchmark workflow ru
 | macOS ARM64 | 2.286 | 4.514 | 2.222 | 0.692 |
 
 These are the exact reported per-operation medians for each runner and this workload; they are not directly comparable hardware benchmarks unless runner CPU, compiler, and environment are controlled. In particular, these results are not evidence of a universal platform ranking or a speedup against another ECS. The baseline confirms that the new benchmark executes on all five configured runners and provides reproducible starting data for later changes. Component and query performance remain unmeasured.
+
+
+## Memory-access review (roadmap point 103, in progress)
+
+The current implementation does not yet expose a representative component-access workload through `World`: `ComponentStorage<T>` remains an internal type and is not registered with the world. The existing `ecs` benchmark therefore measures entity-slot lifecycle only, while `memory` measures generic `Buffer`/`SoaBuffer` operations and synthetic AoS/SoA scans. Neither can establish the cost of real ECS component lookups, query iteration, or structural changes.
+
+The storage implementation already uses contiguous `entities` and `components` columns, a sparse index from entity index to row, generation validation on lookup, and `swap_remove` for deletion. These are design properties, not proof of cache-locality or speed. The sparse vector's memory footprint also depends on the largest entity index, so benchmarks must include sparse/dense entity-index distributions rather than only dense sequential handles.
+
+**Decision for point 103:** do not change the representation or add speculative caching/prefetching yet. First integrate storage with `World` and define a representative workload; then benchmark, on all configured runners, at least: (1) repeated `get` for dense and sparse indices, including stale generations; (2) sequential iteration over one component; (3) iteration over two component types with different overlap rates; (4) insert/replace/remove including `swap_remove`; and (5) end-to-end setup cost separately from steady-state access. Use equivalent data and checksums, multiple sizes and repeated runs, and record allocations/memory footprint where practical. Compare against a simple baseline only if it models the same semantics. A representation change is justified only by a repeatable improvement in a representative workload without weakening generation checks, alignment invariants, allocation-failure behavior, or safe borrowing.
+
+Until those cases can run through a real consumer API, point 103 remains **in progress**; no memory-access optimization is claimed.

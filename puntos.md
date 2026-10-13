@@ -6,8 +6,8 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 
 - Total de puntos numerados: 287
 - Completados: 95
-- En progreso: 5
-- Pendientes: 187
+- En progreso: 6
+- Pendientes: 186
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -130,7 +130,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [>] 100 — Crear sistemas paralelos (contrato de seguridad y `SystemAccess` público implementados: declara lecturas/escrituras por tipo, fusiona duplicados de forma conservadora y detecta conflictos read/write; planificador determinista de fases contiguas implementado; ejecución que valide declaraciones, aislamiento estructural y ejecución paralela aún pendientes)
 - [x] 101 — Testear consistencia (tests de invariantes de `World` para contador de entidades vivas, slots retirados y lista libre sin duplicados; tests de `ComponentStorage` para alineación de columnas, índices sparse y generaciones obsoletas tras inserciones, reemplazos, `swap_remove` y reutilización)
 - [x] 102 — Benchmark ECS (benchmarks públicos de ciclo de vida de `World` para spawn, despawn, reutilización de slots y `contains`; CI y resultados de cinco plataformas registrados en `docs/ecs-benchmarks.md`)
-- [ ] 103 — Optimizar acceso a memoria
+- [>] 103 — Optimizar acceso a memoria (revisión documentada en `docs/ecs-benchmarks.md`: no cambiar representación sin carga real; faltan storage integrado con `World` y benchmarks de lookup/iteración/query/estructura)
 - [ ] 104 — Documentar arquitectura ECS
 
 ## FASE 6 — Simulation
@@ -416,3 +416,8 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 - 2026-10-14 — Punto 100 avanzado: `SystemPlan` construye lotes contiguos deterministas a partir de `SystemAccess`, conserva el orden de sistemas conflictivos y acepta entrada vacía. Añadidos tests unitarios y públicos. El planificador solo organiza metadata y no ejecuta closures ni habilita paralelismo seguro; punto sigue en progreso.
 
 - 2026-10-14 — Punto 101 completado en pruebas y documentación: se verifican invariantes de `World` y `ComponentStorage` tras secuencias repetidas de mutaciones, incluyendo lista libre sin duplicados, coherencia del contador de entidades vivas, slots retirados, alineación de columnas y reparación del índice sparse. El storage continúa sin estar integrado con `World`; no se afirma eliminación automática de componentes en `despawn`. Checks locales de formato, diff y checklist ejecutados; pendiente CI remoto.
+
+
+### Registro de progreso — 2026-10-14
+
+- Punto 103 iniciado: revisión de las estructuras actuales y de la evidencia disponible. `ComponentStorage<T>` ya usa columnas contiguas y un índice sparse validado por generación, pero aún no está integrado con `World`; los benchmarks existentes solo cubren ciclo de vida de entidades y layouts genéricos. Documentados los casos necesarios para medir accesos densos/dispersos, generaciones obsoletas, iteración de uno/dos componentes, mutaciones estructurales y coste de preparación por separado. No se introduce una optimización especulativa ni se marca completado sin resultados representativos.
