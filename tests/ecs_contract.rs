@@ -74,3 +74,35 @@ fn public_world_runs_explicit_systems_through_runtime() {
     assert_eq!(failure, Ok(Err("expected failure")));
     assert_eq!(world.len(), 1);
 }
+
+#[test]
+fn public_system_access_metadata_detects_component_conflicts() {
+    use dinah::ecs::SystemAccess;
+
+    struct Position;
+    struct Velocity;
+
+    let mut reader_a = SystemAccess::new();
+    reader_a.read::<Position>();
+    let mut reader_b = SystemAccess::new();
+    reader_b.read::<Position>();
+    assert!(!reader_a.conflicts_with(&reader_b));
+
+    let mut writer = SystemAccess::new();
+    writer.write::<Position>();
+    assert!(reader_a.conflicts_with(&writer));
+    assert!(writer.conflicts_with(&reader_b));
+
+    let mut other_writer = SystemAccess::new();
+    other_writer.write::<Velocity>();
+    assert!(!writer.conflicts_with(&other_writer));
+}
+
+#[test]
+fn public_system_access_metadata_does_not_require_send_or_sync() {
+    use dinah::ecs::SystemAccess;
+
+    let mut local_access = SystemAccess::new();
+    local_access.write::<Rc<Cell<u32>>>();
+    assert!(!local_access.is_empty());
+}
