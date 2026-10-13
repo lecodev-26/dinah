@@ -3,6 +3,7 @@
 //! This module deliberately does not run updates, read a wall clock, or spawn
 //! workers. It only validates and advances logical simulation time.
 
+use crate::ecs::{Entity, World};
 use core::fmt;
 use std::time::Duration;
 
@@ -293,13 +294,159 @@ impl<T> SimulationEntities<T> {
     }
 }
 
+/// Errors produced when binding simulation identities to ECS entities.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SimulationEntityBindingError {
+    /// The ECS handle is stale or is not alive in the supplied world.
+    EntityNotAlive,
+    /// This live ECS entity already has a simulation identity in this binding set.
+    EntityAlreadyBound,
+    /// No further simulation identity can be allocated without wrapping.
+    IdExhausted,
+}
+
+impl fmt::Display for SimulationEntityBindingError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::EntityNotAlive => f.write_str("ECS entity is not alive in the supplied world"),
+            Self::EntityAlreadyBound => f.write_str("ECS entity already has a simulation identity"),
+            Self::IdExhausted => f.write_str("simulation entity ID space is exhausted"),
+        }
+    }
+}
+
+impl std::error::Error for SimulationEntityBindingError {}
+
+/// Explicit, world-validated bridge between simulation IDs and ECS handles.
+///
+/// This type does not own either the [`World`] or entity lifetimes. Callers
+/// supply the owning world when binding and resolving. Resolution revalidates
+/// liveness, so a despawned entity or a stale generation never resolves even if
+/// its old binding has not yet been removed. Each live ECS handle can be bound
+/// at most once per bridge; IDs are monotonic and are never reused.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimulationEntityBindings {
+    next_id: Option<u64>,
+    bindings: Vec<(SimulationEntityId, Entity)>,
+}
+
+impl Default for SimulationEntityBindings {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl SimulationEntityBindings {
+    /// Creates an empty simulation-to-ECS binding set.
+    #[must_use]
+    pub const fn new() -> Self {
+        Self {
+            next_id: Some(0),
+            bindings: Vec::new(),
+        }
+    }
+
+    /// Binds a live ECS entity to a new stable simulation identity.
+    pub fn bind(
+        &mut self,
+        world: &World,
+        entity: Entity,
+    ) -> Result<SimulationEntityId, SimulationEntityBindingError> {
+        if !world.contains(entity) {
+            return Err(SimulationEntityBindingError::EntityNotAlive);
+        }
+        if self.bindings.iter().any(|(_, bound)| *bound == entity) {
+            return Err(SimulationEntityBindingError::EntityAlreadyBound);
+        }
+        let value = self
+            .next_id
+            .ok_or(SimulationEntityBindingError::IdExhausted)?;
+        let id = SimulationEntityId(value);
+        self.bindings.push((id, entity));
+        self.next_id = value.checked_add(1);
+        Ok(id)
+    }
+
+    /// Resolves an ID only while its ECS entity is still alive in `world`.
+    #[must_use]
+    pub fn resolve(&self, world: &World, id: SimulationEntityId) -> Option<Entity> {
+        let entity = self
+            .bindings
+            .iter()
+            .find_map(|(candidate, entity)| (*candidate == id).then_some(*entity))?;
+        world.contains(entity).then_some(entity)
+    }
+
+    /// Removes a binding without despawning the ECS entity.
+    pub fn unbind(&mut self, id: SimulationEntityId) -> Option<Entity> {
+        let index = self
+            .bindings
+            .iter()
+            .position(|(candidate, _)| *candidate == id)?;
+        Some(self.bindings.remove(index).1)
+    }
+
+    /// Returns the number of bindings, including any whose ECS entities were despawned.
+    #[must_use]
+    pub fn len(&self) -> usize {
+        self.bindings.len()
+    }
+
+    /// Returns whether this binding set is empty.
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.bindings.is_empty()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::{
         Simulation, SimulationClock, SimulationEntities, SimulationEntitiesError,
-        SimulationStepError, SimulationTimeError,
+        SimulationEntityBindingError, SimulationEntityBindings, SimulationStepError,
+        SimulationTimeError,
     };
     use std::time::Duration;
+
+    use crate::ecs::World;
+
+    #[test]
+    fn simulation_entity_bindings_validate_liveness_and_reject_duplicates() {
+        let mut world = World::new();
+        let entity = world.spawn().unwrap();
+        let mut bindings = SimulationEntityBindings::new();
+        let id = bindings.bind(&world, entity).unwrap();
+
+        assert_eq!(id.get(), 0);
+        assert_eq!(bindings.resolve(&world, id), Some(entity));
+        assert_eq!(bindings.len(), 1);
+        assert_eq!(
+            bindings.bind(&world, entity),
+            Err(SimulationEntityBindingError::EntityAlreadyBound)
+        );
+
+        world.despawn(entity).unwrap();
+        assert_eq!(bindings.resolve(&world, id), None);
+        let replacement = world.spawn().unwrap();
+        assert_ne!(replacement, entity);
+        assert_eq!(bindings.resolve(&world, id), None);
+        assert_eq!(bindings.unbind(id), Some(entity));
+        assert!(bindings.is_empty());
+    }
+
+    #[test]
+    fn simulation_entity_bindings_reject_dead_handles_without_mutation() {
+        let mut world = World::new();
+        let entity = world.spawn().unwrap();
+        world.despawn(entity).unwrap();
+        let mut bindings = SimulationEntityBindings::new();
+
+        assert_eq!(
+            bindings.bind(&world, entity),
+            Err(SimulationEntityBindingError::EntityNotAlive)
+        );
+        assert!(bindings.is_empty());
+    }
 
     #[test]
     fn simulation_steps_in_order_and_commits_time_after_success() {
