@@ -1,6 +1,7 @@
 //! Contiguous component columns with a sparse entity-index lookup.
 
 use super::{Component, Entity};
+use core::any::Any;
 use core::fmt;
 
 /// Failure to grow a component storage without committing a partial row.
@@ -20,11 +21,18 @@ impl fmt::Display for StorageError {
 
 impl std::error::Error for StorageError {}
 
+/// Type-erased operations needed by `World` to own and clean up storages.
+pub(super) trait ErasedStorage: Any {
+    fn remove_entity(&mut self, entity: Entity);
+    fn as_any(&self) -> &dyn Any;
+    fn as_any_mut(&mut self) -> &mut dyn Any;
+}
+
 /// Stores one component value per entity in contiguous, index-aligned vectors.
 ///
-/// This is an ECS implementation detail, not yet connected to `World`. The
-/// sparse index locates a candidate row; the complete `Entity` (including its
-/// generation) is checked before returning or removing a value.
+/// The sparse index locates a candidate row; the complete `Entity` (including
+/// its generation) is checked before returning or removing a value. `World`
+/// owns these storages behind a type-erased registry.
 #[derive(Debug)]
 pub(super) struct ComponentStorage<T: Component> {
     entities: Vec<Entity>,
@@ -39,6 +47,20 @@ impl<T: Component> Default for ComponentStorage<T> {
             components: Vec::new(),
             sparse: Vec::new(),
         }
+    }
+}
+
+impl<T: Component> ErasedStorage for ComponentStorage<T> {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn remove_entity(&mut self, entity: Entity) {
+        let _ = self.remove(entity);
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
     }
 }
 

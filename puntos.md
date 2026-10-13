@@ -130,7 +130,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [>] 100 — Crear sistemas paralelos (contrato de seguridad y `SystemAccess` público implementados: declara lecturas/escrituras por tipo, fusiona duplicados de forma conservadora y detecta conflictos read/write; planificador determinista de fases contiguas implementado; ejecución que valide declaraciones, aislamiento estructural y ejecución paralela aún pendientes)
 - [x] 101 — Testear consistencia (tests de invariantes de `World` para contador de entidades vivas, slots retirados y lista libre sin duplicados; tests de `ComponentStorage` para alineación de columnas, índices sparse y generaciones obsoletas tras inserciones, reemplazos, `swap_remove` y reutilización)
 - [x] 102 — Benchmark ECS (benchmarks públicos de ciclo de vida de `World` para spawn, despawn, reutilización de slots y `contains`; CI y resultados de cinco plataformas registrados en `docs/ecs-benchmarks.md`)
-- [>] 103 — Optimizar acceso a memoria (revisión documentada en `docs/ecs-benchmarks.md`: no cambiar representación sin carga real; faltan storage integrado con `World` y benchmarks de lookup/iteración/query/estructura)
+- [>] 103 — Optimizar acceso a memoria (integración inicial de `ComponentStorage<T>` con `World` para insert/get/get_mut/remove/has y limpieza en despawn; faltan benchmarks representativos de lookup/iteración/query/estructura y evidencia para cualquier cambio de representación)
 - [ ] 104 — Documentar arquitectura ECS
 
 ## FASE 6 — Simulation
@@ -421,3 +421,6 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 ### Registro de progreso — 2026-10-14
 
 - Punto 103 iniciado: revisión de las estructuras actuales y de la evidencia disponible. `ComponentStorage<T>` ya usa columnas contiguas y un índice sparse validado por generación, pero aún no está integrado con `World`; los benchmarks existentes solo cubren ciclo de vida de entidades y layouts genéricos. Documentados los casos necesarios para medir accesos densos/dispersos, generaciones obsoletas, iteración de uno/dos componentes, mutaciones estructurales y coste de preparación por separado. No se introduce una optimización especulativa ni se marca completado sin resultados representativos.
+
+
+- 2026-10-14 — Punto 103 avanzado: conectado el registro de storages tipados a `World` mediante `TypeId` y borrado de tipo seguro (`Any`), añadidos `insert/get/get_mut/remove/has`, rechazo de handles muertos/obsoletos y limpieza de componentes durante `despawn`. Se añaden pruebas unitarias y de contrato público, incluyendo componente `!Send`/`!Sync` y reutilización de índice. El punto sigue en progreso: faltan benchmarks reales de acceso y queries antes de optimizar la representación. Pendiente CI remoto.

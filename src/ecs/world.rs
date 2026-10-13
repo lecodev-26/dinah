@@ -1,8 +1,11 @@
 //! Entity allocation and lifetime tracking for the initial single-owner ECS.
 
-use super::Entity;
+use super::storage::{ComponentStorage, ErasedStorage, StorageError};
+use super::{Component, Entity};
 use crate::runtime::{ScheduleError, Scheduler};
+use core::any::TypeId;
 use core::fmt;
+use std::collections::HashMap;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum WorldError {
@@ -10,6 +13,8 @@ pub enum WorldError {
     EntityNotAlive,
     /// All entity indices representable by `Entity` have been exhausted.
     EntityIndexExhausted,
+    /// A component storage could not reserve memory for an insertion.
+    AllocationFailed,
 }
 
 impl fmt::Display for WorldError {
@@ -17,6 +22,7 @@ impl fmt::Display for WorldError {
         match self {
             Self::EntityNotAlive => f.write_str("entity is not alive in this world"),
             Self::EntityIndexExhausted => f.write_str("entity index space is exhausted"),
+            Self::AllocationFailed => f.write_str("failed to reserve component storage"),
         }
     }
 }
@@ -30,17 +36,18 @@ struct EntitySlot {
     retired: bool,
 }
 
-/// Owns entity identity and lifetime for one ECS world.
+/// Owns entity identity, lifetime, and component storages for one ECS world.
 ///
-/// Component storage is added in a later roadmap step. This initial `World`
-/// allocates handles, validates their current generation, and reuses indices
-/// only after advancing their generation. A slot is permanently retired if
-/// its generation cannot be advanced without wrapping.
+/// Each
+/// component access validates the full world-local handle, and despawning an
+/// entity removes its rows from every registered storage. A slot is retired if
+/// its generation cannot advance without wrapping.
 #[derive(Debug, Default)]
 pub struct World {
     slots: Vec<EntitySlot>,
     free_indices: Vec<u32>,
     alive_count: usize,
+    storages: HashMap<TypeId, Box<dyn ErasedStorage>>,
 }
 
 impl World {
@@ -51,6 +58,7 @@ impl World {
             slots: Vec::new(),
             free_indices: Vec::new(),
             alive_count: 0,
+            storages: HashMap::new(),
         }
     }
 
@@ -84,6 +92,9 @@ impl World {
             return Err(WorldError::EntityNotAlive);
         }
 
+        for storage in self.storages.values_mut() {
+            storage.remove_entity(entity);
+        }
         slot.alive = false;
         self.alive_count -= 1;
         if let Some(next_generation) = slot.generation.checked_add(1) {
@@ -94,6 +105,74 @@ impl World {
             slot.retired = true;
         }
         Ok(())
+    }
+
+    /// Inserts a component for a live entity, returning a replaced value if any.
+    pub fn insert<T: Component>(
+        &mut self,
+        entity: Entity,
+        component: T,
+    ) -> Result<Option<T>, WorldError> {
+        if !self.contains(entity) {
+            return Err(WorldError::EntityNotAlive);
+        }
+        let storage = self
+            .storages
+            .entry(TypeId::of::<T>())
+            .or_insert_with(|| Box::new(ComponentStorage::<T>::new()));
+        let typed = storage
+            .as_any_mut()
+            .downcast_mut::<ComponentStorage<T>>()
+            .expect("TypeId and component storage type must agree");
+        typed
+            .insert(entity, component)
+            .map_err(|error| match error {
+                StorageError::AllocationFailed => WorldError::AllocationFailed,
+            })
+    }
+
+    /// Returns a shared reference to a component attached to a live entity.
+    #[must_use]
+    pub fn get<T: Component>(&self, entity: Entity) -> Option<&T> {
+        if !self.contains(entity) {
+            return None;
+        }
+        self.storages
+            .get(&TypeId::of::<T>())?
+            .as_ref()
+            .as_any()
+            .downcast_ref::<ComponentStorage<T>>()?
+            .get(entity)
+    }
+
+    /// Returns an exclusive reference to a component attached to a live entity.
+    pub fn get_mut<T: Component>(&mut self, entity: Entity) -> Option<&mut T> {
+        if !self.contains(entity) {
+            return None;
+        }
+        self.storages
+            .get_mut(&TypeId::of::<T>())?
+            .as_any_mut()
+            .downcast_mut::<ComponentStorage<T>>()?
+            .get_mut(entity)
+    }
+
+    /// Removes a component from a live entity and returns its value.
+    pub fn remove<T: Component>(&mut self, entity: Entity) -> Option<T> {
+        if !self.contains(entity) {
+            return None;
+        }
+        self.storages
+            .get_mut(&TypeId::of::<T>())?
+            .as_any_mut()
+            .downcast_mut::<ComponentStorage<T>>()?
+            .remove(entity)
+    }
+
+    /// Returns whether a live entity has a component of the requested type.
+    #[must_use]
+    pub fn has<T: Component>(&self, entity: Entity) -> bool {
+        self.get::<T>(entity).is_some()
     }
 
     /// Returns whether the handle currently names a live entity in this world.
@@ -198,6 +277,37 @@ mod tests {
         let next = world.spawn().unwrap();
         assert_ne!(next.index(), max_generation.index());
         assert!(!world.contains(max_generation));
+    }
+
+    #[test]
+    fn components_insert_replace_mutate_remove_and_cleanup_on_despawn() {
+        let mut world = World::new();
+        let entity = world.spawn().unwrap();
+        assert_eq!(world.insert(entity, 10_u32), Ok(None));
+        assert_eq!(world.get::<u32>(entity), Some(&10));
+        assert!(world.has::<u32>(entity));
+        assert_eq!(world.insert(entity, 20_u32), Ok(Some(10)));
+        *world.get_mut::<u32>(entity).unwrap() += 2;
+        assert_eq!(world.get::<u32>(entity), Some(&22));
+        assert_eq!(world.remove::<u32>(entity), Some(22));
+        assert!(!world.has::<u32>(entity));
+        world.insert(entity, String::from("cleanup")).unwrap();
+        world.despawn(entity).unwrap();
+        assert_eq!(world.get::<String>(entity), None);
+    }
+
+    #[test]
+    fn component_access_rejects_dead_and_stale_entities() {
+        let mut world = World::new();
+        let stale = world.spawn().unwrap();
+        world.insert(stale, 7_u32).unwrap();
+        world.despawn(stale).unwrap();
+        assert_eq!(world.get::<u32>(stale), None);
+        assert_eq!(world.insert(stale, 9_u32), Err(WorldError::EntityNotAlive));
+        let current = world.spawn().unwrap();
+        assert_eq!(current.index(), stale.index());
+        assert_eq!(world.get::<u32>(current), None);
+        assert!(!world.has::<u32>(current));
     }
 
     #[test]

@@ -6,7 +6,6 @@
 mod access;
 mod component;
 mod entity;
-#[allow(dead_code)] // Integrated into World in a later ECS step.
 mod storage;
 mod world;
 

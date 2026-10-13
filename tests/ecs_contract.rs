@@ -148,3 +148,45 @@ fn public_system_plan_keeps_conflicts_ordered_and_groups_compatible_systems() {
     let plan = SystemPlan::from_accesses(&[first, second, third, fourth]);
     assert_eq!(plan.batches(), &[vec![0, 1], vec![2, 3]]);
 }
+
+#[test]
+fn public_world_manages_component_lifecycle_and_despawn_cleanup() {
+    use dinah::ecs::{World, WorldError};
+
+    let mut world = World::new();
+    let entity = world.spawn().unwrap();
+    assert_eq!(world.insert(entity, 12_u32), Ok(None));
+    assert_eq!(world.get::<u32>(entity), Some(&12));
+    assert!(world.has::<u32>(entity));
+    assert_eq!(world.insert(entity, 13_u32), Ok(Some(12)));
+    *world.get_mut::<u32>(entity).unwrap() += 1;
+    assert_eq!(world.get::<u32>(entity), Some(&14));
+    assert_eq!(world.remove::<u32>(entity), Some(14));
+    assert!(!world.has::<u32>(entity));
+
+    world
+        .insert(entity, String::from("removed on despawn"))
+        .unwrap();
+    world.despawn(entity).unwrap();
+    assert_eq!(world.get::<String>(entity), None);
+    assert_eq!(
+        world.insert(entity, 99_u32),
+        Err(WorldError::EntityNotAlive)
+    );
+
+    let replacement = world.spawn().unwrap();
+    assert_eq!(replacement.index(), entity.index());
+    assert!(!world.has::<String>(replacement));
+}
+
+#[test]
+fn public_world_components_support_non_send_values() {
+    use dinah::ecs::World;
+
+    let mut world = World::new();
+    let entity = world.spawn().unwrap();
+    let local = Rc::new(Cell::new(3_u32));
+    world.insert(entity, Rc::clone(&local)).unwrap();
+    world.get::<Rc<Cell<u32>>>(entity).unwrap().set(8);
+    assert_eq!(local.get(), 8);
+}
