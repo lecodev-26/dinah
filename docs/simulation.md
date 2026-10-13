@@ -1,6 +1,6 @@
 # dinah Simulation — diseño inicial de API
 
-Estado: diseño inicial completado (punto 105) y reloj fijo implementado (punto 111). `dinah::simulation` ofrece `SimulationClock`, `SimulationTime` y `SimulationTimeError`; el ejecutor de actualizaciones, las entidades simuladas y las integraciones de dominio siguen pendientes.
+Estado: diseño inicial completado (punto 105) y reloj fijo implementado (punto 111). `dinah::simulation` ofrece `SimulationClock`, `SimulationTime`, `SimulationTimeError`, `Simulation<S>` y `SimulationStepError`; las entidades simuladas y las integraciones de dominio siguen pendientes.
 
 ## Objetivo y responsabilidades
 
@@ -50,7 +50,7 @@ pub trait SimulationStep {
 }
 ```
 
-El reloj ya implementado proporciona el núcleo temporal de esta propuesta: `SimulationClock::new(delta)` rechaza un delta cero y `advance()` incrementa un tick y el tiempo acumulado de forma comprobada. Si el tick o la duración se desbordan, devuelve `SimulationTimeError` y deja el reloj intacto. La política de acumulación de tiempo externo y de pasos máximos por avance queda aplazada; el reloj no consulta tiempo de pared ni ejecuta callbacks.
+El reloj ya implementado proporciona el núcleo temporal de esta propuesta: `SimulationClock::new(delta)` rechaza un delta cero y `advance()` incrementa un tick y el tiempo acumulado de forma comprobada. Si el tick o la duración se desbordan, devuelve `SimulationTimeError` y deja el reloj intacto. La política de acumulación de tiempo externo y de pasos máximos por avance queda aplazada; el reloj no consulta tiempo de pared ni ejecuta callbacks. `Simulation<S>::step` calcula el siguiente tiempo en una copia del reloj, llama una vez al callback síncrono y solo confirma el reloj tras el éxito. Si el callback devuelve error, el tick no avanza; las mutaciones de dominio previas al error no se revierten automáticamente. Si el cálculo temporal falla, el callback ni siquiera se invoca.
 
 ## Contratos que deben quedar definidos
 
@@ -88,7 +88,7 @@ El reloj ya implementado proporciona el núcleo temporal de esta propuesta: `Sim
 1. **105 — Diseño de API:** completado en este documento; firmas y límites iniciales definidos.
 2. **106–110 — Dominios:** evaluar por separado física ASCII, fluidos, autómatas celulares, raycasting y enjambres. Cada integración debe tener un caso de uso, límites de datos y tests propios; no se importarán abstracciones sin validar.
 3. **111 — Timestep:** implementado como `SimulationClock`, con delta fijo no nulo, tick, tiempo acumulado, avance explícito y errores de overflow comprobados. Quedan para después los límites de pasos por llamada y el acumulador de tiempo externo.
-4. **112 — Actualización determinista:** definir orden de fases, semántica de error y qué estado/tick se conserva ante un fallo.
+4. **112 — Actualización determinista:** completado en la primera versión mediante un callback síncrono por paso, tiempo explícito y commit del reloj solo tras éxito; el estado de dominio no tiene rollback automático.
 5. **113–115 — Entidades e integración:** diseñar el estado simulado y después conectar ECS y Compute, sin anticipar queries o ejecución paralela que aún no existan.
 6. **116–118 — Calidad de uso:** tests reproducibles, benchmarks de workloads concretos y ejemplos pequeños.
 7. **119 — Documentación:** describir solo la API implementada, sus límites y resultados medidos.
@@ -97,11 +97,11 @@ El reloj ya implementado proporciona el núcleo temporal de esta propuesta: `Sim
 
 - Los tipos propuestos se convierten en API solo tras fijar los puntos 111 y 112 y comprobar que no duplican responsabilidades de Core, ECS o Runtime.
 - Los parámetros inválidos se rechazan antes de mutaciones observables cuando sea viable. `SimulationClock` rechaza delta cero.
-- Tests del reloj cubren estado inicial, progresión del tick, delta cero y overflow de tick/duración sin mutación parcial. El límite de avance y el fallo de actualización esperan la implementación de los puntos 112 y posteriores.
+- Tests del reloj cubren estado inicial, progresión del tick, delta cero y overflow de tick/duración sin mutación parcial. El fallo de actualización se prueba en el punto 112: el reloj permanece igual si el callback falla; el estado de dominio puede conservar mutaciones previas al error. El límite de avance y el acumulador externo siguen pendientes.
 - Tests de determinismo comparan estados/resultados lógicos y no dependen del tiempo real ni del orden de finalización de workers.
 - Los benchmarks separan coste de avance vacío, actualización por entidad y workloads de dominio; informan tamaño, configuración, entorno y mediana, sin generalizar resultados de microbenchmarks.
 - Los ejemplos compilan contra la API real; las firmas conceptuales de este documento no se presentan como utilizables todavía.
 
 ## Decisiones aplazadas
 
-Quedan abiertas: la firma final de `advance`, si se permite acumular tiempo externo, la política de pausa, la serialización del estado, los eventos, la semántica transaccional de errores, la integración concreta con cada dominio y la estrategia paralela. Se resolverán con pruebas y necesidades reales, no añadiendo abstracciones preventivas.
+Quedan abiertas: si se permite acumular tiempo externo, la política de pausa, la serialización del estado, los eventos, rollback/transacciones del estado de dominio, la integración concreta con cada dominio y la estrategia paralela. Se resolverán con pruebas y necesidades reales, no añadiendo abstracciones preventivas.

@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 98
+- Completados: 99
 - En progreso: 6
-- Pendientes: 183
+- Pendientes: 182
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -142,7 +142,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [ ] 109 — Integrar raycasting
 - [ ] 110 — Integrar swarm algorithms
 - [x] 111 — Definir timestep (`src/simulation.rs`: `SimulationClock` con delta fijo validado, tick y elapsed explícitos, overflow comprobado y tests de avance atómico)
-- [ ] 112 — Definir actualización determinista
+- [x] 112 — Definir actualización determinista (`Simulation<S>::step` ejecuta una actualización síncrona por tick; conserva el reloj ante error y documenta que no revierte mutaciones del estado)
 - [ ] 113 — Crear sistema de entidades simuladas
 - [ ] 114 — Integrar Simulation con ECS
 - [ ] 115 — Integrar Simulation con Compute
@@ -436,3 +436,5 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 - 2026-10-14 — Punto 103: archivados y revisados los benchmarks de acceso ECS en cinco runners (run 38478287951). Se documentan medianas de get denso/disperso, miss de generación obsoleta y ciclo combinado insert/replace/remove; la variación por runner y la falta de iteración/query pública no justifican cambiar la representación. Punto 103 sigue en progreso.
 
 - 2026-10-14 — Punto 111 completado: se añadió `dinah::simulation::{SimulationClock, SimulationTime, SimulationTimeError}`. El reloj no consulta wall-clock; rechaza delta cero y calcula tick/duración siguientes antes de mutar para preservar el estado si hay overflow. Tests específicos cubren progresión y errores. Los puntos 112+ permanecen pendientes.
+
+- 2026-10-14 — Punto 112 completado: añadido `Simulation<S>` con callback síncrono y tiempo explícito. El reloj solo confirma el tick cuando la actualización termina correctamente; overflow temporal evita invocar el callback. Tests cubren orden de ticks, éxito, error y overflow. Se documenta que el estado de dominio no se revierte automáticamente si el callback muta y falla.
