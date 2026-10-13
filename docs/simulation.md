@@ -20,9 +20,9 @@ La primera API debe permitir construir y avanzar una simulación con tiempo expl
 
 Fuera de alcance inicial: reloj de pared implícito, paso variable automático, renderizado, entrada/salida, networking, rollback, DSL de escenarios, sistema de plugins, scheduler oculto, garantía de tiempo real y determinismo bit a bit entre arquitecturas para operaciones de punto flotante.
 
-## Forma conceptual de la API
+## API implementada
 
-Los nombres y firmas siguientes son una propuesta de diseño, no código disponible:
+La API disponible en `dinah::simulation` incluye `SimulationClock`, `SimulationTime`, `SimulationTimeError`, `Simulation<S>`, `SimulationStepError`, `SimulationEntityId`, `SimulationEntities<T>`, `SimulationEntitiesError`, `SimulationEntityBindings` y `SimulationEntityBindingError`. El siguiente fragmento conserva solo el esquema conceptual inicial; no es una API adicional ni una firma que deba copiarse literalmente:
 
 ```rust
 pub struct SimulationConfig {
@@ -96,8 +96,8 @@ Estos IDs son deliberadamente distintos de `ecs::Entity`: esta colección permit
 3. **111 — Timestep:** implementado como `SimulationClock`, con delta fijo no nulo, tick, tiempo acumulado, avance explícito y errores de overflow comprobados. Quedan para después los límites de pasos por llamada y el acumulador de tiempo externo.
 4. **112 — Actualización determinista:** completado en la primera versión mediante un callback síncrono por paso, tiempo explícito y commit del reloj solo tras éxito; el estado de dominio no tiene rollback automático.
 5. **113–115 — Entidades e integración:** 113 crea la colección de estado simulado; 114 añade el puente explícito entre IDs simulados y handles ECS; 115 integra el recorrido mutable secuencial con Compute, conservando orden y sin activar paralelismo implícito.
-6. **116–118 — Calidad de uso:** tests reproducibles (116), benchmark inicial de workloads concretos (117; mediciones de referencia aún pendientes) y ejemplos pequeños (118).
-7. **119 — Documentación:** describir solo la API implementada, sus límites y resultados medidos.
+6. **116–118 — Calidad de uso:** tests reproducibles (116), benchmark inicial medido y archivado en cinco plataformas (117) y ejemplo ejecutable `examples/simulation_basics.rs` (118).
+7. **119 — Documentación:** esta guía recoge la API implementada, sus límites, mediciones de referencia y un ejemplo ejecutable. La documentación seguirá evolucionando al ampliar el módulo.
 
 ## Pruebas deterministas (punto 116)
 
@@ -123,14 +123,14 @@ Son observaciones específicas de máquinas y compilaciones concretas, no garant
 
 `cargo run --example simulation_basics` muestra un `Simulation<Vec<Particle>>` que avanza tres pasos con delta fijo de 16 ms y actualiza posición usando el delta lógico entregado al callback. Después crea una `SimulationEntities<Particle>`, actualiza sus estados con `for_each_mut` y recorre los resultados en orden de inserción. El ejemplo no usa reloj de pared, workers implícitos ni integra entidades simuladas con ECS automáticamente.
 
-## Criterios de aceptación
+## Criterios y límites actuales
 
-- Los tipos propuestos se convierten en API solo tras fijar los puntos 111 y 112 y comprobar que no duplican responsabilidades de Core, ECS o Runtime.
-- Los parámetros inválidos se rechazan antes de mutaciones observables cuando sea viable. `SimulationClock` rechaza delta cero.
-- Tests del reloj cubren estado inicial, progresión del tick, delta cero y overflow de tick/duración sin mutación parcial. El fallo de actualización se prueba en el punto 112: el reloj permanece igual si el callback falla; el estado de dominio puede conservar mutaciones previas al error. El límite de avance y el acumulador externo siguen pendientes.
-- Tests de determinismo comparan estados/resultados lógicos y no dependen del tiempo real ni del orden de finalización de workers.
-- Los benchmarks separan coste de avance vacío, actualización por entidad y workloads de dominio; informan tamaño, configuración, entorno y mediana, sin generalizar resultados de microbenchmarks.
-- Los ejemplos compilan contra la API real; las firmas conceptuales de este documento no se presentan como utilizables todavía.
+- La API publicada corresponde al código de `src/simulation.rs`; el diseño evita duplicar responsabilidades de Core, ECS o Runtime.
+- `SimulationClock` rechaza delta cero y comprueba overflow de tick y duración antes de mutar su estado.
+- `Simulation::step` invoca un callback síncrono con tiempo explícito y confirma el reloj solo tras éxito. El estado de dominio no tiene rollback automático si el callback muta y luego falla.
+- Las pruebas de replay comparan trazas y estado para una secuencia explícita, sin reloj real ni aleatoriedad implícita. No prometen determinismo bit a bit entre arquitecturas ni seguridad de ejecución paralela.
+- Los benchmarks informan tamaño, configuración, entorno y medianas. Son líneas base de microbenchmarks, no pruebas de mejora ni predicciones universales.
+- `cargo run --example simulation_basics` utiliza la API real. Los pasos máximos por avance, el acumulador de tiempo externo, la política de pausa, rollback/transacciones, serialización y modelos de dominio siguen fuera del alcance implementado.
 
 ## Decisiones aplazadas
 

@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 104
+- Completados: 106
 - En progreso: 6
-- Pendientes: 177
+- Pendientes: 175
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -148,8 +148,8 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 115 — Integrar Simulation con Compute (`SimulationEntities::for_each_mut` delega en `compute::for_each`, conserva el orden de inserción y mantiene ejecución secuencial explícita)
 - [x] 116 — Crear pruebas deterministas (replay de una secuencia explícita de entradas en dos ejecuciones, compara la traza de ticks y el estado por ID; sin reloj real ni aleatoriedad implícita)
 - [x] 117 — Crear benchmarks (suite ejecutada en CI y resultados/entornos archivados para Linux x86-64, Linux ARM64, Windows x86-64, macOS x86-64 y macOS ARM64)
-- [ ] 118 — Crear ejemplos
-- [ ] 119 — Documentar Simulation
+- [x] 118 — Crear ejemplos (`examples/simulation_basics.rs`, ejemplo ejecutable de timestep fijo y entidades; CI pasó en `41a2f6f`)
+- [x] 119 — Documentar Simulation (API real, límites, semántica de error, ejemplo ejecutable y resultados medidos en `docs/simulation.md`)
 
 ## FASE 7 — Networking
 
@@ -451,3 +451,5 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 - 2026-10-14 — Punto 116 validado por CI en `cf19fde` (DINAH CI, auditoría documental y archivo de artefactos correctos). El ajuste de alias de tipos resolvió `clippy::type_complexity`. PR #7 del bot documental revisado y cerrado sin merge: solo contenía una lista generada; la documentación de Simulation ya cubría el cambio y el arreglo era interno al test. Punto 117 iniciado: añadido `benches/simulation.rs` con casos de reloj, paso de simulación y recorrido/búsqueda de entidades. La primera ejecución CI pasó, pero la revisión de artefactos detectó que el runner no invocaba el nuevo binario; se corrige el script de benchmarks, el disparador del workflow y se limita la muestra de búsquedas lineales a 16 IDs para mantener un coste acotado. La nueva ejecución `38484605568` pasó en los cinco runners; el workflow de archivo `38484770738` archivó las salidas y entornos en `artifacts/benchmarks/83cbcc3f3a36bd38ee661ae12075a0e27b654414/run-38484605568/`. Punto 117 completado: `docs/simulation.md` registra medianas de referencia y aclara sus límites; no se infieren mejoras ni se cambia la representación basándose solo en estos microbenchmarks.
 
 - 2026-10-14 — Punto 117 validado: DINAH CI, auditoría documental y benchmarks de `83cbcc3` pasaron. Se inspeccionaron los cinco artefactos de Simulation y se verificó su archivo en el commit automático `c860fc7`; se documentaron las medianas medidas y se marcó el punto 117 como completado. Checks locales de formato, diff y checklist pendientes tras esta actualización documental.
+
+- 2026-10-14 — CI principal y auditoría documental pasaron para `41a2f6f`; el archivo automático `38485049766` también terminó correctamente. Punto 118 validado: el ejemplo ejecutable está incluido en CI y usa la API real. Punto 119 actualizado para alinear la guía con el estado implementado, eliminar referencias a benchmarks pendientes y describir explícitamente las limitaciones actuales. Checks locales de formato/diff/checklist ejecutados después del cambio documental.
