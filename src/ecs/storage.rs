@@ -200,6 +200,27 @@ mod tests {
         Entity::from_parts(index, generation)
     }
 
+    fn assert_storage_consistent<T: super::Component>(storage: &ComponentStorage<T>) {
+        assert_eq!(storage.entities.len(), storage.components.len());
+        assert_eq!(storage.len(), storage.entities.len());
+
+        for (row, entity) in storage.entities.iter().copied().enumerate() {
+            assert_eq!(storage.sparse[entity.index() as usize], Some(row));
+            assert_eq!(storage.get(entity).is_some(), true);
+        }
+
+        for (index, row) in storage.sparse.iter().copied().enumerate() {
+            if let Some(row) = row {
+                assert!(row < storage.entities.len());
+                assert_eq!(storage.entities[row].index() as usize, index);
+                assert_eq!(
+                    storage.sparse[storage.entities[row].index() as usize],
+                    Some(row)
+                );
+            }
+        }
+    }
+
     #[test]
     fn rows_are_contiguous_and_keep_entity_component_alignment() {
         let mut storage = ComponentStorage::new();
@@ -303,5 +324,38 @@ mod tests {
         *storage.get_mut(entity(0, 0)).unwrap() = 9;
         assert_eq!(storage.components(), &[9]);
         assert_eq!(storage.len(), 1);
+    }
+
+    #[test]
+    fn sparse_and_column_invariants_hold_across_mixed_mutations() {
+        let mut storage = ComponentStorage::new();
+        assert_storage_consistent(&storage);
+
+        for index in 0..64 {
+            storage.insert(entity(index, 0), index * 10).unwrap();
+            assert_storage_consistent(&storage);
+        }
+        for index in (0..64).step_by(3) {
+            assert_eq!(
+                storage.insert(entity(index, 0), index * 100),
+                Ok(Some(index * 10))
+            );
+            assert_storage_consistent(&storage);
+        }
+        for index in (1..64).step_by(2) {
+            assert_eq!(storage.remove(entity(index, 0)), Some(index * 10));
+            assert_storage_consistent(&storage);
+        }
+        for index in (0..64).step_by(4) {
+            storage.insert(entity(index, 1), index + 7).unwrap();
+            assert_storage_consistent(&storage);
+        }
+        for index in 0..64 {
+            assert_eq!(
+                storage.get(entity(index, 0)).is_some(),
+                index % 2 == 0 && index % 4 != 0
+            );
+        }
+        assert_storage_consistent(&storage);
     }
 }

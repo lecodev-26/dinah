@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 93
+- Completados: 94
 - En progreso: 5
-- Pendientes: 189
+- Pendientes: 188
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -128,7 +128,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 098 — Integrar ECS con Runtime (`World::run_system` despacha una closure con préstamo exclusivo de `World` mediante `Scheduler::schedule`; conserva separados el error del scheduler y el del sistema, con tests unitarios y públicos; integración síncrona, sin prometer paralelismo)
 - [x] 099 — Integrar ECS con Compute (`ComponentStorage::for_each_mut` delega en `compute::for_each`, preserva el emparejamiento entidad/componente y no permite cambios estructurales; tests de alineación, mutación y storage vacío; integración interna secuencial, sin paralelismo ni API pública de World)
 - [>] 100 — Crear sistemas paralelos (contrato de seguridad y `SystemAccess` público implementados: declara lecturas/escrituras por tipo, fusiona duplicados de forma conservadora y detecta conflictos read/write; planificador determinista de fases contiguas implementado; ejecución que valide declaraciones, aislamiento estructural y ejecución paralela aún pendientes)
-- [ ] 101 — Testear consistencia
+- [x] 101 — Testear consistencia (tests de invariantes de `World` para contador de entidades vivas, slots retirados y lista libre sin duplicados; tests de `ComponentStorage` para alineación de columnas, índices sparse y generaciones obsoletas tras inserciones, reemplazos, `swap_remove` y reutilización)
 - [ ] 102 — Benchmark ECS
 - [ ] 103 — Optimizar acceso a memoria
 - [ ] 104 — Documentar arquitectura ECS
@@ -414,3 +414,5 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 - 2026-10-14 — Punto 100 avanzado: añadidos `SystemAccess` y `AccessMode` públicos con detección de conflictos por `TypeId`, deduplicación de declaraciones y precedencia conservadora de escritura; tests unitarios y de contrato público. No ejecuta sistemas ni habilita workers; punto sigue en progreso.
 
 - 2026-10-14 — Punto 100 avanzado: `SystemPlan` construye lotes contiguos deterministas a partir de `SystemAccess`, conserva el orden de sistemas conflictivos y acepta entrada vacía. Añadidos tests unitarios y públicos. El planificador solo organiza metadata y no ejecuta closures ni habilita paralelismo seguro; punto sigue en progreso.
+
+- 2026-10-14 — Punto 101 completado en pruebas y documentación: se verifican invariantes de `World` y `ComponentStorage` tras secuencias repetidas de mutaciones, incluyendo lista libre sin duplicados, coherencia del contador de entidades vivas, slots retirados, alineación de columnas y reparación del índice sparse. El storage continúa sin estar integrado con `World`; no se afirma eliminación automática de componentes en `despawn`. Checks locales de formato, diff y checklist ejecutados; pendiente CI remoto.

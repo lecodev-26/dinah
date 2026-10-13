@@ -139,6 +139,27 @@ mod tests {
     use super::{World, WorldError};
     use crate::runtime::Scheduler;
 
+    fn assert_world_consistent(world: &World) {
+        assert_eq!(
+            world.alive_count,
+            world.slots.iter().filter(|slot| slot.alive).count()
+        );
+        let mut seen = std::collections::HashSet::new();
+        for index in &world.free_indices {
+            assert!(seen.insert(*index), "duplicate free index: {index}");
+            let slot = &world.slots[*index as usize];
+            assert!(!slot.alive);
+            assert!(!slot.retired);
+        }
+        for (index, slot) in world.slots.iter().enumerate() {
+            if slot.alive || slot.retired {
+                assert!(!seen.contains(&(index as u32)));
+            } else {
+                assert!(seen.contains(&(index as u32)));
+            }
+        }
+    }
+
     #[test]
     fn spawn_and_despawn_track_liveness_and_counts() {
         let mut world = World::new();
@@ -201,5 +222,32 @@ mod tests {
         let result = world.run_system(&scheduler, |_| Err::<(), _>("system failed"));
         assert_eq!(result, Ok(Err("system failed")));
         assert!(world.is_empty());
+    }
+
+    #[test]
+    fn entity_slot_and_free_list_invariants_hold_across_repeated_reuse() {
+        let mut world = World::new();
+        let mut live = Vec::new();
+        assert_world_consistent(&world);
+
+        for step in 0..512_u32 {
+            let entity = world.spawn().unwrap();
+            assert!(world.contains(entity));
+            live.push(entity);
+            assert_world_consistent(&world);
+
+            if step % 3 == 2 {
+                let entity = live.remove(0);
+                world.despawn(entity).unwrap();
+                assert!(!world.contains(entity));
+                assert_world_consistent(&world);
+            }
+        }
+        while let Some(entity) = live.pop() {
+            world.despawn(entity).unwrap();
+            assert_world_consistent(&world);
+        }
+        assert!(world.is_empty());
+        assert_eq!(world.len(), 0);
     }
 }
