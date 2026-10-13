@@ -119,6 +119,10 @@ El test `deterministic_replay_reproduces_tick_trace_and_entity_state` ejecuta do
 
 Son observaciones específicas de máquinas y compilaciones concretas, no garantías ni comparaciones controladas entre sistemas operativos. La construcción está incluida en los casos de reloj y paso, por lo que no deben interpretarse como coste aislado por tick en régimen estable. El caso de búsquedas mide la búsqueda lineal actual sobre 16 IDs repartidos por la colección; no es una query ECS. Estos datos establecen una línea base, no prueban una mejora frente a una versión anterior ni justifican por sí solos cambiar la representación de almacenamiento. El workflow de benchmarks ejecuta la suite y archiva la salida y el entorno de los cinco runners.
 
+## Ejemplo ejecutable (punto 118)
+
+`cargo run --example simulation_basics` muestra un `Simulation<Vec<Particle>>` que avanza tres pasos con delta fijo de 16 ms y actualiza posición usando el delta lógico entregado al callback. Después crea una `SimulationEntities<Particle>`, actualiza sus estados con `for_each_mut` y recorre los resultados en orden de inserción. El ejemplo no usa reloj de pared, workers implícitos ni integra entidades simuladas con ECS automáticamente.
+
 ## Criterios de aceptación
 
 - Los tipos propuestos se convierten en API solo tras fijar los puntos 111 y 112 y comprobar que no duplican responsabilidades de Core, ECS o Runtime.
