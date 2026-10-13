@@ -352,7 +352,12 @@ mod tests {
             assert_storage_consistent(&storage);
         }
         for index in (1..64).step_by(2) {
-            assert_eq!(storage.remove(entity(index, 0)), Some(index * 10));
+            let expected = if index % 3 == 0 {
+                index * 100
+            } else {
+                index * 10
+            };
+            assert_eq!(storage.remove(entity(index, 0)), Some(expected));
             assert_storage_consistent(&storage);
         }
         for index in (0..64).step_by(4) {
