@@ -136,11 +136,11 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 ## FASE 6 — Simulation
 
 - [x] 105 — Diseñar Simulation API (`docs/simulation.md` fija responsabilidades, contrato temporal propuesto, errores, determinismo, integración por etapas y criterios de aceptación; las firmas se identifican explícitamente como conceptuales)
-- [ ] 106 — Integrar conceptos de ascii_physics_engine
-- [ ] 107 — Integrar conceptos de fluid simulation
-- [ ] 108 — Integrar cellular simulation
-- [ ] 109 — Integrar raycasting
-- [ ] 110 — Integrar swarm algorithms
+- [ ] 106 — Evaluar conceptos de física ASCII (revisión: no existe módulo, ejemplo ni dependencia `ascii_physics_engine`; antes de implementar, definir una demo discreta de partículas/obstáculos, límites de rejilla y reglas deterministas; no importar código ni licencias sin auditoría)
+- [ ] 107 — Evaluar simulación de fluidos (revisión: no existe solver ni modelo de fluido en el código; concretar primero si el objetivo es una rejilla 2D educativa, qué variables y estabilidad numérica se requieren, y tests de conservación/valores finitos; no prometer CFD general)
+- [ ] 108 — Evaluar autómatas celulares (revisión: no existe motor de celdas ni reglas implementadas; definir rejilla, vecindad, bordes y buffer doble para actualización síncrona determinista; tests de patrones conocidos y bordes antes de cerrar)
+- [ ] 109 — Evaluar raycasting (revisión: no existe API geométrica, escena espacial ni raycaster; especificar 2D/3D, tipos numéricos, contrato de impacto y tolerancias, con casos de miss, borde y origen dentro del objeto; medir antes de optimizar)
+- [ ] 110 — Evaluar algoritmos de enjambre (revisión: no existen agentes ni reglas de enjambre; elegir primero un caso acotado —p. ej. flocking 2D—, límites de vecindad y actualización por snapshot para evitar dependencia del orden; tests de reproducibilidad y límites numéricos)
 - [x] 111 — Definir timestep (`src/simulation.rs`: `SimulationClock` con delta fijo validado, tick y elapsed explícitos, overflow comprobado y tests de avance atómico)
 - [x] 112 — Definir actualización determinista (`Simulation<S>::step` ejecuta una actualización síncrona por tick; conserva el reloj ante error y documenta que no revierte mutaciones del estado)
 - [x] 113 — Crear sistema de entidades simuladas (`SimulationEntities<T>` con IDs monotónicos, acceso/mutación/eliminación, orden de iteración estable y error de agotamiento)
@@ -464,3 +464,12 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 - 220 y 225 pasan a en progreso, no a completados: ya existen pruebas de contrato/determinismo y benchmarks para los módulos implementados, pero falta la integración end-to-end completa y quedan subsistemas futuros sin pruebas/benchmarks.
 - Se mantienen abiertos 033 (no hay carga representativa propia de Core), 035 (estabilidad de Core aún depende de justificar `HasCoreId`), 084 (sin kernel SIMD de producción que demuestre beneficio), 085 (AoS/SoA no justifica un cambio general), 086 (no existe todavía un sistema transversal de métricas de rendimiento), 100 (sin ejecución ECS paralela segura) y 103 (faltan iteración/query pública y benchmarks representativos para optimizar).
 - No se inició Networking ni se modificó código de producto en esta auditoría. Los puntos de Networking, Storage, Native, CLI, observabilidad, seguridad, cobertura, profiling, integración total y release siguen pendientes hasta que haya evidencia específica.
+
+
+### Auditoría de Simulation 106–110 — 2026-10-14
+
+- CI de la auditoría documental anterior confirmada: commit `760097e`, ejecución https://github.com/lecodev-26/dinah/actions/runs/38485531650 (success).
+- Inspeccionados `src/lib.rs`, `src/simulation.rs`, `docs/simulation.md`, `Cargo.toml`, `examples/`, `benches/`, `tests/` y búsqueda global de términos/archivos de dominio. La implementación actual contiene reloj fijo, callback de actualización, entidades simuladas, puente con ECS y recorrido secuencial por Compute; no contiene módulos ni dependencias de física ASCII, fluidos, autómatas celulares, raycasting o enjambres.
+- Los puntos 106–110 siguen pendientes; no hay evidencia para marcarlos completados ni se ha añadido una dependencia externa. Se aclaró el alcance verificable y los criterios mínimos de aceptación de cada punto para evitar integraciones genéricas sin caso de uso.
+- Orden sugerido para una futura selección de implementación: 108 (autómata celular 2D acotado) o 106 (demo de física ASCII discreta) por sus límites y tests simples; 109, 107 y 110 requieren decidir antes geometría, modelo numérico o reglas de vecindad. Este orden es una recomendación de riesgo/alcance, no una decisión de producto ni un inicio de fase.
+- No se modificó código de producto ni se inició Networking.

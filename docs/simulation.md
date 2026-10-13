@@ -92,7 +92,13 @@ Estos IDs son deliberadamente distintos de `ecs::Entity`: esta colección permit
 ## Secuencia propuesta de implementación
 
 1. **105 — Diseño de API:** completado en este documento; firmas y límites iniciales definidos.
-2. **106–110 — Dominios:** evaluar por separado física ASCII, fluidos, autómatas celulares, raycasting y enjambres. Cada integración debe tener un caso de uso, límites de datos y tests propios; no se importarán abstracciones sin validar.
+2. **106–110 — Dominios (pendientes tras auditoría):** no hay implementaciones ni dependencias para estos dominios en la primera versión. Cada propuesta debe permanecer opcional y separada del reloj y del núcleo de Simulation, con un caso de uso acotado, límites de datos, tests de dominio y revisión de licencia/procedencia si se toma código externo. Criterios mínimos por dominio:
+   - **106 — Física ASCII:** rejilla discreta, reglas explícitas de movimiento/obstáculos y demo pequeña reproducible; no se promete un motor físico general.
+   - **107 — Fluidos:** escoger modelo y variables antes de implementar; definir estabilidad numérica y pruebas de valores finitos/conservación apropiadas al modelo; no prometer CFD general.
+   - **108 — Autómatas celulares:** definir rejilla, vecindad, bordes y actualización síncrona (snapshot/buffer doble); probar patrones conocidos y límites.
+   - **109 — Raycasting:** decidir 2D o 3D, tipos numéricos y contrato de impacto; cubrir miss, bordes, origen dentro del objeto y tolerancias antes de optimizar.
+   - **110 — Enjambres:** elegir un modelo acotado (por ejemplo, flocking 2D), definir vecindad y actualización sin dependencia del orden de recorrido; probar reproducibilidad y límites numéricos.
+   Ninguno de estos puntos se considera completado por la API genérica de Simulation ni por los benchmarks de su reloj/colección de entidades.
 3. **111 — Timestep:** implementado como `SimulationClock`, con delta fijo no nulo, tick, tiempo acumulado, avance explícito y errores de overflow comprobados. Quedan para después los límites de pasos por llamada y el acumulador de tiempo externo.
 4. **112 — Actualización determinista:** completado en la primera versión mediante un callback síncrono por paso, tiempo explícito y commit del reloj solo tras éxito; el estado de dominio no tiene rollback automático.
 5. **113–115 — Entidades e integración:** 113 crea la colección de estado simulado; 114 añade el puente explícito entre IDs simulados y handles ECS; 115 integra el recorrido mutable secuencial con Compute, conservando orden y sin activar paralelismo implícito.
