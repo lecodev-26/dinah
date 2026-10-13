@@ -205,8 +205,17 @@ mod tests {
         assert_eq!(storage.len(), storage.entities.len());
 
         for (row, entity) in storage.entities.iter().copied().enumerate() {
-            assert_eq!(storage.sparse[entity.index() as usize], Some(row));
-            assert_eq!(storage.get(entity).is_some(), true);
+            assert_eq!(
+                storage
+                    .sparse
+                    .get(entity.index() as usize)
+                    .copied()
+                    .flatten(),
+                Some(row),
+                "entity {:?} at row {row} must have a sparse entry",
+                entity
+            );
+            assert!(storage.get(entity).is_some());
         }
 
         for (index, row) in storage.sparse.iter().copied().enumerate() {
