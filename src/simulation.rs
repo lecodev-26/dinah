@@ -281,6 +281,22 @@ impl<T> SimulationEntities<T> {
         self.entities.iter().map(|(id, state)| (*id, state))
     }
 
+    /// Mutates every entity state through the sequential Compute primitive.
+    ///
+    /// Entities are visited exactly once in insertion order during normal
+    /// completion. This operation is deliberately sequential; it does not opt
+    /// into Runtime workers or change Simulation's timestep/clock semantics.
+    /// If the callback panics, the panic propagates and earlier mutations are
+    /// not rolled back.
+    pub fn for_each_mut<F>(&mut self, mut operation: F)
+    where
+        F: FnMut(SimulationEntityId, &mut T),
+    {
+        crate::compute::for_each(&mut self.entities, |(id, state)| {
+            operation(*id, state);
+        });
+    }
+
     /// Returns the number of currently stored entities.
     #[must_use]
     pub fn len(&self) -> usize {
@@ -544,6 +560,25 @@ mod tests {
         *entities.get_mut(first).unwrap() += 1;
         assert_eq!(entities.get(first), Some(&11));
         assert_eq!(entities.len(), 3);
+    }
+
+    #[test]
+    fn simulated_entities_use_compute_in_deterministic_insertion_order() {
+        let mut entities = SimulationEntities::new();
+        let first = entities.insert(1_u32).unwrap();
+        let second = entities.insert(2_u32).unwrap();
+        let third = entities.insert(3_u32).unwrap();
+        let mut visited = Vec::new();
+
+        entities.for_each_mut(|id, state| {
+            visited.push(id);
+            *state *= 10;
+        });
+
+        assert_eq!(visited, vec![first, second, third]);
+        assert_eq!(entities.get(first), Some(&10));
+        assert_eq!(entities.get(second), Some(&20));
+        assert_eq!(entities.get(third), Some(&30));
     }
 
     #[test]

@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 101
+- Completados: 102
 - En progreso: 6
-- Pendientes: 180
+- Pendientes: 179
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -145,7 +145,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 112 — Definir actualización determinista (`Simulation<S>::step` ejecuta una actualización síncrona por tick; conserva el reloj ante error y documenta que no revierte mutaciones del estado)
 - [x] 113 — Crear sistema de entidades simuladas (`SimulationEntities<T>` con IDs monotónicos, acceso/mutación/eliminación, orden de iteración estable y error de agotamiento)
 - [x] 114 — Integrar Simulation con ECS (`SimulationEntityBindings` conecta IDs simulados con `ecs::Entity`, valida entidades vivas, evita asociaciones duplicadas y rechaza handles obsoletos al resolver)
-- [ ] 115 — Integrar Simulation con Compute
+- [x] 115 — Integrar Simulation con Compute (`SimulationEntities::for_each_mut` delega en `compute::for_each`, conserva el orden de inserción y mantiene ejecución secuencial explícita)
 - [ ] 116 — Crear pruebas deterministas
 - [ ] 117 — Crear benchmarks
 - [ ] 118 — Crear ejemplos
@@ -442,3 +442,5 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 - 2026-10-14 — Punto 113 completado: añadida `SimulationEntities<T>` como colección de estado simulado independiente de ECS, con `SimulationEntityId` monotónico, inserción/acceso/mutación/eliminación, iteración en orden de inserción y error explícito de agotamiento sin mutación. Tests cubren orden, IDs no reutilizados, borrado y agotamiento; documentados los costes lineales y el límite frente a `ecs::Entity`. CI remoto correcto en `fdcfbb2`.
 
 - 2026-10-14 — Punto 114 implementado: añadida `SimulationEntityBindings` como puente explícito entre `SimulationEntityId` y `ecs::Entity`. Solo enlaza handles vivos, impide asociar dos veces el mismo handle, revalida liveness/generación en `resolve` y permite retirar la asociación sin despawn implícito. Tests cubren enlaces válidos, duplicados, handles obsoletos y rechazo sin mutación. El puente no posee `World`; el llamador debe usar consistentemente el mundo propietario y gestionar `unbind`. Pendiente CI remoto.
+
+- 2026-10-14 — Punto 114 validado por CI en `148dcbe`; punto 115 implementado: `SimulationEntities::for_each_mut` delega el recorrido mutable a `compute::for_each`, con orden de inserción determinista y sin workers implícitos. Test cubre orden de visita y mutación de cada estado. Pendiente CI remoto del nuevo commit.

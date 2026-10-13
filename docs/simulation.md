@@ -1,6 +1,6 @@
 # dinah Simulation — diseño inicial de API
 
-Estado: diseño inicial completado (105), reloj fijo (111), actualización determinista (112) y colección inicial de entidades simuladas (113) e integración de identidades con ECS (114) implementados. `dinah::simulation` ofrece `SimulationClock`, `SimulationTime`, `SimulationTimeError`, `Simulation<S>`, `SimulationStepError`, `SimulationEntityId`, `SimulationEntities<T>`, `SimulationEntitiesError`, `SimulationEntityBindings` y `SimulationEntityBindingError`. La integración con Compute y los modelos de dominio siguen pendientes.
+Estado: diseño inicial completado (105), reloj fijo (111), actualización determinista (112) y colección inicial de entidades simuladas (113) e integración de identidades con ECS (114) implementados. `dinah::simulation` ofrece `SimulationClock`, `SimulationTime`, `SimulationTimeError`, `Simulation<S>`, `SimulationStepError`, `SimulationEntityId`, `SimulationEntities<T>`, `SimulationEntitiesError`, `SimulationEntityBindings` y `SimulationEntityBindingError`. `SimulationEntities::for_each_mut` utiliza el recorrido secuencial de Compute para actualizar estados en orden de inserción; la ejecución paralela desde Simulation sigue siendo explícita y no se activa automáticamente.
 
 ## Objetivo y responsabilidades
 
@@ -56,7 +56,7 @@ El reloj ya implementado proporciona el núcleo temporal de esta propuesta: `Sim
 
 `SimulationEntities<T>` conserva estados de entidad propiedad de Simulation en un vector ordenado. `insert` devuelve un `SimulationEntityId` monotónico; `get`, `get_mut`, `remove`, `iter`, `len` e `is_empty` exponen operaciones explícitas. La iteración respeta el orden de inserción y `remove` conserva el orden relativo de las entidades restantes. Los IDs eliminados no se reutilizan, y el agotamiento del espacio de IDs se informa antes de modificar la colección. La búsqueda por ID y el borrado son lineales en esta primera versión; no se afirma rendimiento constante ni almacenamiento ECS.
 
-Estos IDs son deliberadamente distintos de `ecs::Entity`: esta colección permite definir primero el contrato de estado simulado sin duplicar ni asumir el ciclo de vida del `World`. El punto 114 implementa el puente explícito `SimulationEntityBindings`: `bind` solo acepta entidades vivas en el `World` suministrado y evita asignar dos IDs al mismo handle; `resolve` vuelve a comprobar la vida del handle y rechaza entidades eliminadas o generaciones obsoletas; `unbind` elimina únicamente la asociación, nunca destruye la entidad. El llamador debe suministrar consistentemente el mismo `World` propietario, porque los handles ECS son locales a cada mundo. Los IDs de este puente pertenecen a su propia secuencia y no son IDs de `SimulationEntities<T>`. La asociación no toma posesión del ciclo de vida ECS ni sincroniza automáticamente `despawn`; el llamador debe gestionar `unbind` cuando corresponda.
+Estos IDs son deliberadamente distintos de `ecs::Entity`: esta colección permite definir primero el contrato de estado simulado sin duplicar ni asumir el ciclo de vida del `World`. El punto 114 implementa el puente explícito `SimulationEntityBindings`: `bind` solo acepta entidades vivas en el `World` suministrado y evita asignar dos IDs al mismo handle; `resolve` vuelve a comprobar la vida del handle y rechaza entidades eliminadas o generaciones obsoletas; `unbind` elimina únicamente la asociación, nunca destruye la entidad. El llamador debe suministrar consistentemente el mismo `World` propietario, porque los handles ECS son locales a cada mundo. Los IDs de este puente pertenecen a su propia secuencia y no son IDs de `SimulationEntities<T>`. La asociación no toma posesión del ciclo de vida ECS ni sincroniza automáticamente `despawn`; el llamador debe gestionar `unbind` cuando corresponda. Para procesar estados simulados, `SimulationEntities::for_each_mut` delega el recorrido mutable al primitivo secuencial `compute::for_each`, conserva el orden de inserción y no crea workers ni altera el reloj. Un pánico se propaga y las mutaciones anteriores no se revierten.
 
 ## Contratos que deben quedar definidos
 
@@ -84,8 +84,8 @@ Estos IDs son deliberadamente distintos de `ecs::Entity`: esta colección permit
 
 ### Integración con ECS y Compute
 
-- La integración con ECS se hará en un punto separado y deberá respetar préstamos, ciclo de vida de entidades y límites de queries realmente implementados.
-- La integración con Compute será explícita: una operación no se vuelve paralela solo por procesar muchos elementos.
+- La integración con ECS se hará mediante asociaciones explícitas y deberá respetar préstamos, ciclo de vida de entidades y límites de queries realmente implementados.
+- La integración con Compute es explícita: `for_each_mut` es secuencial; una operación no se vuelve paralela solo por procesar muchos elementos.
 - No se ejecutarán sistemas ECS en paralelo hasta que el punto 100 tenga validación de accesos y aislamiento estructural seguros.
 - La API no exigirá `Send + Sync` a todos los modelos si la ejecución secuencial no lo necesita.
 
@@ -95,7 +95,7 @@ Estos IDs son deliberadamente distintos de `ecs::Entity`: esta colección permit
 2. **106–110 — Dominios:** evaluar por separado física ASCII, fluidos, autómatas celulares, raycasting y enjambres. Cada integración debe tener un caso de uso, límites de datos y tests propios; no se importarán abstracciones sin validar.
 3. **111 — Timestep:** implementado como `SimulationClock`, con delta fijo no nulo, tick, tiempo acumulado, avance explícito y errores de overflow comprobados. Quedan para después los límites de pasos por llamada y el acumulador de tiempo externo.
 4. **112 — Actualización determinista:** completado en la primera versión mediante un callback síncrono por paso, tiempo explícito y commit del reloj solo tras éxito; el estado de dominio no tiene rollback automático.
-5. **113–115 — Entidades e integración:** 113 crea la colección de estado simulado; 114 añade el puente explícito entre IDs simulados y handles ECS, validando vida y generación; 115 conectará Compute sin anticipar queries ni ejecución paralela que aún no existan.
+5. **113–115 — Entidades e integración:** 113 crea la colección de estado simulado; 114 añade el puente explícito entre IDs simulados y handles ECS; 115 integra el recorrido mutable secuencial con Compute, conservando orden y sin activar paralelismo implícito.
 6. **116–118 — Calidad de uso:** tests reproducibles, benchmarks de workloads concretos y ejemplos pequeños.
 7. **119 — Documentación:** describir solo la API implementada, sus límites y resultados medidos.
 
