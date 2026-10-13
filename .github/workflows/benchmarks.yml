@@ -10,6 +10,7 @@ on:
       - 'src/runtime.rs'
       - 'src/memory/**'
       - 'src/compute.rs'
+      - 'src/ecs/**'
       - 'Cargo.toml'
       - 'scripts/run_benchmarks.py'
       - '.github/workflows/benchmarks.yml'
