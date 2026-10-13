@@ -71,8 +71,8 @@ impl<T: Component> ComponentStorage<T> {
             self.sparse
                 .try_reserve(required_sparse_len - self.sparse.len())
                 .map_err(|_| StorageError::AllocationFailed)?;
+            self.sparse.resize_with(required_sparse_len, || None);
         }
-        self.sparse.resize_with(required_sparse_len, || None);
 
         if let Some(row) = self.sparse[sparse_index] {
             if self.entities[row] == entity {
