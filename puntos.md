@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 99
+- Completados: 100
 - En progreso: 6
-- Pendientes: 182
+- Pendientes: 181
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -143,7 +143,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [ ] 110 — Integrar swarm algorithms
 - [x] 111 — Definir timestep (`src/simulation.rs`: `SimulationClock` con delta fijo validado, tick y elapsed explícitos, overflow comprobado y tests de avance atómico)
 - [x] 112 — Definir actualización determinista (`Simulation<S>::step` ejecuta una actualización síncrona por tick; conserva el reloj ante error y documenta que no revierte mutaciones del estado)
-- [ ] 113 — Crear sistema de entidades simuladas
+- [x] 113 — Crear sistema de entidades simuladas (`SimulationEntities<T>` con IDs monotónicos, acceso/mutación/eliminación, orden de iteración estable y error de agotamiento)
 - [ ] 114 — Integrar Simulation con ECS
 - [ ] 115 — Integrar Simulation con Compute
 - [ ] 116 — Crear pruebas deterministas
@@ -438,3 +438,5 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 - 2026-10-14 — Punto 111 completado: se añadió `dinah::simulation::{SimulationClock, SimulationTime, SimulationTimeError}`. El reloj no consulta wall-clock; rechaza delta cero y calcula tick/duración siguientes antes de mutar para preservar el estado si hay overflow. Tests específicos cubren progresión y errores. Los puntos 112+ permanecen pendientes.
 
 - 2026-10-14 — Punto 112 completado: añadido `Simulation<S>` con callback síncrono y tiempo explícito. El reloj solo confirma el tick cuando la actualización termina correctamente; overflow temporal evita invocar el callback. Tests cubren orden de ticks, éxito, error y overflow. Se documenta que el estado de dominio no se revierte automáticamente si el callback muta y falla.
+
+- 2026-10-14 — Punto 113 completado: añadida `SimulationEntities<T>` como colección de estado simulado independiente de ECS, con `SimulationEntityId` monotónico, inserción/acceso/mutación/eliminación, iteración en orden de inserción y error explícito de agotamiento sin mutación. Tests cubren orden, IDs no reutilizados, borrado y agotamiento; documentados los costes lineales y el límite frente a `ecs::Entity`. Pendiente CI remoto.

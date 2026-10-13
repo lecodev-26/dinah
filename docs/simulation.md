@@ -1,6 +1,6 @@
 # dinah Simulation — diseño inicial de API
 
-Estado: diseño inicial completado (punto 105) y reloj fijo implementado (punto 111). `dinah::simulation` ofrece `SimulationClock`, `SimulationTime`, `SimulationTimeError`, `Simulation<S>` y `SimulationStepError`; las entidades simuladas y las integraciones de dominio siguen pendientes.
+Estado: diseño inicial completado (105), reloj fijo (111), actualización determinista (112) y colección inicial de entidades simuladas (113) implementados. `dinah::simulation` ofrece `SimulationClock`, `SimulationTime`, `SimulationTimeError`, `Simulation<S>`, `SimulationStepError`, `SimulationEntityId`, `SimulationEntities<T>` y `SimulationEntitiesError`. La integración con ECS/Compute y los modelos de dominio siguen pendientes.
 
 ## Objetivo y responsabilidades
 
@@ -51,6 +51,12 @@ pub trait SimulationStep {
 ```
 
 El reloj ya implementado proporciona el núcleo temporal de esta propuesta: `SimulationClock::new(delta)` rechaza un delta cero y `advance()` incrementa un tick y el tiempo acumulado de forma comprobada. Si el tick o la duración se desbordan, devuelve `SimulationTimeError` y deja el reloj intacto. La política de acumulación de tiempo externo y de pasos máximos por avance queda aplazada; el reloj no consulta tiempo de pared ni ejecuta callbacks. `Simulation<S>::step` calcula el siguiente tiempo en una copia del reloj, llama una vez al callback síncrono y solo confirma el reloj tras el éxito. Si el callback devuelve error, el tick no avanza; las mutaciones de dominio previas al error no se revierten automáticamente. Si el cálculo temporal falla, el callback ni siquiera se invoca.
+
+## Entidades simuladas (punto 113)
+
+`SimulationEntities<T>` conserva estados de entidad propiedad de Simulation en un vector ordenado. `insert` devuelve un `SimulationEntityId` monotónico; `get`, `get_mut`, `remove`, `iter`, `len` e `is_empty` exponen operaciones explícitas. La iteración respeta el orden de inserción y `remove` conserva el orden relativo de las entidades restantes. Los IDs eliminados no se reutilizan, y el agotamiento del espacio de IDs se informa antes de modificar la colección. La búsqueda por ID y el borrado son lineales en esta primera versión; no se afirma rendimiento constante ni almacenamiento ECS.
+
+Estos IDs son deliberadamente distintos de `ecs::Entity`: esta colección permite definir primero el contrato de estado simulado sin duplicar ni asumir el ciclo de vida del `World`. El punto 114 diseñará la integración explícita con ECS y decidirá cómo se asocian ambas identidades.
 
 ## Contratos que deben quedar definidos
 

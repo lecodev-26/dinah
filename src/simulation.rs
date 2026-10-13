@@ -181,9 +181,124 @@ impl<S> Simulation<S> {
     }
 }
 
+/// Stable, simulation-local identity for one simulated entity.
+///
+/// IDs are allocated monotonically and are never reused by a
+/// [`SimulationEntities`] collection. They are not ECS [`crate::ecs::Entity`]
+/// handles; the explicit bridge to ECS is a separate integration step.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct SimulationEntityId(u64);
+
+impl SimulationEntityId {
+    /// Returns the stable numeric identity assigned at insertion.
+    #[must_use]
+    pub const fn get(self) -> u64 {
+        self.0
+    }
+}
+
+/// Errors returned when adding a simulated entity.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SimulationEntitiesError {
+    /// No further unique entity ID can be allocated without wrapping.
+    IdExhausted,
+}
+
+impl fmt::Display for SimulationEntitiesError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::IdExhausted => f.write_str("simulation entity ID space is exhausted"),
+        }
+    }
+}
+
+impl std::error::Error for SimulationEntitiesError {}
+
+/// Deterministically ordered collection of simulation-owned entity state.
+///
+/// Iteration follows insertion order. Removing an entity preserves the relative
+/// order of all remaining entities; IDs are monotonic and never reused. This
+/// intentionally does not duplicate ECS component storage or entity lifetime
+/// management, which are connected in a later integration step.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SimulationEntities<T> {
+    next_id: Option<u64>,
+    entities: Vec<(SimulationEntityId, T)>,
+}
+
+impl<T> Default for SimulationEntities<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<T> SimulationEntities<T> {
+    /// Creates an empty collection.
+    #[must_use]
+    pub const fn new() -> Self {
+        Self {
+            next_id: Some(0),
+            entities: Vec::new(),
+        }
+    }
+
+    /// Inserts state and returns a unique ID, failing before mutation on exhaustion.
+    pub fn insert(&mut self, state: T) -> Result<SimulationEntityId, SimulationEntitiesError> {
+        let current_id = self.next_id.ok_or(SimulationEntitiesError::IdExhausted)?;
+        let id = SimulationEntityId(current_id);
+        self.entities.push((id, state));
+        self.next_id = current_id.checked_add(1);
+        Ok(id)
+    }
+
+    /// Returns state for an ID currently in this collection.
+    #[must_use]
+    pub fn get(&self, id: SimulationEntityId) -> Option<&T> {
+        self.entities
+            .iter()
+            .find_map(|(candidate, state)| (*candidate == id).then_some(state))
+    }
+
+    /// Returns mutable state for an ID currently in this collection.
+    pub fn get_mut(&mut self, id: SimulationEntityId) -> Option<&mut T> {
+        self.entities
+            .iter_mut()
+            .find_map(|(candidate, state)| (*candidate == id).then_some(state))
+    }
+
+    /// Removes state and returns it without reordering remaining entities.
+    pub fn remove(&mut self, id: SimulationEntityId) -> Option<T> {
+        let index = self
+            .entities
+            .iter()
+            .position(|(candidate, _)| *candidate == id)?;
+        Some(self.entities.remove(index).1)
+    }
+
+    /// Iterates over `(ID, state)` pairs in deterministic insertion order.
+    pub fn iter(&self) -> impl Iterator<Item = (SimulationEntityId, &T)> {
+        self.entities.iter().map(|(id, state)| (*id, state))
+    }
+
+    /// Returns the number of currently stored entities.
+    #[must_use]
+    pub fn len(&self) -> usize {
+        self.entities.len()
+    }
+
+    /// Returns whether the collection has no entities.
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.entities.is_empty()
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{Simulation, SimulationClock, SimulationStepError, SimulationTimeError};
+    use super::{
+        Simulation, SimulationClock, SimulationEntities, SimulationEntitiesError,
+        SimulationStepError, SimulationTimeError,
+    };
     use std::time::Duration;
 
     #[test]
@@ -245,6 +360,59 @@ mod tests {
         assert!(!called);
         assert_eq!(*simulation.state(), 0);
         assert_eq!(simulation.clock().tick(), u64::MAX);
+    }
+
+    #[test]
+    fn simulated_entities_keep_stable_ids_and_insertion_order() {
+        let mut entities = SimulationEntities::new();
+        assert!(entities.is_empty());
+
+        let first = entities.insert("first").unwrap();
+        let second = entities.insert("second").unwrap();
+        let third = entities.insert("third").unwrap();
+
+        assert_eq!((first.get(), second.get(), third.get()), (0, 1, 2));
+        assert_eq!(
+            entities.iter().collect::<Vec<_>>(),
+            vec![(first, &"first"), (second, &"second"), (third, &"third")]
+        );
+        assert_eq!(entities.len(), 3);
+    }
+
+    #[test]
+    fn simulated_entity_removal_preserves_remaining_order_and_never_reuses_ids() {
+        let mut entities = SimulationEntities::new();
+        let first = entities.insert(10).unwrap();
+        let second = entities.insert(20).unwrap();
+        let third = entities.insert(30).unwrap();
+
+        assert_eq!(entities.remove(second), Some(20));
+        assert_eq!(entities.get(second), None);
+        assert_eq!(
+            entities.iter().collect::<Vec<_>>(),
+            vec![(first, &10), (third, &30)]
+        );
+        let fourth = entities.insert(40).unwrap();
+        assert_eq!(fourth.get(), 3);
+        *entities.get_mut(first).unwrap() += 1;
+        assert_eq!(entities.get(first), Some(&11));
+        assert_eq!(entities.len(), 3);
+    }
+
+    #[test]
+    fn simulated_entity_id_exhaustion_does_not_mutate_collection() {
+        let mut entities = SimulationEntities::<u8>::new();
+        entities.next_id = Some(u64::MAX);
+
+        let last_id = entities.insert(7).unwrap();
+        assert_eq!(last_id.get(), u64::MAX);
+        assert_eq!(
+            entities.insert(8),
+            Err(SimulationEntitiesError::IdExhausted)
+        );
+        assert_eq!(entities.len(), 1);
+        assert_eq!(entities.get(last_id), Some(&7));
+        assert_eq!(entities.next_id, None);
     }
 
     #[test]
