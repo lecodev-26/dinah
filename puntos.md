@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 96
+- Completados: 97
 - En progreso: 6
-- Pendientes: 185
+- Pendientes: 184
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -135,7 +135,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 
 ## FASE 6 — Simulation
 
-- [ ] 105 — Diseñar Simulation API
+- [x] 105 — Diseñar Simulation API (`docs/simulation.md` fija responsabilidades, contrato temporal propuesto, errores, determinismo, integración por etapas y criterios de aceptación; las firmas se identifican explícitamente como conceptuales)
 - [ ] 106 — Integrar conceptos de ascii_physics_engine
 - [ ] 107 — Integrar conceptos de fluid simulation
 - [ ] 108 — Integrar cellular simulation
@@ -429,3 +429,6 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 - 2026-10-14 — Punto 104 completado: auditada y actualizada `docs/ecs.md` contra el código real tras la integración de storage con `World`. Se corrigieron afirmaciones obsoletas sobre almacenamiento aún no integrado y se añadieron API/errores actuales, ejemplo público compilable conceptualmente y límites claros de queries y paralelismo. CI remoto del cambio de implementación y auditoría documental en curso.
 
 - 2026-10-14 — Punto 103 avanzado: tras validar el CI de `1df4753`, ampliado `benches/ecs.rs` con cargas públicas de `World::get` para índices densos/dispersos, rechazo de generaciones obsoletas y un ciclo de insert/replace/remove. `docs/ecs-benchmarks.md` distingue estas mediciones de las queries e iteración pública aún inexistentes. Pendiente CI/benchmarks multiplataforma para revisar resultados; el punto permanece en progreso y no se declara optimización demostrada.
+
+
+- 2026-10-14 — Punto 105 completado como diseño: `docs/simulation.md` delimita Simulation frente a Core/ECS/Compute/Runtime, propone contratos conceptuales de tiempo/actualización, define límites de determinismo, errores, pánicos, integración y criterios de aceptación. No se declara implementado ningún módulo ni API; timestep y actualización determinista siguen pendientes en 111–112.
