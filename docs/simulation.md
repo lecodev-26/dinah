@@ -96,12 +96,18 @@ Estos IDs son deliberadamente distintos de `ecs::Entity`: esta colección permit
 3. **111 — Timestep:** implementado como `SimulationClock`, con delta fijo no nulo, tick, tiempo acumulado, avance explícito y errores de overflow comprobados. Quedan para después los límites de pasos por llamada y el acumulador de tiempo externo.
 4. **112 — Actualización determinista:** completado en la primera versión mediante un callback síncrono por paso, tiempo explícito y commit del reloj solo tras éxito; el estado de dominio no tiene rollback automático.
 5. **113–115 — Entidades e integración:** 113 crea la colección de estado simulado; 114 añade el puente explícito entre IDs simulados y handles ECS; 115 integra el recorrido mutable secuencial con Compute, conservando orden y sin activar paralelismo implícito.
-6. **116–118 — Calidad de uso:** tests reproducibles, benchmarks de workloads concretos y ejemplos pequeños.
+6. **116–118 — Calidad de uso:** tests reproducibles (116), benchmark inicial de workloads concretos (117; mediciones de referencia aún pendientes) y ejemplos pequeños (118).
 7. **119 — Documentación:** describir solo la API implementada, sus límites y resultados medidos.
 
 ## Pruebas deterministas (punto 116)
 
 El test `deterministic_replay_reproduces_tick_trace_and_entity_state` ejecuta dos veces el mismo escenario con delta fijo y una secuencia explícita de entradas. Cada tick actualiza entidades en orden de inserción mediante `for_each_mut`; la traza registra el tick y cada par ID/estado. Las dos trazas y los estados finales deben coincidir exactamente. El test no lee reloj de pared, no usa fuentes de aleatoriedad ni depende del orden de finalización de workers. Esto verifica reproducibilidad lógica para esta carga secuencial concreta; no constituye una garantía de determinismo bit a bit entre arquitecturas ni de ejecución paralela.
+
+## Benchmarks (punto 117)
+
+`benches/simulation.rs` proporciona un benchmark ejecutable con `cargo bench --bench simulation`. Informa la arquitectura, usa nueve muestras y la mediana, y separa estos casos: 256 avances de `SimulationClock` (incluye construcción), 256 pasos de `Simulation` con una actualización pequeña (incluye construcción), recorrido mutable de `SimulationEntities<T>` y la combinación de iteración más `get` para tamaños de 64, 1.024 y 16.384 entidades. Cada muestra repite la operación 32 veces y normaliza el tiempo; la columna `ns_per_operation` divide además por ticks/entidades cuando corresponde.
+
+El benchmark no contiene resultados archivados ni afirma una mejora de rendimiento: primero debe ejecutarse en runners de referencia y guardar el entorno y salida antes de extraer conclusiones. Los casos de entidades incluyen el coste de actualizar estados acumulativamente, y `iter + get` mide explícitamente la búsqueda lineal actual, no una query ECS. Los resultados son específicos de máquina y compilación release.
 
 ## Criterios de aceptación
 

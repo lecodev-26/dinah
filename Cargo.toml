@@ -37,3 +37,9 @@ name = "ecs"
 path = "benches/ecs.rs"
 harness = false
 test = false
+
+[[bench]]
+name = "simulation"
+path = "benches/simulation.rs"
+harness = false
+test = false
