@@ -6,8 +6,8 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 
 - Total de puntos numerados: 287
 - Completados: 114
-- En progreso: 8
-- Pendientes: 165
+- En progreso: 13
+- Pendientes: 160
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -136,11 +136,11 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 ## FASE 6 — Simulation
 
 - [x] 105 — Diseñar Simulation API (`docs/simulation.md` fija responsabilidades, contrato temporal propuesto, errores, determinismo, integración por etapas y criterios de aceptación; las firmas se identifican explícitamente como conceptuales)
-- [ ] 106 — Evaluar conceptos de física ASCII (revisión: no existe módulo, ejemplo ni dependencia `ascii_physics_engine`; antes de implementar, definir una demo discreta de partículas/obstáculos, límites de rejilla y reglas deterministas; no importar código ni licencias sin auditoría)
-- [ ] 107 — Evaluar simulación de fluidos (revisión: no existe solver ni modelo de fluido en el código; concretar primero si el objetivo es una rejilla 2D educativa, qué variables y estabilidad numérica se requieren, y tests de conservación/valores finitos; no prometer CFD general)
-- [ ] 108 — Evaluar autómatas celulares (revisión: no existe motor de celdas ni reglas implementadas; definir rejilla, vecindad, bordes y buffer doble para actualización síncrona determinista; tests de patrones conocidos y bordes antes de cerrar)
-- [ ] 109 — Evaluar raycasting (revisión: no existe API geométrica, escena espacial ni raycaster; especificar 2D/3D, tipos numéricos, contrato de impacto y tolerancias, con casos de miss, borde y origen dentro del objeto; medir antes de optimizar)
-- [ ] 110 — Evaluar algoritmos de enjambre (revisión: no existen agentes ni reglas de enjambre; elegir primero un caso acotado —p. ej. flocking 2D—, límites de vecindad y actualización por snapshot para evitar dependencia del orden; tests de reproducibilidad y límites numéricos)
+- [>] 106 — Integrar física ASCII: módulo `simulation::ascii_physics` con rejilla acotada, partículas discretas, obstáculos, rebote y renderizado; tests de límites y colisiones. Pendiente CI y revisión final.
+- [>] 107 — Integrar simulación de fluidos acotada: `simulation::fluid::ScalarFluid` implementa difusión escalar 2D explícita, buffer doble y borde sin flujo; tests de estabilidad, finitud y conservación aproximada. No es CFD general; pendiente CI y revisión final.
+- [>] 108 — Integrar autómatas celulares: `simulation::cellular::CellularGrid` implementa Conway Life, vecindad Moore, bordes muertos o wrap y actualización síncrona con buffer doble; tests de blinker, límites y validación. Pendiente CI y revisión final.
+- [>] 109 — Integrar raycasting 2D: `simulation::raycast` ofrece rayos y AABB con intersección por slabs, distancia paramétrica, origen interior y miss; tests de impacto, paralelo, miss y dirección cero. Pendiente CI y revisión final.
+- [>] 110 — Integrar enjambres: `simulation::swarm::Flock2D` implementa flocking 2D acotado con vecindad por radio, actualización desde snapshot y límite de velocidad; tests de replay, velocidad y valores finitos. Pendiente CI y revisión final.
 - [x] 111 — Definir timestep (`src/simulation.rs`: `SimulationClock` con delta fijo validado, tick y elapsed explícitos, overflow comprobado y tests de avance atómico)
 - [x] 112 — Definir actualización determinista (`Simulation<S>::step` ejecuta una actualización síncrona por tick; conserva el reloj ante error y documenta que no revierte mutaciones del estado)
 - [x] 113 — Crear sistema de entidades simuladas (`SimulationEntities<T>` con IDs monotónicos, acceso/mutación/eliminación, orden de iteración estable y error de agotamiento)
@@ -466,10 +466,10 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 - No se inició Networking ni se modificó código de producto en esta auditoría. Los puntos de Networking, Storage, Native, CLI, observabilidad, seguridad, cobertura, profiling, integración total y release siguen pendientes hasta que haya evidencia específica.
 
 
-### Auditoría de Simulation 106–110 — 2026-10-14
+### Implementación inicial de Simulation 106–110 — 2026-10-14
 
-- CI de la auditoría documental anterior confirmada: commit `760097e`, ejecución https://github.com/lecodev-26/dinah/actions/runs/38485531650 (success).
-- Inspeccionados `src/lib.rs`, `src/simulation.rs`, `docs/simulation.md`, `Cargo.toml`, `examples/`, `benches/`, `tests/` y búsqueda global de términos/archivos de dominio. La implementación actual contiene reloj fijo, callback de actualización, entidades simuladas, puente con ECS y recorrido secuencial por Compute; no contiene módulos ni dependencias de física ASCII, fluidos, autómatas celulares, raycasting o enjambres.
-- Los puntos 106–110 siguen pendientes; no hay evidencia para marcarlos completados ni se ha añadido una dependencia externa. Se aclaró el alcance verificable y los criterios mínimos de aceptación de cada punto para evitar integraciones genéricas sin caso de uso.
-- Orden sugerido para una futura selección de implementación: 108 (autómata celular 2D acotado) o 106 (demo de física ASCII discreta) por sus límites y tests simples; 109, 107 y 110 requieren decidir antes geometría, modelo numérico o reglas de vecindad. Este orden es una recomendación de riesgo/alcance, no una decisión de producto ni un inicio de fase.
-- No se modificó código de producto ni se inició Networking.
+- Confirmada CI verde para la auditoría previa `e87549d`: CI https://github.com/lecodev-26/dinah/actions/runs/38485862573 y archivo de artefactos https://github.com/lecodev-26/dinah/actions/runs/38485917858.
+- Añadidos cinco módulos sin dependencias externas: `simulation::ascii_physics`, `simulation::fluid`, `simulation::cellular`, `simulation::raycast` y `simulation::swarm`. Cada módulo contiene tests de dominio y valida entradas básicas.
+- 106 es una física discreta de rejilla (no un motor rígido general); 107 es difusión escalar explícita (no CFD); 108 es Conway Life con buffer doble; 109 es raycasting 2D contra AABB; 110 es flocking 2D basado en snapshot. Las limitaciones están documentadas en `docs/simulation.md`.
+- Estado: los cinco puntos pasan a en progreso mientras se espera CI remota; no marcar como completados antes de confirmar compilación, tests, Clippy y documentación pública.
+- No se inició Networking ni la siguiente fase.

@@ -141,3 +141,15 @@ Son observaciones específicas de máquinas y compilaciones concretas, no garant
 ## Decisiones aplazadas
 
 Quedan abiertas: si se permite acumular tiempo externo, la política de pausa, la serialización del estado, los eventos, rollback/transacciones del estado de dominio, la integración concreta con cada dominio y la estrategia paralela. Se resolverán con pruebas y necesidades reales, no añadiendo abstracciones preventivas.
+
+## Dominios acotados (puntos 106–110)
+
+Los siguientes módulos son modelos educativos independientes del reloj genérico. No incorporan dependencias externas ni se presentan como motores de propósito general:
+
+- **106 — `simulation::ascii_physics`:** `AsciiPhysics` crea una rejilla finita, registra obstáculos y partículas con velocidad entera, avanza cada partícula una celda por eje activo, rebota ante paredes/obstáculos y renderiza `#`, `o` y espacios. Los IDs de partículas son índices de inserción; no hay resolución de colisiones entre partículas ni conservación física continua.
+- **107 — `simulation::fluid`:** `ScalarFluid` resuelve difusión escalar 2D explícita con cuatro vecinos, buffer doble y borde sin flujo. El coeficiente debe pertenecer a `[0, 0.25]`, el límite clásico de estabilidad para esta discretización en 2D. No simula presión, velocidad ni dinámica de fluidos completa; `total()` sirve como comprobación de conservación aproximada con tolerancia de coma flotante.
+- **108 — `simulation::cellular`:** `CellularGrid` implementa Conway's Game of Life con vecindad Moore y actualización síncrona mediante buffer doble. Los bordes pueden ser `Boundary::Dead` o `Boundary::Wrap`. No hay reglas personalizadas en esta primera API.
+- **109 — `simulation::raycast`:** `Ray2` y `Aabb2` implementan intersección 2D por intervalos (slab test). `RayHit::distance` es el parámetro `t` de `origin + direction * t`, no una distancia euclídea a menos que la dirección esté normalizada. Un origen dentro del AABB devuelve `t = 0`; una ausencia de impacto devuelve `None`. Las entradas no finitas, direcciones cero y cajas invertidas se rechazan al construir los tipos.
+- **110 — `simulation::swarm`:** `Flock2D` promedia posición y velocidad de agentes dentro del radio de vecindad, aplica una dirección de steering acotada por `max_speed` y calcula todos los resultados desde la misma instantánea. Es un modelo pequeño de flocking, no una implementación completa de todas las reglas de Reynolds ni una promesa de igualdad bit a bit entre arquitecturas.
+
+Los módulos usan `f64` donde el modelo es continuo; los tests prueban reproducibilidad en la misma plataforma, límites, patrones y propiedades numéricas relevantes. No hay ejecución paralela implícita. Los puntos 106–110 solo se cerrarán después de que CI confirme tests, Clippy y documentación pública.

@@ -700,3 +700,14 @@ mod tests {
         assert_eq!(clock.elapsed(), Duration::MAX);
     }
 }
+
+/// Discrete ASCII-grid particle movement and obstacle collisions.
+pub mod ascii_physics;
+/// Synchronous two-dimensional cellular automata.
+pub mod cellular;
+/// Bounded scalar diffusion on a two-dimensional grid.
+pub mod fluid;
+/// Two-dimensional ray versus axis-aligned rectangle intersections.
+pub mod raycast;
+/// Snapshot-based two-dimensional flocking simulation.
+pub mod swarm;
