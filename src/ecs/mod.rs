@@ -10,7 +10,7 @@ mod entity;
 mod storage;
 mod world;
 
-pub use access::{AccessMode, SystemAccess};
+pub use access::{AccessMode, SystemAccess, SystemPlan};
 pub use component::Component;
 pub use entity::Entity;
 pub use world::{World, WorldError};

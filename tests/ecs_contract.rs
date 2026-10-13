@@ -106,3 +106,45 @@ fn public_system_access_metadata_does_not_require_send_or_sync() {
     local_access.write::<Rc<Cell<u32>>>();
     assert!(!local_access.is_empty());
 }
+
+#[test]
+fn public_system_plan_groups_compatible_accesses_deterministically() {
+    use dinah::ecs::{SystemAccess, SystemPlan};
+
+    struct Position;
+    struct Velocity;
+
+    let mut first = SystemAccess::new();
+    first.read::<Position>();
+    let mut second = SystemAccess::new();
+    second.read::<Position>().write::<Velocity>();
+    let mut third = SystemAccess::new();
+    third.write::<Position>();
+
+    let accesses = [first, second, third];
+    let expected = SystemPlan::from_accesses(&accesses);
+    assert_eq!(expected.batches(), &[vec![0, 1], vec![2]]);
+    for _ in 0..32 {
+        assert_eq!(SystemPlan::from_accesses(&accesses), expected);
+    }
+}
+
+#[test]
+fn public_system_plan_preserves_order_of_conflicting_systems() {
+    use dinah::ecs::{SystemAccess, SystemPlan};
+
+    struct Position;
+    struct Velocity;
+
+    let mut first = SystemAccess::new();
+    first.write::<Position>();
+    let mut second = SystemAccess::new();
+    second.write::<Velocity>();
+    let mut third = SystemAccess::new();
+    third.read::<Position>();
+    let mut fourth = SystemAccess::new();
+    fourth.write::<Velocity>();
+
+    let plan = SystemPlan::from_accesses(&[first, second, third, fourth]);
+    assert_eq!(plan.batches(), &[vec![0, 1], vec![2], vec![3]]);
+}

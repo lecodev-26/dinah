@@ -127,7 +127,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 097 — Crear iteración eficiente (`ComponentStorage::iter/iter_mut` recorren simultáneamente las columnas contiguas, devuelven pares entidad/componente alineados y permiten mutación segura de filas sin cambio estructural; tests para orden físico, storage vacío y actualización mutable)
 - [x] 098 — Integrar ECS con Runtime (`World::run_system` despacha una closure con préstamo exclusivo de `World` mediante `Scheduler::schedule`; conserva separados el error del scheduler y el del sistema, con tests unitarios y públicos; integración síncrona, sin prometer paralelismo)
 - [x] 099 — Integrar ECS con Compute (`ComponentStorage::for_each_mut` delega en `compute::for_each`, preserva el emparejamiento entidad/componente y no permite cambios estructurales; tests de alineación, mutación y storage vacío; integración interna secuencial, sin paralelismo ni API pública de World)
-- [>] 100 — Crear sistemas paralelos (contrato de seguridad y `SystemAccess` público implementados: declara lecturas/escrituras por tipo, fusiona duplicados de forma conservadora y detecta conflictos read/write; planificador de lotes seguros, aislamiento estructural y ejecución paralela aún pendientes)
+- [>] 100 — Crear sistemas paralelos (contrato de seguridad y `SystemAccess` público implementados: declara lecturas/escrituras por tipo, fusiona duplicados de forma conservadora y detecta conflictos read/write; planificador determinista de fases contiguas implementado; ejecución que valide declaraciones, aislamiento estructural y ejecución paralela aún pendientes)
 - [ ] 101 — Testear consistencia
 - [ ] 102 — Benchmark ECS
 - [ ] 103 — Optimizar acceso a memoria
@@ -412,3 +412,5 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 - 2026-10-13 — Punto 100 iniciado: documentados los requisitos de seguridad para sistemas ECS paralelos, incluidos conflictos read/write y write/write, bounds Send/Sync por API concurrente, aislamiento de mutaciones estructurales y criterios de aceptación. No se marca completado: `World` sigue siendo single-owner, el storage no está integrado y aún no existe una API paralela ECS segura.
 
 - 2026-10-14 — Punto 100 avanzado: añadidos `SystemAccess` y `AccessMode` públicos con detección de conflictos por `TypeId`, deduplicación de declaraciones y precedencia conservadora de escritura; tests unitarios y de contrato público. No ejecuta sistemas ni habilita workers; punto sigue en progreso.
+
+- 2026-10-14 — Punto 100 avanzado: `SystemPlan` construye lotes contiguos deterministas a partir de `SystemAccess`, conserva el orden de sistemas conflictivos y acepta entrada vacía. Añadidos tests unitarios y públicos. El planificador solo organiza metadata y no ejecuta closures ni habilita paralelismo seguro; punto sigue en progreso.
