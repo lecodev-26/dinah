@@ -42,7 +42,7 @@ struct EntitySlot {
 /// component access validates the full world-local handle, and despawning an
 /// entity removes its rows from every registered storage. A slot is retired if
 /// its generation cannot advance without wrapping.
-#[derive(Debug, Default)]
+#[derive(Default)]
 pub struct World {
     slots: Vec<EntitySlot>,
     free_indices: Vec<u32>,
@@ -50,10 +50,21 @@ pub struct World {
     storages: HashMap<TypeId, Box<dyn ErasedStorage>>,
 }
 
+impl fmt::Debug for World {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("World")
+            .field("slots", &self.slots)
+            .field("free_indices", &self.free_indices)
+            .field("alive_count", &self.alive_count)
+            .field("storage_count", &self.storages.len())
+            .finish()
+    }
+}
+
 impl World {
     /// Creates an empty world.
     #[must_use]
-    pub const fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             slots: Vec::new(),
             free_indices: Vec::new(),
