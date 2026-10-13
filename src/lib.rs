@@ -10,6 +10,7 @@ pub mod core;
 pub mod ecs;
 pub mod memory;
 pub mod runtime;
+pub mod simulation;
 
 /// Returns the crate's current package name.
 pub const fn crate_name() -> &'static str {

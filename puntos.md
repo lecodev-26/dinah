@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 97
+- Completados: 98
 - En progreso: 6
-- Pendientes: 184
+- Pendientes: 183
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -141,7 +141,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [ ] 108 — Integrar cellular simulation
 - [ ] 109 — Integrar raycasting
 - [ ] 110 — Integrar swarm algorithms
-- [ ] 111 — Definir timestep
+- [x] 111 — Definir timestep (`src/simulation.rs`: `SimulationClock` con delta fijo validado, tick y elapsed explícitos, overflow comprobado y tests de avance atómico)
 - [ ] 112 — Definir actualización determinista
 - [ ] 113 — Crear sistema de entidades simuladas
 - [ ] 114 — Integrar Simulation con ECS
@@ -434,3 +434,5 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 - 2026-10-14 — Punto 105 completado como diseño: `docs/simulation.md` delimita Simulation frente a Core/ECS/Compute/Runtime, propone contratos conceptuales de tiempo/actualización, define límites de determinismo, errores, pánicos, integración y criterios de aceptación. No se declara implementado ningún módulo ni API; timestep y actualización determinista siguen pendientes en 111–112.
 
 - 2026-10-14 — Punto 103: archivados y revisados los benchmarks de acceso ECS en cinco runners (run 38478287951). Se documentan medianas de get denso/disperso, miss de generación obsoleta y ciclo combinado insert/replace/remove; la variación por runner y la falta de iteración/query pública no justifican cambiar la representación. Punto 103 sigue en progreso.
+
+- 2026-10-14 — Punto 111 completado: se añadió `dinah::simulation::{SimulationClock, SimulationTime, SimulationTimeError}`. El reloj no consulta wall-clock; rechaza delta cero y calcula tick/duración siguientes antes de mutar para preservar el estado si hay overflow. Tests específicos cubren progresión y errores. Los puntos 112+ permanecen pendientes.

@@ -1,6 +1,6 @@
 # dinah Simulation — diseño inicial de API
 
-Estado: diseño del contrato inicial (punto 105). No existe todavía un módulo `dinah::simulation`; este documento fija límites y criterios para implementarlo sin presentar APIs propuestas como si estuvieran disponibles.
+Estado: diseño inicial completado (punto 105) y reloj fijo implementado (punto 111). `dinah::simulation` ofrece `SimulationClock`, `SimulationTime` y `SimulationTimeError`; el ejecutor de actualizaciones, las entidades simuladas y las integraciones de dominio siguen pendientes.
 
 ## Objetivo y responsabilidades
 
@@ -50,7 +50,7 @@ pub trait SimulationStep {
 }
 ```
 
-Esta forma solo sirve para concretar las decisiones que deben resolverse antes de implementar. La firma definitiva debe evitar borrar errores de dominio, validar valores inválidos antes de mutar cuando sea posible y dejar explícito quién posee el estado. La política de `advance` —un paso fijo por llamada frente a consumir un acumulador— se decidirá junto con el punto 111, sin introducir tiempo de pared en el contrato básico.
+El reloj ya implementado proporciona el núcleo temporal de esta propuesta: `SimulationClock::new(delta)` rechaza un delta cero y `advance()` incrementa un tick y el tiempo acumulado de forma comprobada. Si el tick o la duración se desbordan, devuelve `SimulationTimeError` y deja el reloj intacto. La política de acumulación de tiempo externo y de pasos máximos por avance queda aplazada; el reloj no consulta tiempo de pared ni ejecuta callbacks.
 
 ## Contratos que deben quedar definidos
 
@@ -85,9 +85,9 @@ Esta forma solo sirve para concretar las decisiones que deben resolverse antes d
 
 ## Secuencia propuesta de implementación
 
-1. **105 — Diseño de API:** fijar responsabilidades, configuración, tiempo, errores, orden y no-objetivos. Este documento cubre el contrato inicial; la implementación se mantiene pendiente.
+1. **105 — Diseño de API:** completado en este documento; firmas y límites iniciales definidos.
 2. **106–110 — Dominios:** evaluar por separado física ASCII, fluidos, autómatas celulares, raycasting y enjambres. Cada integración debe tener un caso de uso, límites de datos y tests propios; no se importarán abstracciones sin validar.
-3. **111 — Timestep:** definir duración fija, contador, avance, límites y desbordamientos.
+3. **111 — Timestep:** implementado como `SimulationClock`, con delta fijo no nulo, tick, tiempo acumulado, avance explícito y errores de overflow comprobados. Quedan para después los límites de pasos por llamada y el acumulador de tiempo externo.
 4. **112 — Actualización determinista:** definir orden de fases, semántica de error y qué estado/tick se conserva ante un fallo.
 5. **113–115 — Entidades e integración:** diseñar el estado simulado y después conectar ECS y Compute, sin anticipar queries o ejecución paralela que aún no existan.
 6. **116–118 — Calidad de uso:** tests reproducibles, benchmarks de workloads concretos y ejemplos pequeños.
@@ -96,8 +96,8 @@ Esta forma solo sirve para concretar las decisiones que deben resolverse antes d
 ## Criterios de aceptación
 
 - Los tipos propuestos se convierten en API solo tras fijar los puntos 111 y 112 y comprobar que no duplican responsabilidades de Core, ECS o Runtime.
-- Los parámetros inválidos se rechazan antes de mutaciones observables cuando sea viable.
-- Tests cubren paso inicial, progresión del tick, timestep inválido, límite de avance, overflow y fallo de actualización.
+- Los parámetros inválidos se rechazan antes de mutaciones observables cuando sea viable. `SimulationClock` rechaza delta cero.
+- Tests del reloj cubren estado inicial, progresión del tick, delta cero y overflow de tick/duración sin mutación parcial. El límite de avance y el fallo de actualización esperan la implementación de los puntos 112 y posteriores.
 - Tests de determinismo comparan estados/resultados lógicos y no dependen del tiempo real ni del orden de finalización de workers.
 - Los benchmarks separan coste de avance vacío, actualización por entidad y workloads de dominio; informan tamaño, configuración, entorno y mediana, sin generalizar resultados de microbenchmarks.
 - Los ejemplos compilan contra la API real; las firmas conceptuales de este documento no se presentan como utilizables todavía.
