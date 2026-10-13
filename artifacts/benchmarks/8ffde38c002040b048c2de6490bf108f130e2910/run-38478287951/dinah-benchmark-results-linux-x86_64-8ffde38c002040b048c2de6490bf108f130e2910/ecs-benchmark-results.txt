@@ -1,0 +1,30 @@
+[1m[92m   Compiling[0m dinah v0.1.0 (/home/runner/work/dinah/dinah)
+[1m[92m    Finished[0m `bench` profile [optimized] target(s) in 0.50s
+[1m[92m     Running[0m benches/ecs.rs (target/release/deps/ecs-cb384e7372636975)
+dinah ECS benchmark; build=release; statistic=median; samples=7
+Scope: public World entity lifecycle and individual component access; queries and public component iteration are not implemented.
+Results are machine-specific observations, not performance guarantees.
+case=world_spawn_fresh operations=64 samples=7 median_total_ns=831 ns_per_operation=12.984 operations_per_second=77015644
+case=world_despawn_after_spawn operations=64 samples=7 median_total_ns=1773 ns_per_operation=27.703 operations_per_second=36097011
+case=world_spawn_despawn_reuse operations=192 samples=7 median_total_ns=2104 ns_per_operation=10.958 operations_per_second=91254753
+case=world_contains_scan operations=64 samples=7 median_total_ns=170 ns_per_operation=2.656 operations_per_second=376470588
+case=world_component_get_dense operations=64 samples=7 median_total_ns=1072 ns_per_operation=16.750 operations_per_second=59701493
+case=world_component_get_sparse operations=4 samples=7 median_total_ns=130 ns_per_operation=32.500 operations_per_second=30769231
+case=world_component_get_stale_generation operations=64 samples=7 median_total_ns=351 ns_per_operation=5.484 operations_per_second=182336182
+case=world_component_insert_replace_remove operations=65 samples=7 median_total_ns=2374 ns_per_operation=36.523 operations_per_second=27379949
+case=world_spawn_fresh operations=1024 samples=7 median_total_ns=7485 ns_per_operation=7.310 operations_per_second=136806947
+case=world_despawn_after_spawn operations=1024 samples=7 median_total_ns=14868 ns_per_operation=14.520 operations_per_second=68872747
+case=world_spawn_despawn_reuse operations=3072 samples=7 median_total_ns=21831 ns_per_operation=7.106 operations_per_second=140717329
+case=world_contains_scan operations=1024 samples=7 median_total_ns=1213 ns_per_operation=1.185 operations_per_second=844187964
+case=world_component_get_dense operations=1024 samples=7 median_total_ns=16421 ns_per_operation=16.036 operations_per_second=62359174
+case=world_component_get_sparse operations=64 samples=7 median_total_ns=1062 ns_per_operation=16.594 operations_per_second=60263653
+case=world_component_get_stale_generation operations=1024 samples=7 median_total_ns=2835 ns_per_operation=2.769 operations_per_second=361199295
+case=world_component_insert_replace_remove operations=1025 samples=7 median_total_ns=19356 ns_per_operation=18.884 operations_per_second=52955156
+case=world_spawn_fresh operations=16384 samples=7 median_total_ns=117420 ns_per_operation=7.167 operations_per_second=139533299
+case=world_despawn_after_spawn operations=16384 samples=7 median_total_ns=330638 ns_per_operation=20.181 operations_per_second=49552683
+case=world_spawn_despawn_reuse operations=49152 samples=7 median_total_ns=435413 ns_per_operation=8.859 operations_per_second=112885927
+case=world_contains_scan operations=16384 samples=7 median_total_ns=19035 ns_per_operation=1.162 operations_per_second=860730234
+case=world_component_get_dense operations=16384 samples=7 median_total_ns=266538 ns_per_operation=16.268 operations_per_second=61469659
+case=world_component_get_sparse operations=1024 samples=7 median_total_ns=16360 ns_per_operation=15.977 operations_per_second=62591687
+case=world_component_get_stale_generation operations=16384 samples=7 median_total_ns=45004 ns_per_operation=2.747 operations_per_second=364056528
+case=world_component_insert_replace_remove operations=16385 samples=7 median_total_ns=308816 ns_per_operation=18.847 operations_per_second=53057484
