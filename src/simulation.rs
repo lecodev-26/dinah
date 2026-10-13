@@ -583,7 +583,10 @@ mod tests {
 
     #[test]
     fn deterministic_replay_reproduces_tick_trace_and_entity_state() {
-        fn run_scenario() -> (Vec<(u64, Vec<(u64, i64)>)>, Vec<(u64, i64)>) {
+        type EntitySnapshot = Vec<(u64, i64)>;
+        type TickSnapshot = (u64, EntitySnapshot);
+
+        fn run_scenario() -> (Vec<TickSnapshot>, EntitySnapshot) {
             let mut simulation = Simulation::new((), Duration::from_millis(16)).unwrap();
             let mut entities = SimulationEntities::new();
             entities.insert(3_i64).unwrap();
