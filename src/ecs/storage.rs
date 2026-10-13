@@ -159,19 +159,23 @@ impl<T: Component> ComponentStorage<T> {
         removed_component
     }
 
+    #[cfg(test)]
     pub(super) fn len(&self) -> usize {
         debug_assert_eq!(self.entities.len(), self.components.len());
         self.components.len()
     }
 
+    #[cfg(test)]
     pub(super) fn is_empty(&self) -> bool {
         self.components.is_empty()
     }
 
+    #[cfg(test)]
     pub(super) fn entities(&self) -> &[Entity] {
         &self.entities
     }
 
+    #[cfg(test)]
     pub(super) fn components(&self) -> &[T] {
         &self.components
     }
@@ -180,6 +184,7 @@ impl<T: Component> ComponentStorage<T> {
     ///
     /// Structural changes may reorder rows; callers must not rely on a stable
     /// order across insertions or removals.
+    #[cfg(test)]
     pub(super) fn iter(&self) -> impl Iterator<Item = (Entity, &T)> {
         self.entities.iter().copied().zip(self.components.iter())
     }
@@ -189,6 +194,7 @@ impl<T: Component> ComponentStorage<T> {
     ///
     /// This deliberately exposes no structural storage operations to the
     /// callback. It is sequential and makes no claim about parallel execution.
+    #[cfg(test)]
     pub(super) fn for_each_mut<F>(&mut self, mut operation: F)
     where
         F: FnMut(Entity, &mut T),
@@ -205,6 +211,7 @@ impl<T: Component> ComponentStorage<T> {
 
     /// Mutably iterates over distinct entity/component rows without exposing
     /// structural mutation while any yielded borrow is alive.
+    #[cfg(test)]
     pub(super) fn iter_mut(&mut self) -> impl Iterator<Item = (Entity, &mut T)> {
         self.entities
             .iter()
