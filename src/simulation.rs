@@ -582,6 +582,57 @@ mod tests {
     }
 
     #[test]
+    fn deterministic_replay_reproduces_tick_trace_and_entity_state() {
+        fn run_scenario() -> (Vec<(u64, Vec<(u64, i64)>)>, Vec<(u64, i64)>) {
+            let mut simulation = Simulation::new((), Duration::from_millis(16)).unwrap();
+            let mut entities = SimulationEntities::new();
+            entities.insert(3_i64).unwrap();
+            entities.insert(-2_i64).unwrap();
+            entities.insert(11_i64).unwrap();
+            let inputs = [2_i64, -1, 4, 0, 3];
+            let mut trace = Vec::new();
+
+            for input in inputs {
+                let time = simulation
+                    .step(|_state, time| {
+                        entities.for_each_mut(|id, value| {
+                            *value = value
+                                .wrapping_mul(3)
+                                .wrapping_add(input)
+                                .wrapping_add(id.get() as i64)
+                                .wrapping_add(time.tick as i64);
+                        });
+                        Ok::<_, ()>(())
+                    })
+                    .unwrap();
+                trace.push((
+                    time.tick,
+                    entities
+                        .iter()
+                        .map(|(id, value)| (id.get(), *value))
+                        .collect(),
+                ));
+            }
+
+            let final_state = entities
+                .iter()
+                .map(|(id, value)| (id.get(), *value))
+                .collect();
+            (trace, final_state)
+        }
+
+        let first = run_scenario();
+        let second = run_scenario();
+
+        assert_eq!(first, second);
+        assert_eq!(
+            first.0.iter().map(|(tick, _)| *tick).collect::<Vec<_>>(),
+            [1, 2, 3, 4, 5]
+        );
+        assert_eq!(first.1, first.0.last().unwrap().1);
+    }
+
+    #[test]
     fn simulated_entity_id_exhaustion_does_not_mutate_collection() {
         let mut entities = SimulationEntities::<u8>::new();
         entities.next_id = Some(u64::MAX);

@@ -1,6 +1,6 @@
 # dinah Simulation — diseño inicial de API
 
-Estado: diseño inicial completado (105), reloj fijo (111), actualización determinista (112) y colección inicial de entidades simuladas (113) e integración de identidades con ECS (114) implementados. `dinah::simulation` ofrece `SimulationClock`, `SimulationTime`, `SimulationTimeError`, `Simulation<S>`, `SimulationStepError`, `SimulationEntityId`, `SimulationEntities<T>`, `SimulationEntitiesError`, `SimulationEntityBindings` y `SimulationEntityBindingError`. `SimulationEntities::for_each_mut` utiliza el recorrido secuencial de Compute para actualizar estados en orden de inserción; la ejecución paralela desde Simulation sigue siendo explícita y no se activa automáticamente.
+Estado: diseño inicial completado (105), reloj fijo (111), actualización determinista (112), colección inicial de entidades simuladas (113), integración de identidades con ECS (114), recorrido mediante Compute (115) y prueba de replay determinista (116) implementados. `dinah::simulation` ofrece `SimulationClock`, `SimulationTime`, `SimulationTimeError`, `Simulation<S>`, `SimulationStepError`, `SimulationEntityId`, `SimulationEntities<T>`, `SimulationEntitiesError`, `SimulationEntityBindings` y `SimulationEntityBindingError`. `SimulationEntities::for_each_mut` utiliza el recorrido secuencial de Compute para actualizar estados en orden de inserción; la ejecución paralela desde Simulation sigue siendo explícita y no se activa automáticamente.
 
 ## Objetivo y responsabilidades
 
@@ -98,6 +98,10 @@ Estos IDs son deliberadamente distintos de `ecs::Entity`: esta colección permit
 5. **113–115 — Entidades e integración:** 113 crea la colección de estado simulado; 114 añade el puente explícito entre IDs simulados y handles ECS; 115 integra el recorrido mutable secuencial con Compute, conservando orden y sin activar paralelismo implícito.
 6. **116–118 — Calidad de uso:** tests reproducibles, benchmarks de workloads concretos y ejemplos pequeños.
 7. **119 — Documentación:** describir solo la API implementada, sus límites y resultados medidos.
+
+## Pruebas deterministas (punto 116)
+
+El test `deterministic_replay_reproduces_tick_trace_and_entity_state` ejecuta dos veces el mismo escenario con delta fijo y una secuencia explícita de entradas. Cada tick actualiza entidades en orden de inserción mediante `for_each_mut`; la traza registra el tick y cada par ID/estado. Las dos trazas y los estados finales deben coincidir exactamente. El test no lee reloj de pared, no usa fuentes de aleatoriedad ni depende del orden de finalización de workers. Esto verifica reproducibilidad lógica para esta carga secuencial concreta; no constituye una garantía de determinismo bit a bit entre arquitecturas ni de ejecución paralela.
 
 ## Criterios de aceptación
 
