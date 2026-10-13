@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 95
+- Completados: 96
 - En progreso: 6
-- Pendientes: 186
+- Pendientes: 185
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -131,7 +131,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 101 — Testear consistencia (tests de invariantes de `World` para contador de entidades vivas, slots retirados y lista libre sin duplicados; tests de `ComponentStorage` para alineación de columnas, índices sparse y generaciones obsoletas tras inserciones, reemplazos, `swap_remove` y reutilización)
 - [x] 102 — Benchmark ECS (benchmarks públicos de ciclo de vida de `World` para spawn, despawn, reutilización de slots y `contains`; CI y resultados de cinco plataformas registrados en `docs/ecs-benchmarks.md`)
 - [>] 103 — Optimizar acceso a memoria (integración inicial de `ComponentStorage<T>` con `World` para insert/get/get_mut/remove/has y limpieza en despawn; faltan benchmarks representativos de lookup/iteración/query/estructura y evidencia para cualquier cambio de representación)
-- [ ] 104 — Documentar arquitectura ECS
+- [x] 104 — Documentar arquitectura ECS (`docs/ecs.md` auditada contra la API actual: almacenamiento registrado por `TypeId`, operaciones públicas de componentes, limpieza en `despawn`, errores, ejemplo de uso y límites explícitos de queries/paralelismo)
 
 ## FASE 6 — Simulation
 
@@ -424,3 +424,6 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 
 
 - 2026-10-14 — Punto 103 avanzado: conectado el registro de storages tipados a `World` mediante `TypeId` y borrado de tipo seguro (`Any`), añadidos `insert/get/get_mut/remove/has`, rechazo de handles muertos/obsoletos y limpieza de componentes durante `despawn`. Se añaden pruebas unitarias y de contrato público, incluyendo componente `!Send`/`!Sync` y reutilización de índice. El punto sigue en progreso: faltan benchmarks reales de acceso y queries antes de optimizar la representación. Pendiente CI remoto.
+
+
+- 2026-10-14 — Punto 104 completado: auditada y actualizada `docs/ecs.md` contra el código real tras la integración de storage con `World`. Se corrigieron afirmaciones obsoletas sobre almacenamiento aún no integrado y se añadieron API/errores actuales, ejemplo público compilable conceptualmente y límites claros de queries y paralelismo. CI remoto del cambio de implementación y auditoría documental en curso.

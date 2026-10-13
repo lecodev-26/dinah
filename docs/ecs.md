@@ -1,6 +1,6 @@
 # dinah ECS — diseño inicial
 
-Estado: diseño inicial aprobado; `Entity`, `Component`, el ciclo de vida inicial de `World` y el adaptador explícito de sistemas a Runtime están implementados. El punto 099 añade un adaptador interno que procesa secuencialmente los componentes contiguos mediante `compute::for_each`, manteniendo alineados los handles de entidad. El almacenamiento todavía no está conectado a `World` ni expuesto como API pública. Las queries siguen pendientes. Las decisiones de este documento son una propuesta inicial revisable, no una garantía de estabilidad pública.
+Estado: arquitectura inicial implementada y documentada; `Entity`, `Component`, ciclo de vida de `World`, storage tipado por `TypeId`, acceso individual a componentes y adaptadores explícitos a Runtime/Compute están disponibles. La API de queries combinadas y la ejecución paralela segura de sistemas siguen pendientes. Las decisiones de este documento son revisables y no constituyen una garantía de estabilidad pública.
 
 ## Objetivos
 
@@ -92,21 +92,21 @@ Un componente es cualquier tipo Rust `'static`. El punto 093 expone `dinah::ecs:
 
 Cada `TypeId` identifica el storage del tipo en un `World`. El almacenamiento se mantendrá detrás de un registro privado type-erased (`Any`) y cada acceso tipado comprobará el downcast; un desacuerdo de tipos se tratará como un error/invariante interna, nunca mediante punteros crudos. No se expondrán referencias que sobrevivan a una mutación estructural incompatible del `World`.
 
-## World y operaciones iniciales
+## World y operaciones disponibles
 
-`World` es el propietario de entidades, generaciones, lista libre y storages. La API se implementará incrementalmente con operaciones equivalentes a:
+`World` es el propietario de entidades, generaciones, lista libre y storages. La API pública implementada incluye:
 
 - `spawn` / `despawn` para crear y destruir entidades.
 - `insert<T>` para añadir o reemplazar un componente.
 - `get<T>` / `get_mut<T>` para acceder a un componente existente.
 - `remove<T>` para retirar un componente.
-- `contains<T>` y conteos para inspección explícita.
+- `has<T>` para comprobar la presencia de un componente; `contains(entity)`, `len()` e `is_empty()` para la vida de las entidades.
 
-Los nombres y tipos exactos de error se fijarán en los puntos 092–094, junto con pruebas de handle inválido, entidad muerta, duplicación/reemplazo, falta de componente y capacidad. `World` será inicialmente single-owner y no sincronizado internamente; la concurrencia se añadirá por APIs explícitas que puedan demostrar préstamos disjuntos.
+`insert` devuelve `Result<Option<T>, WorldError>`: un `Ok(Some(old))` indica que reemplazó un valor previo. Los accesos `get`, `get_mut` y `remove` devuelven `None` si el handle está muerto/obsoleto o no tiene ese componente. `WorldError` distingue `EntityNotAlive`, `EntityIndexExhausted` y `AllocationFailed`. `World` sigue siendo single-owner y no sincronizado internamente.
 
-## Contrato de queries (punto 095)
+## Contrato de queries (punto 095; API aún pendiente)
 
-Esta sección fija la semántica de la primera API de queries; no afirma que las queries ni el almacenamiento estén implementados. La API concreta se incorporará junto con los storages en los puntos 096–097, de modo que el compilador pueda validar los préstamos reales.
+Esta sección fija la semántica prevista para una API futura de queries; no afirma que las queries combinadas estén implementadas. El acceso individual a componentes y el almacenamiento sí están implementados, pero todavía no existe una API pública para recorrer entidades que satisfacen varios tipos de componente.
 
 ### Selección y resultados
 
@@ -138,7 +138,7 @@ Esta sección fija la semántica de la primera API de queries; no afirma que las
 4. Préstamos de lectura coexistentes y rechazo en compilación de accesos incompatibles cuando la forma de la API lo permita.
 5. Ausencia de cambios estructurales como efecto secundario de iterar.
 
-Estos casos son criterios de aceptación para la implementación futura; el punto 095 solo queda cerrado como contrato de diseño documentado.
+Estos casos son criterios de aceptación para la implementación futura; el punto 095 queda cerrado como contrato de diseño, no como implementación de queries.
 
 ## Límites de seguridad y errores
 
@@ -157,14 +157,14 @@ La destrucción de una entidad debe dejar todos los storages coherentes. Las pru
 ## Secuencia de aceptación
 
 1. **091 — Diseño ECS:** decisiones, invariantes, límites y secuencia de integración documentados aquí.
-2. **092–094 — Entity, Component, World:** implementados los handles, el bound público y el ciclo de vida inicial de World; el storage de componentes permanece fuera de estos puntos.
-3. **095–097 — Queries, almacenamiento e iteración:** contrato de queries, storage contiguo e iteradores seguros secuenciales implementados/documentados incrementalmente. La integración de acceso individual de storages con `World` se añadió después; las queries públicas siguen pendientes.
+2. **092–094 — Entity, Component, World:** handles, bound público y ciclo de vida inicial de `World` implementados.
+3. **095–097 — Queries, almacenamiento e iteración:** contrato de queries, storage contiguo e iteradores internos seguros implementados/documentados; la integración de acceso individual de storages con `World` se añadió después. Las queries públicas y la iteración pública sobre el mundo siguen pendientes.
 4. **098–101 — Integración Runtime/Compute, sistemas paralelos y consistencia:** adaptador síncrono explícito de `World` a Runtime e integración secuencial interna del storage con `compute::for_each` implementados; el punto 100 tiene contrato de seguridad, `SystemAccess`, detección básica de conflictos y `SystemPlan` determinista implementados; sigue en progreso hasta disponer de ejecución segura que valide declaraciones, aísle cambios estructurales y pase CI multiplataforma. El punto 101 añade pruebas de invariantes de slots/lista libre y del índice sparse/columnas bajo mutaciones repetidas.
 5. **102–104 — Benchmarks, acceso a memoria y documentación:** medir antes de cambiar representación o prometer rendimiento.
 
 ### Benchmark baseline (punto 102, completado)
 
-`benches/ecs.rs` mide la API pública disponible hoy: creación de entidades, destrucción, reutilización de slots y recorrido de `contains`, con tamaños de 64, 1.024 y 16.384 entidades y siete muestras por caso. La metodología y los límites están documentados en `docs/ecs-benchmarks.md`. La primera ejecución de CI terminó correctamente en las cinco plataformas y sus resultados están resumidos en `docs/ecs-benchmarks.md`. No mide componentes ni queries porque el almacenamiento todavía no está integrado en `World`; el punto se limita expresamente a la línea base del ciclo de vida público.
+`benches/ecs.rs` mide la API pública disponible hoy: creación de entidades, destrucción, reutilización de slots y recorrido de `contains`, con tamaños de 64, 1.024 y 16.384 entidades y siete muestras por caso. La metodología y los límites están documentados en `docs/ecs-benchmarks.md`. La primera ejecución de CI terminó correctamente en las cinco plataformas y sus resultados están resumidos en `docs/ecs-benchmarks.md`. No mide componentes ni queries porque este benchmark corresponde al punto 102 y se ejecutó antes de integrar el almacenamiento con `World`; sigue siendo únicamente la línea base del ciclo de vida de entidades.
 
 
 ### Integración inicial de componentes con World
@@ -172,3 +172,21 @@ La destrucción de una entidad debe dejar todos los storages coherentes. Las pru
 `World` mantiene un registro privado `TypeId -> Box<dyn ErasedStorage>`; cada storage concreto sigue usando `ComponentStorage<T>` y sus columnas contiguas. La API pública actual incluye `insert<T>`, `get<T>`, `get_mut<T>`, `remove<T>` y `has<T>`. `insert` solo acepta entidades vivas, devuelve el componente reemplazado y propaga `WorldError::AllocationFailed` si las reservas de las columnas fallan. `get`/`get_mut`/`remove` no acceden a handles muertos u obsoletos. `despawn` recorre los storages registrados y retira el componente de esa entidad antes de invalidar su slot; al reutilizar el índice no quedan componentes de la generación anterior.
 
 Esta integración no implementa todavía queries de múltiples componentes, iteración pública sobre `World`, ejecución paralela de sistemas ni garantías de `Send`/`Sync`. El mapa de storages y los tipos de componentes no se exponen directamente, y la API permanece single-owner y segura sin `unsafe`.
+
+
+### Ejemplo de uso de la API pública actual
+
+```rust
+use dinah::ecs::World;
+
+let mut world = World::new();
+let entity = world.spawn()?;
+world.insert(entity, 42_u32)?;
+assert_eq!(world.get::<u32>(entity), Some(&42));
+*world.get_mut::<u32>(entity).expect("component exists") += 1;
+assert_eq!(world.remove::<u32>(entity), Some(43));
+world.despawn(entity)?;
+# Ok::<(), dinah::ecs::WorldError>(())
+```
+
+El ejemplo ilustra solo operaciones ya disponibles; no depende de una API de queries todavía inexistente. En ejemplos de aplicaciones, los errores de creación/inserción deben propagarse o tratarse según la política del programa.
