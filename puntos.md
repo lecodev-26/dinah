@@ -5,8 +5,8 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 94
-- En progreso: 6
+- Completados: 95
+- En progreso: 5
 - Pendientes: 187
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
@@ -129,7 +129,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 099 — Integrar ECS con Compute (`ComponentStorage::for_each_mut` delega en `compute::for_each`, preserva el emparejamiento entidad/componente y no permite cambios estructurales; tests de alineación, mutación y storage vacío; integración interna secuencial, sin paralelismo ni API pública de World)
 - [>] 100 — Crear sistemas paralelos (contrato de seguridad y `SystemAccess` público implementados: declara lecturas/escrituras por tipo, fusiona duplicados de forma conservadora y detecta conflictos read/write; planificador determinista de fases contiguas implementado; ejecución que valide declaraciones, aislamiento estructural y ejecución paralela aún pendientes)
 - [x] 101 — Testear consistencia (tests de invariantes de `World` para contador de entidades vivas, slots retirados y lista libre sin duplicados; tests de `ComponentStorage` para alineación de columnas, índices sparse y generaciones obsoletas tras inserciones, reemplazos, `swap_remove` y reutilización)
-- [>] 102 — Benchmark ECS (benchmarks públicos de ciclo de vida de `World` añadidos para spawn, despawn, reutilización de slots y `contains`; pendiente CI multiarquitectura y resultados archivados)
+- [x] 102 — Benchmark ECS (benchmarks públicos de ciclo de vida de `World` para spawn, despawn, reutilización de slots y `contains`; CI y resultados de cinco plataformas registrados en `docs/ecs-benchmarks.md`)
 - [ ] 103 — Optimizar acceso a memoria
 - [ ] 104 — Documentar arquitectura ECS
 
