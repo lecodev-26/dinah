@@ -1,0 +1,18 @@
+[1m[92m   Compiling[0m dinah v0.1.0 (/home/runner/work/dinah/dinah)
+[1m[92m    Finished[0m `bench` profile [optimized] target(s) in 0.22s
+[1m[92m     Running[0m benches/ecs.rs (target/release/deps/ecs-cb384e7372636975)
+dinah ECS benchmark; build=release; statistic=median; samples=7
+Scope: public World entity lifecycle only; component storage and queries are not integrated yet.
+Results are machine-specific observations, not performance guarantees.
+case=world_spawn_fresh operations=64 samples=7 median_total_ns=361 ns_per_operation=5.641 operations_per_second=177285319
+case=world_despawn_after_spawn operations=64 samples=7 median_total_ns=1072 ns_per_operation=16.750 operations_per_second=59701493
+case=world_spawn_despawn_reuse operations=192 samples=7 median_total_ns=1152 ns_per_operation=6.000 operations_per_second=166666667
+case=world_contains_scan operations=64 samples=7 median_total_ns=110 ns_per_operation=1.719 operations_per_second=581818182
+case=world_spawn_fresh operations=1024 samples=7 median_total_ns=4697 ns_per_operation=4.587 operations_per_second=218011497
+case=world_despawn_after_spawn operations=1024 samples=7 median_total_ns=7231 ns_per_operation=7.062 operations_per_second=141612502
+case=world_spawn_despawn_reuse operations=3072 samples=7 median_total_ns=11587 ns_per_operation=3.772 operations_per_second=265124709
+case=world_contains_scan operations=1024 samples=7 median_total_ns=1041 ns_per_operation=1.017 operations_per_second=983669549
+case=world_spawn_fresh operations=16384 samples=7 median_total_ns=73600 ns_per_operation=4.492 operations_per_second=222608696
+case=world_despawn_after_spawn operations=16384 samples=7 median_total_ns=176683 ns_per_operation=10.784 operations_per_second=92731049
+case=world_spawn_despawn_reuse operations=49152 samples=7 median_total_ns=282791 ns_per_operation=5.753 operations_per_second=173810340
+case=world_contains_scan operations=16384 samples=7 median_total_ns=16704 ns_per_operation=1.020 operations_per_second=980842912

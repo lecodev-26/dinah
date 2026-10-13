@@ -1,0 +1,18 @@
+[1m[92m   Compiling[0m dinah v0.1.0 (/Users/runner/work/dinah/dinah)
+[1m[92m    Finished[0m `bench` profile [optimized] target(s) in 0.35s
+[1m[92m     Running[0m benches/ecs.rs (target/release/deps/ecs-8078962a3d0753c4)
+dinah ECS benchmark; build=release; statistic=median; samples=7
+Scope: public World entity lifecycle only; component storage and queries are not integrated yet.
+Results are machine-specific observations, not performance guarantees.
+case=world_spawn_fresh operations=64 samples=7 median_total_ns=375 ns_per_operation=5.859 operations_per_second=170666667
+case=world_despawn_after_spawn operations=64 samples=7 median_total_ns=791 ns_per_operation=12.359 operations_per_second=80910240
+case=world_spawn_despawn_reuse operations=192 samples=7 median_total_ns=958 ns_per_operation=4.990 operations_per_second=200417537
+case=world_contains_scan operations=64 samples=7 median_total_ns=125 ns_per_operation=1.953 operations_per_second=512000000
+case=world_spawn_fresh operations=1024 samples=7 median_total_ns=3916 ns_per_operation=3.824 operations_per_second=261491318
+case=world_despawn_after_spawn operations=1024 samples=7 median_total_ns=8292 ns_per_operation=8.098 operations_per_second=123492523
+case=world_spawn_despawn_reuse operations=3072 samples=7 median_total_ns=10584 ns_per_operation=3.445 operations_per_second=290249433
+case=world_contains_scan operations=1024 samples=7 median_total_ns=750 ns_per_operation=0.732 operations_per_second=1365333333
+case=world_spawn_fresh operations=16384 samples=7 median_total_ns=37625 ns_per_operation=2.296 operations_per_second=435455150
+case=world_despawn_after_spawn operations=16384 samples=7 median_total_ns=87458 ns_per_operation=5.338 operations_per_second=187335635
+case=world_spawn_despawn_reuse operations=49152 samples=7 median_total_ns=262875 ns_per_operation=5.348 operations_per_second=186978602
+case=world_contains_scan operations=16384 samples=7 median_total_ns=36208 ns_per_operation=2.210 operations_per_second=452496686
