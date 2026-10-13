@@ -105,9 +105,9 @@ El test `deterministic_replay_reproduces_tick_trace_and_entity_state` ejecuta do
 
 ## Benchmarks (punto 117)
 
-`benches/simulation.rs` proporciona un benchmark ejecutable con `cargo bench --bench simulation`. Informa la arquitectura, usa nueve muestras y la mediana, y separa estos casos: 256 avances de `SimulationClock` (incluye construcción), 256 pasos de `Simulation` con una actualización pequeña (incluye construcción), recorrido mutable de `SimulationEntities<T>` y la combinación de iteración más `get` para tamaños de 64, 1.024 y 16.384 entidades. Cada muestra repite la operación 32 veces y normaliza el tiempo; la columna `ns_per_operation` divide además por ticks/entidades cuando corresponde.
+`benches/simulation.rs` proporciona un benchmark ejecutable con `cargo bench --bench simulation`. Informa la arquitectura, usa nueve muestras y la mediana, y separa estos casos: 256 avances de `SimulationClock` (incluye construcción), 256 pasos de `Simulation` con una actualización pequeña (incluye construcción), recorrido mutable de `SimulationEntities<T>` y 16 búsquedas `get` distribuidas sobre colecciones de 64, 1.024 y 16.384 entidades. Cada muestra repite la operación 32 veces y normaliza el tiempo; la columna `ns_per_operation` divide además por ticks/entidades cuando corresponde.
 
-El benchmark no contiene resultados archivados ni afirma una mejora de rendimiento: primero debe ejecutarse en runners de referencia y guardar el entorno y salida antes de extraer conclusiones. Los casos de entidades incluyen el coste de actualizar estados acumulativamente, y `iter + get` mide explícitamente la búsqueda lineal actual, no una query ECS. Los resultados son específicos de máquina y compilación release.
+El benchmark no contiene resultados archivados ni afirma una mejora de rendimiento: primero debe ejecutarse en runners de referencia y guardar el entorno y salida antes de extraer conclusiones. Los casos de entidades incluyen el coste de actualizar estados acumulativamente; las búsquedas `get` miden la búsqueda lineal actual sobre 16 IDs repartidos por la colección, no una query ECS. El workflow de benchmarks ejecuta este binario y archiva su salida junto con las otras suites. Los resultados son específicos de máquina y compilación release.
 
 ## Criterios de aceptación
 

@@ -6,6 +6,7 @@ use dinah::simulation::{Simulation, SimulationClock, SimulationEntities};
 const SAMPLES: usize = 9;
 const ITERATIONS_PER_SAMPLE: usize = 32;
 const SIZES: &[usize] = &[64, 1_024, 16_384];
+const LOOKUPS_PER_SAMPLE: usize = 16;
 
 fn measure<F: FnMut()>(mut operation: F) -> Vec<Duration> {
     let mut samples = Vec::with_capacity(SAMPLES);
@@ -87,18 +88,23 @@ fn main() {
         });
         report("simulation_entities_for_each_mut", size, &update_samples);
 
+        let ids: Vec<_> = entities
+            .iter()
+            .step_by((size / LOOKUPS_PER_SAMPLE).max(1))
+            .take(LOOKUPS_PER_SAMPLE)
+            .map(|(id, _)| id)
+            .collect();
         let lookup_samples = measure(|| {
-            let mut checksum = 0_u64;
-            for (id, _) in entities.iter() {
-                checksum = checksum.wrapping_add(*black_box(
-                    entities.get(id).expect("iterated entity remains present"),
-                ));
-            }
+            let checksum = ids.iter().fold(0_u64, |sum, &id| {
+                sum.wrapping_add(*black_box(
+                    entities.get(id).expect("sampled entity remains present"),
+                ))
+            });
             black_box(checksum);
         });
         report(
-            "simulation_entities_iter_plus_get_linear_lookup",
-            size,
+            "simulation_entities_16_spread_get_lookups_linear_search",
+            ids.len(),
             &lookup_samples,
         );
     }

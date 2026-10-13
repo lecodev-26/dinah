@@ -11,6 +11,7 @@ on:
       - 'src/memory/**'
       - 'src/compute.rs'
       - 'src/ecs/**'
+      - 'src/simulation.rs'
       - 'Cargo.toml'
       - 'scripts/run_benchmarks.py'
       - '.github/workflows/benchmarks.yml'
