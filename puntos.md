@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 106
-- En progreso: 6
-- Pendientes: 175
+- Completados: 114
+- En progreso: 8
+- Pendientes: 165
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -111,7 +111,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [>] 084 — Implementar SIMD donde aporte beneficio real (benchmark directo/API y candidato seguro `wide::f32x4`; matriz repetida: mejora en Linux x86-64, regresión en ARM64 y resultados mixtos en otros runners; sin kernel de producción que justifique SIMD; detalles en `docs/simd-research.md`)
 - [>] 085 — Optimizar estructuras data-oriented (benchmark AoS/SoA repetido tres veces en cinco runners; SoA pierde de forma consistente al leer un campo en Windows y al leer ambos en Linux ARM64, pero el resto de diferencias son pequeñas o variables; falta una carga real y medir construcción/conversión/escrituras)
 - [ ] 086 — Añadir métricas de rendimiento
-- [ ] 087 — Crear benchmarks CPU
+- [x] 087 — Crear benchmarks CPU (suite `benches/compute.rs`: bucle escalar, API secuencial, rutas paralelas de 2/4 workers y candidato `wide::f32x4`; 8 tamaños, 11 muestras por caso y mediana; ejecución multiplataforma archivada en el punto 088)
 - [x] 088 — Comparar secuencial/paralelo (benchmark release archivado en cinco runners; salida escalar/paralela verificada; análisis documentado: en el kernel ligero, 2 workers tardan 4,0–10,3× más incluso con 262.144 elementos y 4 workers 6,3–16,6× más; no se justifica paralelizar automáticamente este kernel)
 - [x] 089 — Testear determinismo (tests públicos repetidos en Core, Compute secuencial/paralelo/pipelines, Runtime —orden FIFO/resultados, cancelación, estados, métricas, trazas, `Shared<T>`, `TaskQueue` y `TaskFailure`— y Memory —secuencias de Buffer/SoaBuffer, errores sin mutación, alineación y capacidad cero—; CI y auditoría documental verdes para el commit `7171343`)
 - [x] 090 — Documentar Compute (guía pública `docs/compute.md` enlazada desde README; ejemplos de uso y contratos de las APIs secuenciales, por lotes, paralelas, reducciones y pipeline; límites de ownership, errores, determinismo, pánicos y rendimiento documentados; CI/auditoría de la guía confirmadas en `7171343`)
@@ -262,21 +262,21 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 
 ## FASE 13 — Testing
 
-- [ ] 211 — Unit tests Core
-- [ ] 212 — Unit tests Runtime
-- [ ] 213 — Unit tests Memory
-- [ ] 214 — Unit tests Compute
-- [ ] 215 — Unit tests ECS
-- [ ] 216 — Unit tests Simulation
+- [x] 211 — Unit tests Core (`src/core/tests.rs`: 15 tests unitarios; complementados por `tests/core_determinism.rs`; CI verde en `320c5d7`)
+- [x] 212 — Unit tests Runtime (tests en `src/runtime.rs` y submódulos: executor, scheduler, queue, cancellation, estados, sincronización, métricas y tracing; complementados por tests públicos de contrato/determinismo; CI verde en `320c5d7`)
+- [x] 213 — Unit tests Memory (`src/memory/buffer.rs` y `src/memory/soa.rs`: 26 tests unitarios; complementados por `tests/memory_determinism.rs`; CI verde en `320c5d7`)
+- [x] 214 — Unit tests Compute (`src/compute.rs`: 22 tests unitarios; complementados por `tests/compute_determinism.rs`; CI verde en `320c5d7`)
+- [x] 215 — Unit tests ECS (tests unitarios de access, component, entity, storage y world; complementados por `tests/ecs_contract.rs`; CI verde en `320c5d7`)
+- [x] 216 — Unit tests Simulation (`src/simulation.rs`: 14 tests unitarios, incluidos timestep, errores, entidades, bindings y replay determinista; CI verde en `320c5d7`)
 - [ ] 217 — Unit tests Network
 - [ ] 218 — Unit tests Storage
 - [ ] 219 — Unit tests Native
-- [ ] 220 — Integration tests
+- [>] 220 — Integration tests (existen contratos públicos de Core, Runtime y ECS, más suites de determinismo de Core/Runtime/Memory/Compute; faltan pruebas end-to-end de la arquitectura completa y de módulos aún no implementados)
 - [ ] 221 — Concurrency tests
 - [ ] 222 — Stress tests
-- [ ] 223 — Determinism tests
+- [x] 223 — Determinism tests (contratos repetidos públicos de Core, Runtime, Memory y Compute, más replay de Simulation; no implica determinismo temporal ni equivalencia bit a bit entre arquitecturas)
 - [ ] 224 — Regression tests
-- [ ] 225 — Benchmark suite
+- [>] 225 — Benchmark suite (suite release reproducible de Runtime, Memory, Compute, ECS y Simulation en cinco runners; faltan suites de Networking, Storage y Native cuando esos módulos existan)
 - [ ] 226 — CI completa
 - [ ] 227 — Coverage
 - [ ] 228 — Test matrix Linux
@@ -453,3 +453,14 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 - 2026-10-14 — Punto 117 validado: DINAH CI, auditoría documental y benchmarks de `83cbcc3` pasaron. Se inspeccionaron los cinco artefactos de Simulation y se verificó su archivo en el commit automático `c860fc7`; se documentaron las medianas medidas y se marcó el punto 117 como completado. Checks locales de formato, diff y checklist pendientes tras esta actualización documental.
 
 - 2026-10-14 — CI principal y auditoría documental pasaron para `41a2f6f`; el archivo automático `38485049766` también terminó correctamente. Punto 118 validado: el ejemplo ejecutable está incluido en CI y usa la API real. Punto 119 actualizado para alinear la guía con el estado implementado, eliminar referencias a benchmarks pendientes y describir explícitamente las limitaciones actuales. Checks locales de formato/diff/checklist ejecutados después del cambio documental.
+
+
+### Auditoría de puntos no marcados — 2026-10-14
+
+- Se verificó que la CI del commit `320c5d7` terminó correctamente (https://github.com/lecodev-26/dinah/actions/runs/38485213862) y que el archivado automático también terminó correctamente (https://github.com/lecodev-26/dinah/actions/runs/38485269268).
+- Se revisó la lista completa de puntos pendientes/en progreso, el inventario de módulos, tests, benchmarks y workflows antes de iniciar Networking.
+- Se cerraron 087 y 211–216 porque hay implementaciones de benchmarks CPU y suites unitarias por módulo con CI verde. Esto no cierra la cobertura global, pruebas de estrés, fuzzing ni la matriz de arquitecturas, que siguen siendo tareas distintas.
+- Se cerró 223 por la cobertura repetible observable ya existente en Core, Runtime, Memory, Compute y Simulation; no se afirma determinismo temporal ni bit a bit entre arquitecturas.
+- 220 y 225 pasan a en progreso, no a completados: ya existen pruebas de contrato/determinismo y benchmarks para los módulos implementados, pero falta la integración end-to-end completa y quedan subsistemas futuros sin pruebas/benchmarks.
+- Se mantienen abiertos 033 (no hay carga representativa propia de Core), 035 (estabilidad de Core aún depende de justificar `HasCoreId`), 084 (sin kernel SIMD de producción que demuestre beneficio), 085 (AoS/SoA no justifica un cambio general), 086 (no existe todavía un sistema transversal de métricas de rendimiento), 100 (sin ejecución ECS paralela segura) y 103 (faltan iteración/query pública y benchmarks representativos para optimizar).
+- No se inició Networking ni se modificó código de producto en esta auditoría. Los puntos de Networking, Storage, Native, CLI, observabilidad, seguridad, cobertura, profiling, integración total y release siguen pendientes hasta que haya evidencia específica.
