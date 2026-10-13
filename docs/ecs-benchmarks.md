@@ -12,7 +12,7 @@ Cases:
 - `world_component_get_stale_generation`: repeatedly verify that a stale handle cannot retrieve a component after its entity index is reused.
 - `world_component_insert_replace_remove`: create one entity, insert then repeatedly replace one component, and remove it; this is an end-to-end structural workload, not an isolated insert latency.
 
-The benchmark intentionally uses only public API. It does **not** measure component insertion, component iteration, queries, or structural changes involving components: `ComponentStorage` is still internal and is not connected to `World`. These results must not be interpreted as full ECS workload performance or as proof that the ECS is faster than another implementation.
+The benchmark intentionally uses only public API. It measures typed component lookup and one combined insert/replace/remove workload through `World`; it does **not** measure isolated insertion latency, public component iteration, or multi-component queries. `ComponentStorage` remains an internal implementation detail but is integrated with `World`. These results must not be interpreted as full ECS workload performance or as proof that the ECS is faster than another implementation.
 
 The benchmark workflow records results on Linux x86-64, Linux ARM64, Windows x86-64, macOS x86-64, and macOS ARM64. Compare only results from comparable environments; use measurements to identify follow-up questions, not to infer universal speedups. The cases include world construction and allocation where described, so their timing is end-to-end for that scenario rather than a pure isolated instruction cost.
 
@@ -34,10 +34,25 @@ These are the exact reported per-operation medians for each runner and this work
 
 ## Memory-access review (roadmap point 103, in progress)
 
-The current implementation exposes individual typed component access through `World`, so the ECS benchmark now includes dense and sparse-index `get`, stale-generation misses, and an end-to-end insert/replace/remove case. The `memory` benchmark still measures generic `Buffer`/`SoaBuffer` operations and synthetic AoS/SoA scans. No public iteration or multi-component query API exists yet, so those workloads cannot honestly be measured through a consumer-facing interface.
+The current implementation exposes individual typed component access through `World`, so the ECS benchmark includes dense and sparse-index `get`, stale-generation misses, and an end-to-end insert/replace/remove case. The `memory` benchmark still measures generic `Buffer`/`SoaBuffer` operations and synthetic AoS/SoA scans. No public component iteration or multi-component query API exists yet, so those workloads cannot honestly be measured through a consumer-facing interface.
 
 The storage implementation already uses contiguous `entities` and `components` columns, a sparse index from entity index to row, generation validation on lookup, and `swap_remove` for deletion. These are design properties, not proof of cache-locality or speed. The sparse vector's memory footprint also depends on the largest entity index, so benchmarks must include sparse/dense entity-index distributions rather than only dense sequential handles.
 
 **Decision for point 103:** do not change the representation or add speculative caching/prefetching yet. The current benchmark now covers: (1) repeated `get` for dense and sparse entity indices; (2) stale-generation misses; and (3) combined insert/replace/remove. The remaining required measurements are (4) sequential iteration over one component; (5) iteration over two component types with different overlap rates; and (6) end-to-end setup cost separated from steady-state access. Iteration and multi-component cases require the corresponding safe public API first. Use equivalent data and checksums, multiple sizes and repeated runs, and record allocations/memory footprint where practical. Compare against a simple baseline only if it models the same semantics. A representation change is justified only by a repeatable improvement in a representative workload without weakening generation checks, alignment invariants, allocation-failure behavior, or safe borrowing.
 
 Until those cases can run through a real consumer API, point 103 remains **in progress**; no memory-access optimization is claimed.
+
+
+### Archived component-access baseline (commit `8ffde38`)
+
+The five-runner benchmark completed successfully: [benchmark workflow run 38478287951](https://github.com/lecodev-26/dinah/actions/runs/38478287951). The raw outputs and environment details are archived under [`artifacts/benchmarks/8ffde38c002040b048c2de6490bf108f130e2910/run-38478287951/`](../artifacts/benchmarks/8ffde38c002040b048c2de6490bf108f130e2910/run-38478287951/). The table shows the median nanoseconds per operation at 16,384 entities; `sparse get` visits every sixteenth entity (1,024 lookups), while the other lookup cases visit 16,384 handles. Insert/replace/remove is a combined end-to-end workload, not an isolated operation.
+
+| Runner | Dense `get` | Sparse `get` | Stale-generation miss | Insert/replace/remove cycle |
+| --- | ---: | ---: | ---: | ---: |
+| Linux x86-64 | 16.268 | 15.977 | 2.747 | 18.847 |
+| Linux ARM64 | 16.947 | 17.085 | 2.257 | 20.100 |
+| Windows x86-64 | 32.227 | 32.227 | 1.965 | 34.947 |
+| macOS x86-64 | 30.905 | 46.792 | 5.260 | 32.531 |
+| macOS ARM64 | 10.424 | 10.498 | 1.536 | 11.377 |
+
+These are machine-specific medians from seven samples, not controlled cross-machine comparisons. The sparse case performs fewer lookups than the dense case, so its per-operation value is useful for the measured lookup path but does not compare equal total work. The baseline establishes that the new cases run on all five runners; it does not establish a representation win or justify prefetching, caching, or a layout change. Public iteration, overlapping two-component workloads, and setup-versus-steady-state separation remain prerequisites for a broader decision.

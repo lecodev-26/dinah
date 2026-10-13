@@ -432,3 +432,5 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 
 
 - 2026-10-14 — Punto 105 completado como diseño: `docs/simulation.md` delimita Simulation frente a Core/ECS/Compute/Runtime, propone contratos conceptuales de tiempo/actualización, define límites de determinismo, errores, pánicos, integración y criterios de aceptación. No se declara implementado ningún módulo ni API; timestep y actualización determinista siguen pendientes en 111–112.
+
+- 2026-10-14 — Punto 103: archivados y revisados los benchmarks de acceso ECS en cinco runners (run 38478287951). Se documentan medianas de get denso/disperso, miss de generación obsoleta y ciclo combinado insert/replace/remove; la variación por runner y la falta de iteración/query pública no justifican cambiar la representación. Punto 103 sigue en progreso.
