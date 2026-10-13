@@ -1,6 +1,6 @@
 # DINAH ECS benchmarks
 
-The `ecs` release benchmark records the cost of the currently public entity-lifecycle API. It runs seven samples per case and reports the median total duration, nanoseconds per operation, and derived operations per second for workloads of 64, 1,024, and 16,384 entities.
+The `ecs` release benchmark records the cost of the currently public entity-lifecycle API and individual component access. It runs seven samples per case and reports the median total duration, nanoseconds per operation, and derived operations per second for workloads of 64, 1,024, and 16,384 entities.
 
 Cases:
 
@@ -8,6 +8,9 @@ Cases:
 - `world_despawn_after_spawn`: allocate the workload, then destroy each entity.
 - `world_spawn_despawn_reuse`: allocate, destroy, then allocate again to exercise free-slot reuse and generation advancement.
 - `world_contains_scan`: scan a prebuilt set of live handles and count successful `contains` checks.
+- `world_component_get_dense` / `world_component_get_sparse`: repeated typed `World::get` lookups for all entities or every sixteenth entity index with a component; the checksum consumes returned values.
+- `world_component_get_stale_generation`: repeatedly verify that a stale handle cannot retrieve a component after its entity index is reused.
+- `world_component_insert_replace_remove`: create one entity, insert then repeatedly replace one component, and remove it; this is an end-to-end structural workload, not an isolated insert latency.
 
 The benchmark intentionally uses only public API. It does **not** measure component insertion, component iteration, queries, or structural changes involving components: `ComponentStorage` is still internal and is not connected to `World`. These results must not be interpreted as full ECS workload performance or as proof that the ECS is faster than another implementation.
 
@@ -31,10 +34,10 @@ These are the exact reported per-operation medians for each runner and this work
 
 ## Memory-access review (roadmap point 103, in progress)
 
-The current implementation does not yet expose a representative component-access workload through `World`: `ComponentStorage<T>` remains an internal type and is not registered with the world. The existing `ecs` benchmark therefore measures entity-slot lifecycle only, while `memory` measures generic `Buffer`/`SoaBuffer` operations and synthetic AoS/SoA scans. Neither can establish the cost of real ECS component lookups, query iteration, or structural changes.
+The current implementation exposes individual typed component access through `World`, so the ECS benchmark now includes dense and sparse-index `get`, stale-generation misses, and an end-to-end insert/replace/remove case. The `memory` benchmark still measures generic `Buffer`/`SoaBuffer` operations and synthetic AoS/SoA scans. No public iteration or multi-component query API exists yet, so those workloads cannot honestly be measured through a consumer-facing interface.
 
 The storage implementation already uses contiguous `entities` and `components` columns, a sparse index from entity index to row, generation validation on lookup, and `swap_remove` for deletion. These are design properties, not proof of cache-locality or speed. The sparse vector's memory footprint also depends on the largest entity index, so benchmarks must include sparse/dense entity-index distributions rather than only dense sequential handles.
 
-**Decision for point 103:** do not change the representation or add speculative caching/prefetching yet. First integrate storage with `World` and define a representative workload; then benchmark, on all configured runners, at least: (1) repeated `get` for dense and sparse indices, including stale generations; (2) sequential iteration over one component; (3) iteration over two component types with different overlap rates; (4) insert/replace/remove including `swap_remove`; and (5) end-to-end setup cost separately from steady-state access. Use equivalent data and checksums, multiple sizes and repeated runs, and record allocations/memory footprint where practical. Compare against a simple baseline only if it models the same semantics. A representation change is justified only by a repeatable improvement in a representative workload without weakening generation checks, alignment invariants, allocation-failure behavior, or safe borrowing.
+**Decision for point 103:** do not change the representation or add speculative caching/prefetching yet. The current benchmark now covers: (1) repeated `get` for dense and sparse entity indices; (2) stale-generation misses; and (3) combined insert/replace/remove. The remaining required measurements are (4) sequential iteration over one component; (5) iteration over two component types with different overlap rates; and (6) end-to-end setup cost separated from steady-state access. Iteration and multi-component cases require the corresponding safe public API first. Use equivalent data and checksums, multiple sizes and repeated runs, and record allocations/memory footprint where practical. Compare against a simple baseline only if it models the same semantics. A representation change is justified only by a repeatable improvement in a representative workload without weakening generation checks, alignment invariants, allocation-failure behavior, or safe borrowing.
 
 Until those cases can run through a real consumer API, point 103 remains **in progress**; no memory-access optimization is claimed.
