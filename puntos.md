@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 119
+- Completados: 120
 - En progreso: 8
-- Pendientes: 160
+- Pendientes: 159
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -153,7 +153,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 
 ## FASE 7 — Networking
 
-- [ ] 120 — Diseñar Network API
+- [x] 120 — Diseñar Network API (`docs/network.md` fija capas, ownership, framing, límites de mensajes, errores, tiempo, concurrencia, cierre, seguridad, determinismo y decisiones aplazadas; identifica propuestas sin presentarlas como API implementada)
 - [ ] 121 — Definir transporte
 - [ ] 122 — Definir mensajes
 - [ ] 123 — Definir serialización
@@ -473,3 +473,9 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 - 106 es una física discreta de rejilla (no un motor rígido general); 107 es difusión escalar explícita (no CFD); 108 es Conway Life con buffer doble; 109 es raycasting 2D contra AABB; 110 es flocking 2D basado en snapshot. Las limitaciones están documentadas en `docs/simulation.md`.
 - CI confirmada verde en `f7591b2`: tests, Clippy, documentación pública y checklist pasaron (https://github.com/lecodev-26/dinah/actions/runs/38486267990); auditoría documental pasó (https://github.com/lecodev-26/dinah/actions/runs/38486267997). Los cinco puntos se marcan completados con el alcance acotado descrito arriba.
 - No se inició Networking ni la siguiente fase.
+
+
+### Networking — diseño inicial (punto 120)
+
+- Tras completar y validar Simulation 106–110, se inicia Fase 7 con el diseño de API. `docs/network.md` separa mensaje lógico, serialización, transporte, conexión e integración; fija contratos de seguridad y límites, y documenta decisiones aplazadas. No se implementaron sockets ni dependencias en este punto.
+- La fase sigue abierta: los puntos 121–140 no se consideran iniciados ni completados por el documento de diseño.
