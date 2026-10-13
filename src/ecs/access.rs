@@ -238,7 +238,7 @@ mod plan_tests {
     }
 
     #[test]
-    fn conflicting_systems_keep_input_order_across_batches() {
+    fn conflicts_keep_input_order_while_compatible_systems_share_batches() {
         let mut first = SystemAccess::new();
         first.write::<Position>();
         let mut independent = SystemAccess::new();
@@ -249,7 +249,7 @@ mod plan_tests {
         fourth.write::<Velocity>();
 
         let plan = SystemPlan::from_accesses(&[first, independent, third, fourth]);
-        assert_eq!(plan.batches(), &[vec![0, 1], vec![2], vec![3]]);
+        assert_eq!(plan.batches(), &[vec![0, 1], vec![2, 3]]);
     }
 
     #[test]
