@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 120
+- Completados: 121
 - En progreso: 8
-- Pendientes: 159
+- Pendientes: 158
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -154,7 +154,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 ## FASE 7 — Networking
 
 - [x] 120 — Diseñar Network API (`docs/network.md` fija capas, ownership, framing, límites de mensajes, errores, tiempo, concurrencia, cierre, seguridad, determinismo y decisiones aplazadas; identifica propuestas sin presentarlas como API implementada)
-- [ ] 121 — Definir transporte
+- [x] 121 — Definir transporte (contrato bloqueante de byte stream: lectura parcial/EOF, escritura completa y fallo parcial, bloqueo, timeout explícito, cierre, ownership y límites documentados en `docs/network.md`; sin afirmar sockets implementados)
 - [ ] 122 — Definir mensajes
 - [ ] 123 — Definir serialización
 - [ ] 124 — Crear conexiones
@@ -484,3 +484,9 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 ### Identidad visual del README — 2026-10-14
 
 - Actualizada la identidad visual de DINAH a una paleta naranja coherente (`#e87524`, `#ffb15c`, `#c65312`) en las marcas, botones, cabeceras, diagramas, gráficos y variantes light/dark del README. Se recolorearon los recursos raster de marca existentes y se corrigió el README para describir el estado real del repositorio: un único crate Rust, cinco suites de benchmarks y un ejemplo ejecutable. No se modificó código de producto ni se alteró el estado de los 287 puntos.
+
+
+### Networking — contrato de transporte (punto 121)
+
+- Se fija el primer contrato como byte stream bloqueante, separado del proveedor de sockets: lectura parcial permitida, `0` como EOF, escritura completa con errores parciales explícitos, timeout configurado sin reloj oculto, ownership prestado, límites en framing y ninguna reconexión/reintento automático. No se introduce UDP ni se afirma implementación de sockets.
+- El punto 121 queda documentado; el punto 122 (mensajes) sigue siendo el siguiente. Validación pendiente de CI tras el commit de documentación.

@@ -1,6 +1,6 @@
 # dinah Networking — diseño de API y límites de v0.1
 
-Estado: diseño inicial (punto 120). Este documento fija las fronteras y contratos para que los siguientes puntos puedan implementar transporte, mensajes y conexiones sin comprometer prematuramente una API de red demasiado amplia. No declara que haya sockets, serialización ni conexiones implementados.
+Estado: diseño incremental (puntos 120–121). Este documento fija las fronteras de Networking y el contrato elegido para el transporte de stream. No declara que haya sockets, serialización ni conexiones implementados.
 
 ## Objetivo
 
@@ -45,6 +45,23 @@ Capas previstas:
 4. **Conexión y endpoint:** identidad local/remota y estado de conexión, sin confundir dirección, sesión autenticada y autorización.
 5. **Integración:** adaptadores explícitos hacia Runtime y Simulation; ninguna mutación oculta ni callback de fondo implícito.
 
+## Decisión de transporte — punto 121
+
+Para la primera versión se define un **transporte de byte stream bloqueante y explícito**, con operaciones de lectura y escritura que pueden completar una cantidad parcial de bytes. El contrato es independiente del proveedor concreto: la primera implementación con sockets queda para el punto de conexiones y no forma parte de este punto de diseño. No se añade UDP ni una abstracción común stream/datagrama todavía; esos modelos tienen semánticas distintas y no deben esconderse tras la misma API.
+
+Contrato elegido:
+
+- **Escritura completa:** la operación de alto nivel `write_all(bytes)` solo devuelve éxito cuando todos los bytes solicitados se han aceptado. Una implementación interna puede hacer varias escrituras parciales. Si ocurre un error después de escribir un prefijo, devuelve el error y no reintenta de forma oculta desde cero: el llamador debe tratar el estado del stream como potencialmente desincronizado y normalmente cerrar la conexión.
+- **Lectura:** `read(buffer)` devuelve el número de bytes realmente leídos, que puede ser menor que el tamaño del buffer. `0` significa EOF/cierre ordenado del peer, no “todavía no hay datos”. La lectura parcial no delimita mensajes; el framing pertenece a una capa posterior.
+- **Bloqueo:** las operaciones esperan a que haya progreso o un error del sistema. La primera API no expone `WouldBlock` como flujo normal ni promete operaciones no bloqueantes; una evolución asíncrona requerirá otro contrato explícito.
+- **Timeouts:** no se oculta ningún reloj ni deadline global. Si el proveedor permite configurar timeout, se establece explícitamente en su configuración y el timeout se devuelve como error tipado. No se promete una latencia máxima portátil.
+- **Cierre:** EOF indica cierre remoto de lectura. Los errores de escritura/lectura se conservan como errores; no se convierten en buffer vacío. El cierre local debe ser una operación explícita del proveedor de conexión, especificada al implementar conexiones.
+- **Propiedad y concurrencia:** los bytes se prestan solo durante la llamada y no se retienen. El objeto de conexión es mutable y no se comparte concurrentemente sin sincronización externa. El orden de bytes se conserva por la semántica del stream, pero una llamada de lectura no corresponde necesariamente a una escritura.
+- **Límites:** el transporte mueve bytes y no asigna memoria según longitudes remotas. La capa de framing/serialización define y valida los máximos antes de reservar payloads.
+- **Fallos parciales:** tras un fallo de escritura parcial, el estado del protocolo se considera incierto; no se reintenta automáticamente la trama completa. La recuperación o reconexión queda fuera del contrato base.
+
+Este punto cierra una decisión de diseño, no una implementación de red. Las pruebas del contrato pueden usar un proveedor falso; las pruebas de sockets locales pertenecen al punto 137 y no deben depender de tiempos exactos ni de servicios externos.
+
 ## Contratos obligatorios
 
 - **Ownership:** buffers prestados durante la llamada, salvo que una API futura documente explícitamente una transferencia de propiedad. No retener referencias a buffers del llamador.
@@ -60,7 +77,7 @@ Capas previstas:
 
 ## Decisiones aplazadas y orden de implementación
 
-- **121 Transporte:** elegir primero un contrato concreto (preferencia inicial: transporte de stream bloqueante explícito para la primera implementación, salvo que el caso de uso exija datagramas). Especificar parcialidad, EOF, timeouts y errores.
+- **121 Transporte (decisión tomada):** stream de bytes bloqueante; lecturas parciales permitidas, EOF definido, escritura completa con errores de progreso parcial, timeout explícito del proveedor y sin reintento automático. No se mezcla stream con datagramas ni se afirma que existan sockets implementados.
 - **122 Mensajes:** decidir envelope/versionado, tipos de mensaje y límites.
 - **123 Serialización:** elegir formato acotado, con versiones y errores; medirlo antes de introducir dependencias.
 - **124–126 Conexiones/endpoints/estado:** definir ownership, estados y cierre antes de añadir recuperación.
@@ -71,6 +88,8 @@ Capas previstas:
 - **140 Documentación:** documentar exclusivamente comportamiento implementado y límites medidos.
 
 ## Criterios de aceptación del punto 120
+
+El punto 121 queda definido cuando el contrato de transporte fija semántica de stream, lectura parcial/EOF, escritura parcial, bloqueo, timeout, cierre, ownership, límites y recuperación tras error, sin presentarlo como implementación.
 
 - Responsabilidades separadas de Core, Runtime, Simulation y Networking.
 - Capas lógicas de mensaje, serialización, transporte, conexión e integración identificadas.
