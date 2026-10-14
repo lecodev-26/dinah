@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
   <title id="title">dinah mark</title>
   <desc id="desc">Minimal lowercase d monogram for the dinah project.</desc>
-  <rect width="128" height="128" rx="28" fill="#171717"/>
+  <rect width="128" height="128" rx="28" fill="#087f8c"/>
   <path d="M79 23h17v82H79V94c-6 8-15 13-27 13-22 0-38-18-38-42s16-42 38-42c12 0 21 5 27 13V23Zm-23 68c14 0 24-11 24-26S70 39 56 39 32 50 32 65s10 26 24 26Z" fill="#fff"/>
 </svg>
