@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/dinah-mark.svg" alt="DINAH logo" width="132">
+<img src="assets/logo.png" alt="DINAH logo" width="132">
 
 <img src="assets/banner.jpg" alt="DINAH: modular Rust runtime, compute and simulation foundation" width="100%">
 
