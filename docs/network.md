@@ -1,6 +1,6 @@
 # dinah Networking — diseño de API y límites de v0.1
 
-Estado: diseño incremental (puntos 120–121). Este documento fija las fronteras de Networking y el contrato elegido para el transporte de stream. No declara que haya sockets, serialización ni conexiones implementados.
+Estado: diseño incremental (puntos 120–122). Este documento fija las fronteras de Networking y los contratos de transporte y mensaje. No declara que haya sockets, serialización ni conexiones implementados.
 
 ## Objetivo
 
@@ -35,7 +35,7 @@ pub trait Transport {
 }
 ```
 
-Esta firma es un punto de discusión, no una promesa de API final. Antes de implementarla hay que decidir si el contrato es stream o datagrama, cómo se representa `WouldBlock`, cómo se distinguen EOF y desconexión, si la lectura puede ser parcial y quién posee los buffers. No se debe tratar una llamada `send` de stream como si enviara un mensaje completo.
+Esta firma es un punto de discusión, no una promesa de API final. El punto 121 ya fija el primer transporte como byte stream bloqueante, con lectura parcial y EOF explícito; las firmas definitivas deberán reflejar ese contrato y no tratar una llamada de escritura como si delimitara un mensaje completo. Los tipos de error y el proveedor concreto se decidirán al implementar conexiones.
 
 Capas previstas:
 
@@ -62,6 +62,51 @@ Contrato elegido:
 
 Este punto cierra una decisión de diseño, no una implementación de red. Las pruebas del contrato pueden usar un proveedor falso; las pruebas de sockets locales pertenecen al punto 137 y no deben depender de tiempos exactos ni de servicios externos.
 
+## Contrato de mensaje lógico — punto 122
+
+Un mensaje lógico es una unidad de protocolo independiente del transporte concreto y del layout de bytes. La lectura del stream no crea mensajes: el framing que permitirá reconstruirlos se especifica en el punto 123. Este punto define la semántica y la identidad del mensaje, no su codificación binaria.
+
+### Envelope conceptual
+
+Cada mensaje debe tener estos elementos semánticos:
+
+- **Versión de protocolo:** identifica la versión del contrato común de Networking que interpreta el envelope. No equivale a la versión de un tipo de mensaje.
+- **Identificador de tipo:** identificador numérico estable asignado a una clase de mensaje dentro del protocolo. El valor cero queda reservado como inválido; un identificador publicado no se reutiliza para otro significado.
+- **Versión de mensaje:** versión del esquema semántico del tipo identificado, separada de la versión global del protocolo.
+- **Payload opaco:** contenido específico del tipo. La capa de mensajes no interpreta structs Rust en memoria ni presupone que el payload tenga una representación portable sin serialización explícita.
+
+Como notación de diseño, no como API ya implementada:
+
+```rust
+struct MessageEnvelope<'a> {
+    protocol_version: ProtocolVersion,
+    message_type: MessageType,
+    message_version: MessageVersion,
+    payload: &'a [u8],
+}
+```
+
+Estos nombres ilustran el contrato conceptual; no existen aún como tipos públicos de Rust. La representación y el orden exactos de los campos, el endianness, la codificación de enteros y el framing pertenecen al punto 123.
+
+### Reglas de validación y evolución
+
+- El receptor valida la versión de protocolo, el identificador de tipo, la versión del mensaje y el tamaño del payload antes de entregar el mensaje a la lógica de aplicación.
+- Un tipo desconocido o una versión de mensaje no admitida produce un error tipado por defecto; ignorarlo solo se permitirá mediante una política de compatibilidad explícita del protocolo, nunca por descarte silencioso implícito.
+- Una versión incompatible del protocolo se rechaza antes de despachar el payload. Las reglas de compatibilidad hacia delante/atrás deben declararse por versión; no se infieren del hecho de que el payload pueda decodificarse.
+- Los identificadores publicados son estables y no se reasignan. Una modificación incompatible del significado requiere un nuevo identificador o una nueva versión de mensaje, conforme a las reglas de compatibilidad documentadas.
+- El tamaño máximo de payload y del mensaje completo debe ser finito y comprobarse antes de reservar memoria basada en datos remotos. El valor concreto y la representación de longitud se fijan en el punto 123; este punto no inventa todavía un límite numérico.
+- Los errores de mensaje distinguen, como mínimo, versión de protocolo no admitida, tipo desconocido, versión de mensaje no admitida y límite excedido. Los errores de framing y de decodificación se detallan en serialización.
+- El orden solo es el que garantice el transporte seleccionado. Este envelope no añade secuencias, confirmaciones, entrega exactamente-una-vez ni deduplicación.
+- Un mensaje válido no implica autenticación, autorización, confianza en el emisor ni cifrado. La aplicación decide la política de seguridad y valida los datos del dominio.
+- La identidad de conexión, el estado de sesión, los mensajes de control de ciclo de vida, los ACK/reintentos y la reconexión quedan fuera del envelope base y se deciden en los puntos de conexiones/estado o en un protocolo de aplicación explícito.
+
+### Criterios de aceptación del punto 122
+
+- Se definen los campos semánticos del envelope y se separan versión de protocolo y versión de mensaje.
+- Se fijan reglas para identificadores estables, tipos/versiones desconocidos, compatibilidad y límites sin decidir prematuramente la codificación binaria.
+- Se distinguen los errores de mensaje de los errores de framing/serialización y no se prometen garantías de entrega que el transporte no proporciona.
+- Se declara expresamente que el ejemplo de Rust es conceptual y que no hay tipos de mensaje implementados todavía.
+
 ## Contratos obligatorios
 
 - **Ownership:** buffers prestados durante la llamada, salvo que una API futura documente explícitamente una transferencia de propiedad. No retener referencias a buffers del llamador.
@@ -78,7 +123,7 @@ Este punto cierra una decisión de diseño, no una implementación de red. Las p
 ## Decisiones aplazadas y orden de implementación
 
 - **121 Transporte (decisión tomada):** stream de bytes bloqueante; lecturas parciales permitidas, EOF definido, escritura completa con errores de progreso parcial, timeout explícito del proveedor y sin reintento automático. No se mezcla stream con datagramas ni se afirma que existan sockets implementados.
-- **122 Mensajes:** decidir envelope/versionado, tipos de mensaje y límites.
+- **122 Mensajes (decisión tomada):** envelope conceptual con versión de protocolo, identificador estable de tipo, versión de mensaje y payload opaco; codificación binaria y framing quedan para 123.
 - **123 Serialización:** elegir formato acotado, con versiones y errores; medirlo antes de introducir dependencias.
 - **124–126 Conexiones/endpoints/estado:** definir ownership, estados y cierre antes de añadir recuperación.
 - **127–131 Prediction/reconciliation/history/resimulation:** documentar primero el modelo temporal, snapshots, autoridad, orden de inputs y límites de memoria; no declarar determinismo de red como garantía de transporte.
@@ -96,3 +141,11 @@ El punto 121 queda definido cuando el contrato de transporte fija semántica de 
 - Contratos iniciales de ownership, framing, límites, errores, tiempo, concurrencia, cierre, seguridad y determinismo definidos.
 - Decisiones no resueltas etiquetadas como propuestas, no como APIs existentes.
 - Ningún transporte, socket, serializador o característica de predicción se considera implementado por este documento.
+
+## Criterios de aceptación del punto 121
+
+El punto 121 queda definido cuando el contrato de transporte fija semántica de stream, lectura parcial/EOF, escritura parcial, bloqueo, timeout, cierre, ownership, límites y recuperación tras error.
+
+## Criterios de aceptación del punto 123 (pendiente)
+
+La serialización debe elegir una codificación binaria/versionada, framing, representación de longitudes, límites numéricos y errores de decodificación. Estos detalles no se consideran decididos por el punto 122.

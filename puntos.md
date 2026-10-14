@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 121
+- Completados: 122
 - En progreso: 8
-- Pendientes: 158
+- Pendientes: 157
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -155,7 +155,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 
 - [x] 120 — Diseñar Network API (`docs/network.md` fija capas, ownership, framing, límites de mensajes, errores, tiempo, concurrencia, cierre, seguridad, determinismo y decisiones aplazadas; identifica propuestas sin presentarlas como API implementada)
 - [x] 121 — Definir transporte (contrato bloqueante de byte stream: lectura parcial/EOF, escritura completa y fallo parcial, bloqueo, timeout explícito, cierre, ownership y límites documentados en `docs/network.md`; sin afirmar sockets implementados)
-- [ ] 122 — Definir mensajes
+- [x] 122 — Definir mensajes (envelope conceptual con versión de protocolo, tipo estable, versión de mensaje y payload opaco; reglas de validación/evolución y límites documentados en `docs/network.md`, sin decidir la codificación binaria ni afirmar implementación)
 - [ ] 123 — Definir serialización
 - [ ] 124 — Crear conexiones
 - [ ] 125 — Crear endpoints
@@ -489,4 +489,10 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 ### Networking — contrato de transporte (punto 121)
 
 - Se fija el primer contrato como byte stream bloqueante, separado del proveedor de sockets: lectura parcial permitida, `0` como EOF, escritura completa con errores parciales explícitos, timeout configurado sin reloj oculto, ownership prestado, límites en framing y ninguna reconexión/reintento automático. No se introduce UDP ni se afirma implementación de sockets.
-- El punto 121 queda documentado; el punto 122 (mensajes) sigue siendo el siguiente. Validación pendiente de CI tras el commit de documentación.
+- El punto 121 queda documentado y validado por CI en el commit `8be9e28` (ejecución 38491633487, todos los trabajos correctos).
+
+
+### Networking — contrato de mensajes (punto 122)
+
+- Se define el envelope lógico de mensaje: versión de protocolo, identificador de tipo estable, versión del mensaje y payload opaco. Se documentan rechazo de versiones/tipos desconocidos por defecto, compatibilidad explícita, límites y errores, separando el contrato semántico del formato binario/framing. El ejemplo Rust es conceptual; no se han implementado tipos, serialización ni sockets.
+- El punto 122 queda documentado; el punto 123 (serialización) es el siguiente.
