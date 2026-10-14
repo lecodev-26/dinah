@@ -1,94 +1,110 @@
 <div align="center">
 
-<img src="assets/dinah-mark.svg" alt="dinah mark" width="72">
+<img src="assets/dinah-mark.svg" alt="dinah logo" width="112">
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/hero.svg"><img src="assets/readme/light/hero.svg" alt="dinah: Rust-first modular runtime and high-performance compute foundation. Pre-alpha, private." width="100%"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/banner.svg"><img src="assets/readme/light/banner.svg" alt="dinah — modular Rust runtime and compute foundation" width="100%"></picture>
 
-<a href="roadmap.md"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/b-roadmap.svg"><img src="assets/readme/light/b-roadmap.svg" alt="Roadmap" width="105"></picture></a>&nbsp;<a href="puntos.md"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/b-checklist.svg"><img src="assets/readme/light/b-checklist.svg" alt="Checklist" width="110"></picture></a>&nbsp;<a href="docs"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/b-docs.svg"><img src="assets/readme/light/b-docs.svg" alt="Documentation" width="151"></picture></a>&nbsp;<a href="artifacts/README.md"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/b-artifacts.svg"><img src="assets/readme/light/b-artifacts.svg" alt="Benchmark artifacts" width="199"></picture></a>&nbsp;<a href="https://github.com/lecodev-26/dinah/actions"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/b-ci.svg"><img src="assets/readme/light/b-ci.svg" alt="CI runs" width="92"></picture></a>
+[![CI](https://github.com/lecodev-26/dinah/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/lecodev-26/dinah/actions/workflows/ci.yml) [![Benchmarks](https://github.com/lecodev-26/dinah/actions/workflows/benchmarks.yml/badge.svg?branch=main)](https://github.com/lecodev-26/dinah/actions/workflows/benchmarks.yml) [![Documentation audit](https://github.com/lecodev-26/dinah/actions/workflows/documentation-audit.yml/badge.svg?branch=main)](https://github.com/lecodev-26/dinah/actions/workflows/documentation-audit.yml) [![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-087f8c.svg)](https://github.com/lecodev-26/dinah/blob/main/LICENSE-MIT)
 
-**dinah** is a Rust-first project exploring a high-performance runtime and a modular foundation for compute, data-oriented processing, simulation, networking and storage.<br>`dinah` is the lowercase project name and visual identity.
+<a href="roadmap.md"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/b-roadmap.svg"><img src="assets/readme/light/b-roadmap.svg" alt="Roadmap" width="105"></picture></a>&nbsp;<a href="puntos.md"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/b-checklist.svg"><img src="assets/readme/light/b-checklist.svg" alt="Master checklist" width="110"></picture></a>&nbsp;<a href="docs"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/b-docs.svg"><img src="assets/readme/light/b-docs.svg" alt="Documentation" width="151"></picture></a>&nbsp;<a href="artifacts/README.md"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/b-artifacts.svg"><img src="assets/readme/light/b-artifacts.svg" alt="Benchmark artifacts" width="199"></picture></a>
+
+**A Rust-first foundation for runtime execution, compute, data-oriented systems and simulation.**<br>dinah is developed incrementally: planned features are not represented as implemented until code, tests, documentation and evidence support the claim.
+
+</div>
+
+> **Version status — updated 2026-10-14:** `dinah` is pre-alpha and remains in closed development. The Core, Compute and ECS foundations are still being refined; Simulation's first bounded models are implemented. Networking has entered its design phase, but no network transport or wire protocol is implemented yet. A passing CI run validates the current checks, not API stability, release readiness or performance guarantees.
+
+<div align="center">
+
+**Repository snapshot:** 120 / 287 checklist points complete · 8 in progress · 159 pending · 0 obsolete<br>
+**Code snapshot:** approximately 6,100 Rust source lines · 201 test functions · 5 benchmark suites · 1 runnable example<br>
+**Current milestone:** Networking API boundaries documented; transport and messages are next.
 
 </div>
 
 <div align="center">
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/h-status.svg"><img src="assets/readme/light/h-status.svg" alt="Status" width="100%"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/h-status.svg"><img src="assets/readme/light/h-status.svg" alt="Current status" width="100%"></picture>
 
 </div>
 
-> **Pre-alpha, foundation stage (2026-10-14).** The roadmap is ambitious by design. Modules are introduced only when their interfaces, tests, benchmarks and use cases justify them, and a planned capability is not considered implemented until code, tests, documentation and evidence exist.
+## ✨ What dinah is
 
-| | |
+dinah is a modular systems-software project written primarily in Rust. It is building reusable foundations for task execution, memory management, compute workloads, entity-component data and deterministic simulation, with networking and other systems planned in staged roadmap phases.
+
+It is **not a game engine, operating system, cryptographic product or finished general-purpose runtime**. The roadmap expresses direction; the master checklist records the actual implementation state. Modules and APIs remain subject to change while the project is pre-alpha.
+
+<div align="center">
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/h-arch.svg"><img src="assets/readme/light/h-arch.svg" alt="How dinah is structured" width="100%"></picture>
+
+</div>
+
+<div align="center">
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/layers.svg"><img src="assets/readme/light/layers.svg" alt="The planned modular architecture and current implementation boundaries" width="100%"></picture>
+
+</div>
+
+The architecture is layered so that components can evolve without circular dependencies or premature coupling. The currently implemented foundations are more mature than the networking, storage, native/hardware and security areas that remain in the roadmap.
+
+<div align="center">
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/h-principles.svg"><img src="assets/readme/light/h-principles.svg" alt="Engineering principles" width="100%"></picture>
+
+</div>
+
+1. **Correctness before optimization.** Establish contracts, tests and failure behaviour before pursuing speed.
+2. **Measure before claiming.** Benchmarks need reproducible inputs, recorded environments and retained CI artifacts.
+3. **Rust-first and memory-safe.** C, C++ or Assembly are considered only when a measured technical need justifies them.
+4. **Deterministic behaviour where promised.** Ordering, time, errors and state transitions must be explicit and tested.
+5. **Small, justified dependency surface.** Dependencies need a concrete reason and a maintainable upgrade path.
+6. **Evidence-driven roadmap.** A design document is not proof that a feature exists; checklist items close only with appropriate implementation and validation evidence.
+
+<div align="center">
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/h-map.svg"><img src="assets/readme/light/h-map.svg" alt="Repository layout" width="100%"></picture>
+
+</div>
+
+| Component | What it contains |
 |---|---|
-| **Checklist** | 120 of 287 points complete, 8 in progress, 159 pending, 0 obsolete |
-| **Phases complete** | 0 Foundation, 2 Runtime, 3 Memory, 6 Simulation |
-| **Almost there** | 1 Core (13/15), 4 Compute (11/14), 5 Data / ECS (12/14) |
-| **Just started** | 7 Networking: API boundaries defined (point 120) |
-| **CI on `main`** | passing on the latest runs: format, tests, Clippy, docs, checklist validation, benchmark matrix and artifact archive |
-| **Code** | about 6,100 lines of Rust in `src/`, 201 test functions, 5 benchmark suites, 1 runnable example |
-| **Visibility** | private repository during closed development |
+| `src/core` | Shared types, IDs, configuration, states, errors and core contracts. |
+| `src/runtime` | Tasks, workers, scheduler/executor, synchronization, cancellation, metrics and tracing. |
+| `src/memory` | Buffers, contiguous storage and structure-of-arrays foundations. |
+| `src/compute` | Sequential and parallel iteration, batches, reductions and pipelines. |
+| `src/ecs` | Generational entities, `World`, component storage and access contracts. |
+| `src/simulation` | Fixed-step clock, deterministic step contract, simulated entities and bounded physics/fluid/cellular/raycast/swarm models. |
+| `docs/` | Module guides, design decisions, research, benchmark notes and engineering policies. |
+| `tests/` · `benches/` · `examples/` | Integration tests, performance suites and runnable examples. |
+| `scripts/` · `.github/workflows/` | Checklist/documentation checks, CI, benchmark matrix and artifact archiving. |
+| `artifacts/` | Retained benchmark outputs and run metadata. |
+
+**Requirements:** Rust stable and Git. The workspace uses Rust edition 2021. Platform-specific performance observations are collected by GitHub Actions; they should not be interpreted as universal hardware comparisons.
 
 <div align="center">
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/stats.svg"><img src="assets/readme/light/stats.svg" alt="42% of the checklist complete, 4 phases complete, 201 test functions, 5 benchmark platforms" width="100%"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/h-modules.svg"><img src="assets/readme/light/h-modules.svg" alt="Current implementation status by module" width="100%"></picture>
 
 </div>
 
-<div align="center">
-
-<picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/h-progress.svg"><img src="assets/readme/light/h-progress.svg" alt="Roadmap progress" width="100%"></picture>
-
-</div>
-
-<div align="center">
-
-<picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/phases.svg"><img src="assets/readme/light/phases.svg" alt="Progress per roadmap phase, from phase 0 Foundation to phase 17 dinah v0.2+" width="100%"></picture>
-
-</div>
-
-The master checklist is [`puntos.md`](puntos.md): 287 numbered points. Point IDs are permanent, so completed, pending or obsolete items are never renumbered. The narrative plan, architecture and phase sequencing live in [`roadmap.md`](roadmap.md).
-
-<div align="center">
-
-<picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/h-arch.svg"><img src="assets/readme/light/h-arch.svg" alt="Architecture" width="100%"></picture>
-
-</div>
-
-<div align="center">
-
-<picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/layers.svg"><img src="assets/readme/light/layers.svg" alt="The twelve architecture layers and their current status" width="100%"></picture>
-
-</div>
-
-The layers are design goals that can evolve independently. Circular dependencies and premature public APIs are avoided, and dinah is, by definition, not a game engine or an operating system.
-
-<div align="center">
-
-<picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/h-modules.svg"><img src="assets/readme/light/h-modules.svg" alt="What exists today" width="100%"></picture>
-
-</div>
-
-| Module | Implemented so far | Guide |
+| Module | Current state | Reference |
 |---|---|---|
-| **Core** | `dinah::core`: validated configuration, non-null IDs, lifecycle states and shared validation contracts. Not declared stable until the planned review and validation finish. | [core.md](docs/core.md) |
-| **Runtime** | Executor, scheduler, queues, synchronization, task outcomes, cancellation, task states, metrics and tracing. | [runtime.md](docs/runtime.md) |
-| **Memory** | `Buffer<T>` and `SoaBuffer<A, B>`, with documented limits and benchmarks. | [memory.md](docs/memory.md) · [memory-model.md](docs/memory-model.md) |
-| **Compute** | `for_each`, `for_each_batch`, `for_each_parallel`, `map`, `try_reduce`, `try_reduce_parallel` and `ComputePipeline`, with execution, ownership and error contracts. | [compute.md](docs/compute.md) |
-| **Data / ECS** | Generational entity identity, sparse-set storage, `World`, queries and access contracts. | [ecs.md](docs/ecs.md) · [ecs-benchmarks.md](docs/ecs-benchmarks.md) |
-| **Simulation** | `SimulationClock` with a fixed non-zero delta, deterministic `Simulation::step`, simulated entities bridged to ECS, and five bounded domain models: ASCII physics, cellular automata, raycasting, fluid and swarm. | [simulation.md](docs/simulation.md) |
-| **Networking** | Design only: [network.md](docs/network.md) fixes layers, ownership, framing, message limits, errors, time, concurrency, shutdown, security and determinism. No transport yet. | [network.md](docs/network.md) |
+| **Core** | Shared types and contracts exist. Core v0.1 is not declared stable; first benchmarks and the final API-stability decision remain open. | [`docs/core.md`](docs/core.md) |
+| **Runtime** | Scheduler, executor, task queues, parallel dispatch, synchronization, cancellation, task outcomes, metrics and tracing are implemented. | [`docs/runtime.md`](docs/runtime.md) |
+| **Memory** | `Buffer<T>` and `SoaBuffer<A, B>` provide the initial buffer/storage abstractions; optimization remains evidence-driven. | [`docs/memory.md`](docs/memory.md) · [`docs/memory-model.md`](docs/memory-model.md) |
+| **Compute** | Sequential/batched/parallel operations, reductions and `ComputePipeline` are implemented. SIMD remains open because results vary by platform and no production kernel currently justifies enabling it. | [`docs/compute.md`](docs/compute.md) · [`docs/simd-research.md`](docs/simd-research.md) |
+| **Data / ECS** | Generational entities, `World`, sparse-set component storage and access-conflict planning exist. Full query and parallel-system execution work remains. | [`docs/ecs.md`](docs/ecs.md) · [`docs/ecs-benchmarks.md`](docs/ecs-benchmarks.md) |
+| **Simulation** | Fixed-step clock, deterministic step contract, ECS bindings, replay tests and five bounded models: ASCII physics, scalar fluid diffusion, cellular automata, 2D raycasting and 2D flocking. These are focused models, not a general-purpose physics or CFD engine. | [`docs/simulation.md`](docs/simulation.md) |
+| **Networking** | Design only: the initial API document defines layers and contracts. No transport, serialization, connection system or prediction implementation is claimed. | [`docs/network.md`](docs/network.md) |
 
 <div align="center">
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/h-bench.svg"><img src="assets/readme/light/h-bench.svg" alt="Benchmarks" width="100%"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/h-bench.svg"><img src="assets/readme/light/h-bench.svg" alt="Benchmarks and measurements" width="100%"></picture>
 
 </div>
 
-<div align="center">
-
-<picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/bench.svg"><img src="assets/readme/light/bench.svg" alt="Simulation step median latency on five platforms" width="100%"></picture>
-
-</div>
+The current benchmark suite records median timings for the simulation clock, simulation step, mutable entity traversal and repeated linear searches. Values below come from a recorded five-platform CI matrix (workflow run [`38484605568`](https://github.com/lecodev-26/dinah/actions/runs/38484605568), commit `83cbcc3`). They are historical measurements of specific runners, not a controlled cross-OS comparison or a performance guarantee.
 
 | Platform | Clock (ns/advance) | Step (ns/step) | Mutable walk (ns/entity) | 16 linear searches (ns/search) |
 |---|---:|---:|---:|---:|
@@ -98,76 +114,56 @@ The layers are design goals that can evolve independently. Circular dependencies
 | macOS x86-64 | 10.488 | 10.305 | 0.823 | 4,990.062 |
 | macOS ARM64 | 2.395 | 6.012 | 0.281 | 1,533.875 |
 
-These are medians of nine samples from the CI benchmark matrix (workflow run 38484605568, commit `83cbcc3`). They are observations of specific machines and builds, not guarantees or controlled comparisons between operating systems, and construction is included in the clock and step cases. Performance claims in this project require recorded environment metadata, repeatable measurements and CI artifacts. Archived runs for 23 commits live under [`artifacts/benchmarks/`](artifacts/README.md).
+These are medians of nine samples; construction is included in the clock and step cases. The lightweight compute kernel also demonstrated that dispatch overhead can make parallel execution slower than sequential execution. Benchmark history and metadata are archived under [`artifacts/benchmarks/`](artifacts/README.md). SIMD and data-oriented layout work remain open until representative workloads justify a change.
 
 <div align="center">
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/h-next.svg"><img src="assets/readme/light/h-next.svg" alt="What is next" width="100%"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/h-next.svg"><img src="assets/readme/light/h-next.svg" alt="Roadmap and next milestones" width="100%"></picture>
 
 </div>
 
-**Phase 7, Networking.** The API boundaries are defined (point 120). Next come the transport (121) and the messages (122), then the rest of the 21 points.
+**Current phase — Phase 7: Networking.** Point 120, the initial API design, is complete. The next milestones are **121 — define transport** and **122 — define messages**, followed by serialization, connections, endpoints and state management. Phase 7 covers points 120–140; implementation is intentionally incremental.
 
-**Eight points are in progress:**
+**Eight points remain in progress:**
 
-| Point | Area | Work |
+| Point | Area | Open work |
 |---|---|---|
 | 033 | Core | First benchmarks |
 | 035 | Core | Stabilize Core v0.1 |
-| 084 | Compute | SIMD where it brings a real benefit |
-| 085 | Compute | Data-oriented structures |
-| 100 | Data / ECS | Parallel systems |
-| 103 | Data / ECS | Memory access optimization |
+| 084 | Compute | SIMD only where a real benefit is demonstrated |
+| 085 | Compute | Data-oriented layout optimization |
+| 100 | Data / ECS | Validated and isolated parallel systems execution |
+| 103 | Data / ECS | Further memory-access optimization and evidence |
 | 220 | Testing | Integration tests |
 | 225 | Testing | Benchmark suite |
 
-Point 086 (performance metrics for Compute) is still pending. After networking come Storage, Native / Hardware, the CLI, Observability and Security, then total integration and the first `dinah` v0.1.
+After Networking, the roadmap proceeds through Storage, Native / Hardware, CLI, Observability and Security, followed by integration and the first `dinah` v0.1. Those are roadmap targets, not completed capabilities. See [`roadmap.md`](roadmap.md) and the [`287-point master checklist`](puntos.md) for exact statuses.
+
+## 🛠 Development loop
 
 <div align="center">
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/h-principles.svg"><img src="assets/readme/light/h-principles.svg" alt="How it is built" width="100%"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/cycle.svg"><img src="assets/readme/light/cycle.svg" alt="Design, implement, validate in CI, measure, document and update the checklist" width="100%"></picture>
 
 </div>
 
-<div align="center">
+The project follows a repeatable engineering loop: define the contract, implement the smallest useful slice, validate in CI, measure where relevant, document the result and update the checklist. GitHub Actions checks formatting, tests, Clippy, public documentation, checklist integrity and the benchmark/artifact workflows. The latest main-branch CI and artifact-archive runs for the README baseline passed on commit `163f8d7`:
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/cycle.svg"><img src="assets/readme/light/cycle.svg" alt="Design, implement, test in CI, measure, document, review, update the checklist" width="100%"></picture>
+- [CI run](https://github.com/lecodev-26/dinah/actions/runs/38487467664)
+- [Artifact archive run](https://github.com/lecodev-26/dinah/actions/runs/38487528558)
 
-</div>
+## 🚀 Quick start
 
-- Rust is the primary implementation language. C, C++ and Assembly are used only where a measured technical need justifies them.
-- Measure before optimizing, and make benchmarks reproducible.
-- Correctness, memory safety, determinism and clear APIs come before speculative optimization.
-- Dependencies must be justified and kept maintainable.
-- The roadmap describes intent. `puntos.md` is the living, auditable implementation checklist.
-- CI runs formatting, compilation, tests, Clippy and documentation validation on GitHub Actions, so no local build is required. Exploratory benchmarks may run locally, but claims need CI artifacts.
+Clone the repository and inspect the workspace:
 
-Benchmark artifacts are archived under `artifacts/benchmarks/<commit-sha>/run-<benchmark-run-id>/` only after both CI and the benchmark matrix succeed. See the [artifact policy](artifacts/README.md) and the [automation and bots policy](docs/automation-policy.md).
+```bash
+git clone https://github.com/lecodev-26/dinah.git
+cd dinah
+cargo metadata --no-deps --format-version 1
+```
 
-<div align="center">
+The library API is pre-alpha and can change between commits. Start with [`docs/compute.md`](docs/compute.md) or [`docs/simulation.md`](docs/simulation.md) for examples of currently implemented APIs. CI is the project's authoritative validation gate; benchmark claims should be checked against the associated run artifacts.
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/h-map.svg"><img src="assets/readme/light/h-map.svg" alt="Repository map" width="100%"></picture>
-
-</div>
-
-| Path | What it is |
-|---|---|
-| [`roadmap.md`](roadmap.md) | Project purpose, architecture, phases and sequencing |
-| [`puntos.md`](puntos.md) | Master checklist and development status |
-| [`src/`](src) | The library: `core`, `runtime`, `memory`, `compute`, `ecs`, `simulation` |
-| [`tests/`](tests) | Contract and integration tests |
-| [`benches/`](benches) | Runtime, memory, compute, ECS and simulation benchmarks |
-| [`examples/`](examples) | `simulation_basics`, a runnable example |
-| [`docs/`](docs) | Design guides, SIMD and data-oriented research, ECS benchmarks, reports |
-| [`scripts/`](scripts) | Checklist validation, documentation audit and benchmark runner |
-| [`artifacts/`](artifacts/README.md) | Archived benchmark results |
-| [`.github/workflows/`](.github/workflows) | CI, benchmarks, artifact archive and documentation audit |
-| [`assets/dinah-mark.svg`](assets/dinah-mark.svg) | The project mark: a minimal lowercase `d` monogram |
-
-<div align="center">
-
-<picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/h-license.svg"><img src="assets/readme/light/h-license.svg" alt="License" width="100%"></picture>
-
-</div>
+## 📜 License
 
 Unless a file states otherwise, `dinah` is dual-licensed under either the MIT License ([`LICENSE-MIT`](LICENSE-MIT)) or the Apache License, Version 2.0 ([`LICENSE-APACHE`](LICENSE-APACHE)), at your option. Contributions intended for inclusion are offered under the same dual-license terms unless explicitly agreed otherwise.
