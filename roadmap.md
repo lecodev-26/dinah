@@ -16,7 +16,7 @@ dinah no se define por acumular funciones: cada módulo debe tener límites clar
 - **CI remota:** compilaciones, pruebas, análisis estático y benchmarks se ejecutan en GitHub Actions. Termux se reserva para edición, Git y control del proyecto.
 - **Checklist auditable:** los IDs de puntos.md son permanentes. No se renumeran ni se reutilizan.
 - **Licencia dual:** el código propio se distribuye bajo MIT o Apache-2.0, a elección del usuario, salvo avisos específicos. Toda dependencia o contribución externa debe conservar sus avisos y cumplir sus propias licencias.
-- **Identidad visual:** usar siempre `dinah` en minúsculas; la marca inicial es un SVG monocromo en `assets/dinah-mark.svg`, sin imponer todavía una paleta compleja ni una guía de marca extensa.
+- **Identidad visual:** usar siempre `dinah` en minúsculas y una identidad naranja coherente en el README y los recursos gráficos. Paleta base: naranja `#e87524`, naranja claro `#ffb15c` y naranja oscuro `#c65312`; conservar variantes legibles para fondos claros y oscuros.
 - **Evolución basada en evidencia:** las versiones posteriores se deciden con datos y necesidades reales, no por ampliar una lista indefinidamente.
 
 ## 3. Qué es y qué no es dinah

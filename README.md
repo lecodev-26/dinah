@@ -4,7 +4,7 @@
 
 <img src="assets/banner.jpg" alt="DINAH: modular Rust runtime, compute and simulation foundation" width="100%">
 
-[![CI](https://github.com/lecodev-26/dinah/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/lecodev-26/dinah/actions/workflows/ci.yml) [![Benchmarks](https://github.com/lecodev-26/dinah/actions/workflows/benchmarks.yml/badge.svg?branch=main)](https://github.com/lecodev-26/dinah/actions/workflows/benchmarks.yml) [![Documentation audit](https://github.com/lecodev-26/dinah/actions/workflows/documentation-audit.yml/badge.svg?branch=main)](https://github.com/lecodev-26/dinah/actions/workflows/documentation-audit.yml) [![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-087f8c.svg)](https://github.com/lecodev-26/dinah/blob/main/LICENSE-MIT)
+[![CI](https://github.com/lecodev-26/dinah/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/lecodev-26/dinah/actions/workflows/ci.yml) [![Benchmarks](https://github.com/lecodev-26/dinah/actions/workflows/benchmarks.yml/badge.svg?branch=main)](https://github.com/lecodev-26/dinah/actions/workflows/benchmarks.yml) [![Documentation audit](https://github.com/lecodev-26/dinah/actions/workflows/documentation-audit.yml/badge.svg?branch=main)](https://github.com/lecodev-26/dinah/actions/workflows/documentation-audit.yml) [![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-e87524.svg)](https://github.com/lecodev-26/dinah/blob/main/LICENSE-MIT)
 
 <a href="roadmap.md"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/dark/b-rel.svg"><img src="assets/light/b-rel.svg" alt="Roadmap" width="104"></picture></a>&nbsp;<a href="puntos.md"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/dark/b-sec.svg"><img src="assets/light/b-sec.svg" alt="Master checklist" width="154"></picture></a>&nbsp;<a href="docs"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/dark/b-docs.svg"><img src="assets/light/b-docs.svg" alt="Documentation" width="151"></picture></a>&nbsp;<a href="artifacts/README.md"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/dark/b-arena.svg"><img src="assets/light/b-arena.svg" alt="Benchmark artifacts" width="171"></picture></a>
 
@@ -17,7 +17,7 @@
 <div align="center">
 
 **Repository snapshot:** 287 master checklist points · 120 complete · 8 in progress · 159 pending
-**Code snapshot:** Rust workspace · 5 benchmark suites · 1 runnable example · multi-platform CI benchmark history
+**Code snapshot:** single Rust crate · 5 benchmark suites (Runtime, Memory, Compute, ECS, Simulation) · 1 runnable example · five-platform benchmark history
 **Current milestone:** Networking API boundaries documented; transport and message contracts are next.
 
 </div>
@@ -82,7 +82,7 @@ The design separates shared contracts from runtime execution, storage and comput
 | `scripts/` · `.github/workflows/` | Checklist/documentation checks, CI, benchmark matrix and artifact archiving. |
 | `artifacts/` | Retained benchmark outputs and run metadata. |
 
-**Requirements:** Rust stable and Git. The workspace uses Rust edition 2021. Platform-specific performance measurements are collected by CI and are not universal hardware comparisons.
+**Requirements:** Rust stable and Git. The crate uses Rust edition 2021. Platform-specific performance measurements are collected by CI and are not universal hardware comparisons.
 
 <div align="center">
 

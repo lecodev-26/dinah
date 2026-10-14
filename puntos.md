@@ -479,3 +479,8 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 
 - Tras completar y validar Simulation 106–110, se inicia Fase 7 con el diseño de API. `docs/network.md` separa mensaje lógico, serialización, transporte, conexión e integración; fija contratos de seguridad y límites, y documenta decisiones aplazadas. No se implementaron sockets ni dependencias en este punto.
 - La fase sigue abierta: los puntos 121–140 no se consideran iniciados ni completados por el documento de diseño.
+
+
+### Identidad visual del README — 2026-10-14
+
+- Actualizada la identidad visual de DINAH a una paleta naranja coherente (`#e87524`, `#ffb15c`, `#c65312`) en las marcas, botones, cabeceras, diagramas, gráficos y variantes light/dark del README. Se recolorearon los recursos raster de marca existentes y se corrigió el README para describir el estado real del repositorio: un único crate Rust, cinco suites de benchmarks y un ejemplo ejecutable. No se modificó código de producto ni se alteró el estado de los 287 puntos.
