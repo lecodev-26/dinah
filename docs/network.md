@@ -1,6 +1,6 @@
 # dinah Networking — diseño de API y límites de v0.1
 
-Estado: diseño incremental (puntos 120–123). Este documento fija las fronteras de Networking y los contratos de transporte, mensaje y wire serialization. No declara que haya sockets, serialización ni conexiones implementados.
+Estado: implementación incremental (puntos 120–124). Los contratos de transporte, mensaje y wire format están documentados; el punto 124 añade una conexión TCP bloqueante. El encoder/decoder de wire, los endpoints y la gestión de estado no están implementados todavía.
 
 ## Objetivo
 
@@ -107,6 +107,27 @@ Estos nombres ilustran el contrato conceptual; no existen aún como tipos públi
 - Se distinguen los errores de mensaje de los errores de framing/serialización y no se prometen garantías de entrega que el transporte no proporciona.
 - Se declara expresamente que el ejemplo de Rust es conceptual y que no hay tipos de mensaje implementados todavía.
 
+## Conexiones TCP — punto 124
+
+La primera implementación concreta es `dinah::network::Connection`, un wrapper propietario de `std::net::TcpStream`. Solo proporciona operaciones de byte stream; no convierte escrituras en mensajes ni incorpora todavía el framing v1 del punto 123.
+
+- `Connection::connect(SocketAddr)` conecta usando el comportamiento de timeout predeterminado del sistema operativo.
+- `Connection::connect_timeout(SocketAddr, Duration)` permite solicitar un timeout explícito de conexión y rechaza una duración cero como entrada inválida.
+- `Connection::from_tcp_stream(TcpStream)` toma ownership de un stream ya establecido, como uno aceptado por un listener.
+- `read(&mut [u8])` conserva la semántica de lectura parcial y EOF; los errores, incluidos los timeouts configurados, se devuelven como `ConnectionError::Io`.
+- `write_all(&[u8])` solo devuelve éxito si todos los bytes fueron escritos. Ante error parcial, el estado del stream puede ser incierto; no hay reintento automático de la trama completa.
+- `set_read_timeout` y `set_write_timeout` configuran explícitamente los timeouts de operaciones. `None` desactiva el timeout, sujeto al comportamiento de la plataforma.
+- `local_addr`, `peer_addr` y `shutdown` exponen las direcciones del socket y el cierre explícito. No hay reconexión automática, tareas de fondo, autenticación, cifrado ni sincronización interna.
+
+Los métodos requieren acceso mutable para leer/escribir. El wrapper no implementa `Clone` ni duplica sockets implícitamente. Las pruebas usan loopback y un listener local, sin servicios externos ni aserciones de latencia exacta. Esta API TCP inicial no implica soporte UDP ni estabilidad de API.
+
+### Criterios de aceptación del punto 124
+
+- Wrapper público propietario de `TcpStream` con conexión normal y conexión con timeout explícito.
+- Operaciones de bytes, EOF, errores, direcciones y cierre explícitas y documentadas.
+- Pruebas loopback para ida/vuelta de bytes, EOF, stream preexistente y rechazo de timeout cero.
+- Sin afirmar framing, serialización, autenticación, reconexión o endpoints como capacidades ya implementadas.
+
 ## Contratos obligatorios
 
 - **Ownership:** buffers prestados durante la llamada, salvo que una API futura documente explícitamente una transferencia de propiedad. No retener referencias a buffers del llamador.
@@ -125,7 +146,7 @@ Estos nombres ilustran el contrato conceptual; no existen aún como tipos públi
 - **121 Transporte (decisión tomada):** stream de bytes bloqueante; lecturas parciales permitidas, EOF definido, escritura completa con errores de progreso parcial, timeout explícito del proveedor y sin reintento automático. No se mezcla stream con datagramas ni se afirma que existan sockets implementados.
 - **122 Mensajes (decisión tomada):** envelope conceptual con versión de protocolo, identificador estable de tipo, versión de mensaje y payload opaco; codificación binaria y framing quedan para 123.
 - **123 Serialización (decisión tomada):** framing por longitud prefijada de 32 bits big-endian; cabecera de 6 bytes con versión de protocolo, tipo y versión de mensaje como enteros de 16 bits big-endian; frame máximo de 1 MiB incluido el encabezado; rechazos explícitos de longitud inválida, truncamiento y versiones/tipos inválidos. Formato propio mínimo, sin dependencia externa ni serialización de structs Rust.
-- **124–126 Conexiones/endpoints/estado:** definir ownership, estados y cierre antes de añadir recuperación.
+- **124 Conexiones (implementado inicialmente):** `dinah::network::Connection` envuelve `TcpStream` con lectura/escritura bloqueante, timeout explícito, direcciones y shutdown; sin framing integrado ni reconexión automática. **125 Endpoints y 126 estado** siguen pendientes.
 - **127–131 Prediction/reconciliation/history/resimulation:** documentar primero el modelo temporal, snapshots, autoridad, orden de inputs y límites de memoria; no declarar determinismo de red como garantía de transporte.
 - **132–134 Pérdida/latencia/desconexión:** construir un simulador controlado y tests deterministas antes de implementar políticas de producción.
 - **135–136 Integración Runtime/Simulation:** solo mediante adaptadores explícitos, sin acoplamiento circular ni efectos secundarios ocultos.
