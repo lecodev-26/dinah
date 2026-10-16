@@ -1,6 +1,6 @@
 # dinah Networking — diseño de API y límites de v0.1
 
-Estado: diseño incremental (puntos 120–122). Este documento fija las fronteras de Networking y los contratos de transporte y mensaje. No declara que haya sockets, serialización ni conexiones implementados.
+Estado: diseño incremental (puntos 120–123). Este documento fija las fronteras de Networking y los contratos de transporte, mensaje y wire serialization. No declara que haya sockets, serialización ni conexiones implementados.
 
 ## Objetivo
 
@@ -86,7 +86,7 @@ struct MessageEnvelope<'a> {
 }
 ```
 
-Estos nombres ilustran el contrato conceptual; no existen aún como tipos públicos de Rust. La representación y el orden exactos de los campos, el endianness, la codificación de enteros y el framing pertenecen al punto 123.
+Estos nombres ilustran el contrato conceptual; no existen aún como tipos públicos de Rust. La representación y el orden exactos de los campos, el endianness, la codificación de enteros y el framing se fijan en el punto 123.
 
 ### Reglas de validación y evolución
 
@@ -124,7 +124,7 @@ Estos nombres ilustran el contrato conceptual; no existen aún como tipos públi
 
 - **121 Transporte (decisión tomada):** stream de bytes bloqueante; lecturas parciales permitidas, EOF definido, escritura completa con errores de progreso parcial, timeout explícito del proveedor y sin reintento automático. No se mezcla stream con datagramas ni se afirma que existan sockets implementados.
 - **122 Mensajes (decisión tomada):** envelope conceptual con versión de protocolo, identificador estable de tipo, versión de mensaje y payload opaco; codificación binaria y framing quedan para 123.
-- **123 Serialización:** elegir formato acotado, con versiones y errores; medirlo antes de introducir dependencias.
+- **123 Serialización (decisión tomada):** framing por longitud prefijada de 32 bits big-endian; cabecera de 6 bytes con versión de protocolo, tipo y versión de mensaje como enteros de 16 bits big-endian; frame máximo de 1 MiB incluido el encabezado; rechazos explícitos de longitud inválida, truncamiento y versiones/tipos inválidos. Formato propio mínimo, sin dependencia externa ni serialización de structs Rust.
 - **124–126 Conexiones/endpoints/estado:** definir ownership, estados y cierre antes de añadir recuperación.
 - **127–131 Prediction/reconciliation/history/resimulation:** documentar primero el modelo temporal, snapshots, autoridad, orden de inputs y límites de memoria; no declarar determinismo de red como garantía de transporte.
 - **132–134 Pérdida/latencia/desconexión:** construir un simulador controlado y tests deterministas antes de implementar políticas de producción.
@@ -146,6 +146,49 @@ El punto 121 queda definido cuando el contrato de transporte fija semántica de 
 
 El punto 121 queda definido cuando el contrato de transporte fija semántica de stream, lectura parcial/EOF, escritura parcial, bloqueo, timeout, cierre, ownership, límites y recuperación tras error.
 
-## Criterios de aceptación del punto 123 (pendiente)
+## Serialización y wire format — punto 123
 
-La serialización debe elegir una codificación binaria/versionada, framing, representación de longitudes, límites numéricos y errores de decodificación. Estos detalles no se consideran decididos por el punto 122.
+Este contrato fija una codificación de wire pequeña y explícita para el envelope definido en el punto 122. Es una decisión de diseño; no hay todavía encoder/decoder ni API pública implementados.
+
+### Formato binario v1
+
+Todos los enteros se codifican en **big-endian**. No se transmiten structs Rust en memoria, padding, discriminantes implícitos, `usize`, ni representaciones dependientes de la plataforma.
+
+Cada frame en el byte stream tiene esta forma:
+
+| Campo | Tamaño | Significado |
+|---|---:|---|
+| `frame_length` | 4 bytes | Longitud big-endian de todo lo que sigue, sin incluir este prefijo |
+| `protocol_version` | 2 bytes | Versión del protocolo; `1` es la versión inicial definida por este formato |
+| `message_type` | 2 bytes | Identificador estable de tipo; `0` es inválido/reservado |
+| `message_version` | 2 bytes | Versión del esquema del mensaje; `0` es inválido/reservado |
+| `payload` | 0 o más bytes | Bytes opacos del mensaje, definidos por el tipo y la versión |
+
+`frame_length` cuenta los seis bytes de cabecera y el payload, pero no sus propios cuatro bytes. El mínimo válido es 6 bytes. El máximo de frame es **1 MiB (1.048.576 bytes)**, incluyendo la cabecera pero excluyendo el prefijo de longitud; por tanto, el payload máximo es 1.048.570 bytes. El tamaño total máximo en el stream es 1.048.580 bytes contando el prefijo. Estos límites son constantes del formato v1, no datos confiables enviados por el peer.
+
+### Decodificación y framing
+
+- El decoder lee exactamente los cuatro bytes del prefijo, aceptando lecturas parciales del stream mediante acumulación explícita.
+- Valida `frame_length` contra el mínimo y máximo antes de reservar o acumular el cuerpo. Una longitud fuera de rango se rechaza; no se trunca, satura ni intenta una asignación basada en ella.
+- Después lee exactamente el cuerpo declarado. EOF antes de completar prefijo o cuerpo se informa como frame truncado; no se entrega un mensaje parcial.
+- El decoder valida la versión de protocolo, el tipo y la versión de mensaje antes de despachar el payload. La versión de protocolo no admitida, el tipo cero/desconocido y la versión de mensaje cero/no admitida se rechazan mediante errores diferenciados.
+- Un frame válido consume exactamente el prefijo y el cuerpo declarados. Los bytes siguientes pertenecen al próximo frame; no se acepta que una longitud incluya bytes de un frame posterior.
+- El encoder calcula la longitud con comprobación de overflow, rechaza mensajes que excedan el máximo y emite el prefijo y la cabecera en el orden definido. No puede depender del endianess nativo.
+- El payload permanece opaco en la capa de wire. La decodificación de campos propios de cada mensaje se hará con reglas específicas y límites propios; no se habilita deserialización de tipos arbitrarios ni se interpreta memoria Rust directamente.
+- No se define checksum, compresión, cifrado, autenticación, ACK, secuencias ni recuperación tras pérdida. Esas funciones requieren contratos separados y no deben inferirse de este formato.
+
+### Errores mínimos de serialización
+
+La futura API debe distinguir al menos: longitud de frame demasiado pequeña, longitud de frame excedida, overflow al calcular longitud, prefijo/cuerpo truncado, versión de protocolo no admitida, tipo inválido o desconocido y versión de mensaje inválida o no admitida. Los fallos de transporte subyacentes se conservan como fallos de transporte, no se disfrazan de errores de payload.
+
+### Compatibilidad y evolución
+
+El layout descrito es el wire format v1. Cambiar tamaño, orden, endianness o semántica de los campos de cabecera es un cambio incompatible y requiere una nueva versión de protocolo o una decisión explícita de migración. Los nuevos tipos usan identificadores no reutilizados; cambios incompatibles en un esquema de payload incrementan su versión de mensaje o reciben un nuevo identificador según la política del protocolo. No se permite adivinar versiones ni ignorar campos de cabecera desconocidos.
+
+### Criterios de aceptación del punto 123
+
+- Formato binario, orden de bytes, framing y significado de longitud definidos sin ambigüedad.
+- Límites mínimo/máximo validados antes de asignaciones basadas en datos remotos.
+- Lecturas parciales, EOF/truncamiento, overflow y errores de versión/tipo tienen comportamiento explícito.
+- Se prohíbe depender de layout Rust nativo o añadir dependencias sin necesidad justificada.
+- Se declara que este punto solo decide el contrato: la implementación del encoder/decoder y las pruebas de código se harán en puntos posteriores de implementación/testing.

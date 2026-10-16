@@ -12,13 +12,13 @@
 
 </div>
 
-> **Version status (updated 2026-10-14):** DINAH is pre-alpha and remains in active development. Core, Runtime, Memory, Compute and ECS foundations exist; Simulation's first five bounded models are implemented. Phase 7 (Networking) has completed points 120–122: API boundaries, the blocking byte-stream transport contract and the logical message envelope are documented. Binary serialization and connection handling are not implemented yet. A green CI gate validates the checks that ran; it is not a claim of API stability, release readiness or performance guarantees.
+> **Version status (updated 2026-10-14):** DINAH is pre-alpha and remains in active development. Core, Runtime, Memory, Compute and ECS foundations exist; Simulation's first five bounded models are implemented. Phase 7 (Networking) has completed points 120–123: API boundaries, the blocking byte-stream transport contract, logical message envelope and versioned binary wire format are documented. The encoder/decoder and connection handling are not implemented yet. A green CI gate validates the checks that ran; it is not a claim of API stability, release readiness or performance guarantees.
 
 <div align="center">
 
-**Repository snapshot:** 287 master checklist points · 122 complete · 8 in progress · 157 pending
+**Repository snapshot:** 287 master checklist points · 123 complete · 8 in progress · 156 pending
 **Code snapshot:** single Rust crate · 5 benchmark suites (Runtime, Memory, Compute, ECS, Simulation) · 1 runnable example · five-platform benchmark history
-**Current milestone:** Networking API boundaries, byte-stream transport and logical message contract documented; serialization is next.
+**Current milestone:** Networking API boundaries, byte-stream transport, logical message contract and v1 wire format documented; connection design is next.
 
 </div>
 
@@ -146,7 +146,7 @@ These are medians of nine samples; construction is included in the clock and ste
 
 </div>
 
-**Current phase — Phase 7: Networking.** Points 120–122 are complete: API boundaries, blocking byte-stream transport contract and logical message envelope. The next milestone is **123 — define serialization**, followed by connections, endpoints and state management. Phase 7 spans points 120–140 and will be implemented incrementally.
+**Current phase — Phase 7: Networking.** Points 120–123 are complete: API boundaries, blocking byte-stream transport contract, logical message envelope and versioned binary wire format. The next milestone is **124 — create connections**, followed by endpoints and state management. Phase 7 spans points 120–140 and will be implemented incrementally.
 
 **Eight points remain in progress:**
 

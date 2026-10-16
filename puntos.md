@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 122
+- Completados: 123
 - En progreso: 8
-- Pendientes: 157
+- Pendientes: 156
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -155,8 +155,8 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 
 - [x] 120 — Diseñar Network API (`docs/network.md` fija capas, ownership, framing, límites de mensajes, errores, tiempo, concurrencia, cierre, seguridad, determinismo y decisiones aplazadas; identifica propuestas sin presentarlas como API implementada)
 - [x] 121 — Definir transporte (contrato bloqueante de byte stream: lectura parcial/EOF, escritura completa y fallo parcial, bloqueo, timeout explícito, cierre, ownership y límites documentados en `docs/network.md`; sin afirmar sockets implementados)
-- [x] 122 — Definir mensajes (envelope conceptual con versión de protocolo, tipo estable, versión de mensaje y payload opaco; reglas de validación/evolución y límites documentados en `docs/network.md`, sin decidir la codificación binaria ni afirmar implementación)
-- [ ] 123 — Definir serialización
+- [x] 122 — Definir mensajes (envelope conceptual con versión de protocolo, tipo estable, versión de mensaje y payload opaco; reglas de validación/evolución y límites documentados en `docs/network.md`; la codificación binaria se concreta en el punto 123, sin afirmar implementación)
+- [x] 123 — Definir serialización (wire format v1 documentado: prefijo de longitud u32 big-endian, cabecera de 6 bytes, frame máximo de 1 MiB, límites/errores y evolución versionada; solo diseño, sin afirmar encoder/decoder implementados)
 - [ ] 124 — Crear conexiones
 - [ ] 125 — Crear endpoints
 - [ ] 126 — Crear gestión de estado
