@@ -1,5 +1,5 @@
 //! Public contract tests for blocking TCP connections.
-use dinah::network::{Connection, ConnectionError};
+use dinah::network::{Connection, ConnectionError, Endpoint};
 use std::io::{Read, Write};
 use std::net::{Shutdown, TcpListener, TcpStream};
 use std::thread;
@@ -66,4 +66,46 @@ fn existing_tcp_stream_can_be_wrapped_and_closed_explicitly() {
         .shutdown(Shutdown::Write)
         .expect("explicit write shutdown");
     server.join().expect("server thread completes");
+}
+
+#[test]
+fn endpoint_binds_accepts_and_reports_peer_address() {
+    let bind_address = "127.0.0.1:0".parse().expect("valid bind address");
+    let endpoint = Endpoint::bind(bind_address).expect("bind endpoint");
+    let endpoint_address = endpoint.local_addr().expect("endpoint local address");
+    assert_ne!(endpoint_address.port(), 0);
+
+    let client = thread::spawn(move || {
+        let mut connection = Connection::connect_timeout(endpoint_address, Duration::from_secs(2))
+            .expect("connect to endpoint");
+        connection.write_all(b"hi").expect("write greeting");
+    });
+
+    let (mut accepted, peer_address) = endpoint.accept().expect("accept incoming connection");
+    assert_eq!(
+        accepted.peer_addr().expect("accepted peer address"),
+        peer_address
+    );
+    let mut greeting = [0_u8; 2];
+    let mut read = 0;
+    while read < greeting.len() {
+        let count = accepted.read(&mut greeting[read..]).expect("read greeting");
+        assert_ne!(count, 0, "client closed before full greeting");
+        read += count;
+    }
+    assert_eq!(&greeting, b"hi");
+    client.join().expect("client thread completes");
+}
+
+#[test]
+fn endpoint_nonblocking_mode_is_explicit() {
+    let endpoint =
+        Endpoint::bind("127.0.0.1:0".parse().expect("valid bind address")).expect("bind endpoint");
+    endpoint
+        .set_nonblocking(true)
+        .expect("enable nonblocking mode");
+    let result = endpoint.accept();
+    assert!(
+        matches!(result, Err(ConnectionError::Io(ref error)) if error.kind() == std::io::ErrorKind::WouldBlock)
+    );
 }

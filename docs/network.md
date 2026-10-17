@@ -1,6 +1,6 @@
 # dinah Networking — diseño de API y límites de v0.1
 
-Estado: implementación incremental (puntos 120–124). Los contratos de transporte, mensaje y wire format están documentados; el punto 124 añade una conexión TCP bloqueante. El encoder/decoder de wire, los endpoints y la gestión de estado no están implementados todavía.
+Estado: implementación incremental (puntos 120–125). Los contratos de transporte, mensaje y wire format están documentados; existen una conexión TCP bloqueante y un endpoint TCP de escucha/aceptación. El encoder/decoder de wire y la gestión de estado no están implementados todavía.
 
 ## Objetivo
 
@@ -107,6 +107,23 @@ Estos nombres ilustran el contrato conceptual; no existen aún como tipos públi
 - Se distinguen los errores de mensaje de los errores de framing/serialización y no se prometen garantías de entrega que el transporte no proporciona.
 - Se declara expresamente que el ejemplo de Rust es conceptual y que no hay tipos de mensaje implementados todavía.
 
+## Endpoint TCP — punto 125
+
+`dinah::network::Endpoint` envuelve un `std::net::TcpListener` y permite crear un socket de escucha, consultar la dirección local, configurar explícitamente el modo no bloqueante y aceptar conexiones entrantes como `Connection`. No inicia tareas en segundo plano ni mantiene un registro de las conexiones aceptadas.
+
+- `Endpoint::bind(SocketAddr)` enlaza la dirección solicitada; el puerto `0` permite solicitar un puerto disponible al sistema operativo.
+- `local_addr()` informa la dirección local efectiva, incluido el puerto asignado.
+- `accept()` devuelve una `Connection` propietaria del `TcpStream` aceptado y la dirección del peer. Por defecto bloquea hasta una conexión o error del sistema operativo.
+- `set_nonblocking(true)` hace explícito el modo no bloqueante; `accept()` puede entonces devolver `WouldBlock` si no hay conexiones pendientes. No se añade polling ni scheduler.
+- El endpoint no añade framing, serialización, autenticación, cifrado, reconexión ni gestión de estado.
+
+### Criterios de aceptación del punto 125
+
+- API pública para bind, dirección local, aceptación y modo no bloqueante explícito.
+- Las conexiones aceptadas reutilizan el wrapper `Connection` ya implementado.
+- Pruebas loopback cubren bind/accept/intercambio de bytes y el comportamiento `WouldBlock` explícito.
+- No se crean tareas de fondo ni se afirma que exista gestión de estado de conexión.
+
 ## Conexiones TCP — punto 124
 
 La primera implementación concreta es `dinah::network::Connection`, un wrapper propietario de `std::net::TcpStream`. Solo proporciona operaciones de byte stream; no convierte escrituras en mensajes ni incorpora todavía el framing v1 del punto 123.
@@ -146,7 +163,7 @@ Los métodos requieren acceso mutable para leer/escribir. El wrapper no implemen
 - **121 Transporte (decisión tomada):** stream de bytes bloqueante; lecturas parciales permitidas, EOF definido, escritura completa con errores de progreso parcial, timeout explícito del proveedor y sin reintento automático. No se mezcla stream con datagramas ni se afirma que existan sockets implementados.
 - **122 Mensajes (decisión tomada):** envelope conceptual con versión de protocolo, identificador estable de tipo, versión de mensaje y payload opaco; codificación binaria y framing quedan para 123.
 - **123 Serialización (decisión tomada):** framing por longitud prefijada de 32 bits big-endian; cabecera de 6 bytes con versión de protocolo, tipo y versión de mensaje como enteros de 16 bits big-endian; frame máximo de 1 MiB incluido el encabezado; rechazos explícitos de longitud inválida, truncamiento y versiones/tipos inválidos. Formato propio mínimo, sin dependencia externa ni serialización de structs Rust.
-- **124 Conexiones (implementado inicialmente):** `dinah::network::Connection` envuelve `TcpStream` con lectura/escritura bloqueante, timeout explícito, direcciones y shutdown; sin framing integrado ni reconexión automática. **125 Endpoints y 126 estado** siguen pendientes.
+- **124 Conexiones (implementado inicialmente):** `dinah::network::Connection` envuelve `TcpStream` con lectura/escritura bloqueante, timeout explícito, direcciones y shutdown; sin framing integrado ni reconexión automática. **125 Endpoints (implementado inicialmente):** `dinah::network::Endpoint` envuelve `TcpListener` con bind, dirección local, accept y modo no bloqueante explícito. **126 Gestión de estado** sigue pendiente.
 - **127–131 Prediction/reconciliation/history/resimulation:** documentar primero el modelo temporal, snapshots, autoridad, orden de inputs y límites de memoria; no declarar determinismo de red como garantía de transporte.
 - **132–134 Pérdida/latencia/desconexión:** construir un simulador controlado y tests deterministas antes de implementar políticas de producción.
 - **135–136 Integración Runtime/Simulation:** solo mediante adaptadores explícitos, sin acoplamiento circular ni efectos secundarios ocultos.

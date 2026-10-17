@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 124
+- Completados: 125
 - En progreso: 8
-- Pendientes: 155
+- Pendientes: 154
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -158,7 +158,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 122 — Definir mensajes (envelope conceptual con versión de protocolo, tipo estable, versión de mensaje y payload opaco; reglas de validación/evolución y límites documentados en `docs/network.md`; la codificación binaria se concreta en el punto 123, sin afirmar implementación)
 - [x] 123 — Definir serialización (wire format v1 documentado: prefijo de longitud u32 big-endian, cabecera de 6 bytes, frame máximo de 1 MiB, límites/errores y evolución versionada; solo diseño, sin afirmar encoder/decoder implementados)
 - [x] 124 — Crear conexiones (`dinah::network::Connection` implementa TCP bloqueante sobre `TcpStream`, conexión con timeout, lectura/escritura, direcciones y shutdown; pruebas loopback en `tests/network_connection.rs`; sin framing integrado ni reconexión automática)
-- [ ] 125 — Crear endpoints
+- [x] 125 — Crear endpoints (`dinah::network::Endpoint` implementa bind TCP, consulta de dirección local, accept que devuelve `Connection` y modo no bloqueante explícito; pruebas loopback para aceptación/intercambio y `WouldBlock`; sin gestión de estado ni tareas de fondo)
 - [ ] 126 — Crear gestión de estado
 - [ ] 127 — Investigar client-side prediction
 - [ ] 128 — Implementar prediction

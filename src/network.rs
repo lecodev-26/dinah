@@ -6,7 +6,7 @@
 
 use core::fmt;
 use std::io::{self, Read, Write};
-use std::net::{Shutdown, SocketAddr, TcpStream};
+use std::net::{Shutdown, SocketAddr, TcpListener, TcpStream};
 use std::time::Duration;
 
 /// Errors returned by [`Connection`] operations.
@@ -36,6 +36,53 @@ impl std::error::Error for ConnectionError {
 impl From<io::Error> for ConnectionError {
     fn from(error: io::Error) -> Self {
         Self::Io(error)
+    }
+}
+
+/// A blocking TCP listening endpoint that accepts incoming connections.
+///
+/// Binding an endpoint does not create background tasks or manage accepted
+/// connection state. `accept` blocks until a peer connects or the operating
+/// system returns an error. The endpoint does not implement message framing,
+/// authentication, encryption, or connection-state tracking.
+#[derive(Debug)]
+pub struct Endpoint {
+    listener: TcpListener,
+}
+
+impl Endpoint {
+    /// Binds a TCP listening endpoint to the requested local socket address.
+    ///
+    /// Use port `0` to ask the operating system to choose an available port,
+    /// then inspect it with [`Self::local_addr`].
+    pub fn bind(address: SocketAddr) -> Result<Self, ConnectionError> {
+        Ok(Self {
+            listener: TcpListener::bind(address)?,
+        })
+    }
+
+    /// Returns the local address assigned to this listening endpoint.
+    pub fn local_addr(&self) -> Result<SocketAddr, ConnectionError> {
+        Ok(self.listener.local_addr()?)
+    }
+
+    /// Configures whether `accept` is non-blocking.
+    ///
+    /// The default is blocking. In non-blocking mode, `accept` may return an
+    /// I/O error with kind `WouldBlock` when no connection is waiting.
+    pub fn set_nonblocking(&self, nonblocking: bool) -> Result<(), ConnectionError> {
+        self.listener.set_nonblocking(nonblocking)?;
+        Ok(())
+    }
+
+    /// Accepts one incoming connection and returns its peer address.
+    ///
+    /// In the default blocking mode this waits until a peer connects or an
+    /// operating-system error occurs. The returned stream is wrapped in the
+    /// same byte-stream [`Connection`] API used by outbound connections.
+    pub fn accept(&self) -> Result<(Connection, SocketAddr), ConnectionError> {
+        let (stream, peer_address) = self.listener.accept()?;
+        Ok((Connection::from_tcp_stream(stream), peer_address))
     }
 }
 
