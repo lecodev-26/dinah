@@ -39,7 +39,7 @@ Run an example from the repository root with `cargo run --example NAME`. CI comp
 | Example | Command | Demonstrates |
 |---|---|---|
 | Compute | `cargo run --example compute_basics` | Basic compute operations. |
-| Memory | `cargo run --example memory_basics` | Buffer and SoA basics. |
+| Memory | `cargo run --example memory_basics` | Bounded `Buffer` capacity, rejected insertion and reuse after `clear`. |
 | Runtime | `cargo run --example runtime_basics` | Task execution and scheduling. |
 | ECS | `cargo run --example ecs_basics` | Entities, World and components. |
 | Simulation | `cargo run --example simulation_basics` | Fixed-step simulation. |
