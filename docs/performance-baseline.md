@@ -1,6 +1,6 @@
 # DINAH performance baseline and benchmark-based profiling
 
-The benchmark workflow runs seven release-mode suites: Runtime, Memory, Compute, ECS, Simulation, Network, and Storage. Each executable reports named workload cases, sample counts, the observed minimum/median/maximum sample, and normalized throughput or latency where applicable. The range is descriptive only: it is not a confidence interval, and sample counts remain modest. The runner now preserves those case lines in `baseline.json` alongside the commit, timestamp, OS, architecture, Rust toolchain, and suite wall time. To improve the scheduler comparison, the Runtime suite is executed in three independent benchmark processes by default (`DINAH_RUNTIME_BENCH_REPETITIONS`, bounded to 1–5); each run has a separate raw output file, while the original `runtime-benchmark-results.txt` and top-level `cases` field remain compatible and represent run 1. `baseline.json` stores all runs under each suite’s `repetitions` array. `baseline-summary.txt` gives a short index of suite durations, case counts, and repetition counts. CI uploads these files with the raw per-suite output.
+The benchmark workflow runs seven release-mode suites: Runtime, Memory, Compute, ECS, Simulation, Network, and Storage. Each executable reports named workload cases, sample counts, the observed minimum/median/maximum sample, and normalized throughput or latency where applicable. The range is descriptive only: it is not a confidence interval, and sample counts remain modest. The runner now preserves those case lines in `baseline.json` alongside the commit, timestamp, OS, architecture, Rust toolchain, and suite wall time. To improve the scheduler comparison, the Runtime suite is executed in three independent benchmark processes by default (`DINAH_RUNTIME_BENCH_REPETITIONS`, bounded to 1–5); each run has a separate raw output file, while the original `runtime-benchmark-results.txt` and top-level `cases` field remain compatible and represent run 1. `baseline.json` stores all runs under each suite’s `repetitions` array and provides `runtime_repeated_case_summary`, which calculates the median of the process-level medians, the observed range across processes, and workload-specific ratios against the benchmark-only persistent-pool prototype. `baseline-summary.txt` includes the same repeated-case summary alongside suite durations and case counts. CI uploads these files with the raw per-suite output.
 
 ## How to interpret the baseline
 
@@ -37,3 +37,20 @@ The benchmark also confirms that per-call worker startup and dispatch remain muc
 ## Scheduler channel change (commit `74ad2f0`)
 
 The five-runner artifacts for `74ad2f0` were compared with the earlier `2aeee49` baseline for the same named scheduler workloads. Those historical commits each have a single workflow run; the new independent-process repetition is intended to strengthen future comparisons and does not retroactively add repetitions to those historical measurements. The per-worker channel implementation is mixed rather than a demonstrated general optimization: on Linux x86-64, the 256-task no-op cases moved from 2,490,303 ns to 2,572,036 ns (2 workers) and 1,408,662 ns to 2,494,662 ns (4 workers); Linux ARM64 improved the 2-worker case but regressed the 4-worker case; macOS ARM64 improved both no-op cases; macOS x86-64 and Windows x86-64 regressed substantially in these single workflow samples. CPU-heavy cases also varied by runner. Because this comparison changes code and uses one workflow run per commit, it is not sufficient to claim a reliable speedup or regression in every workload. Keep the change under review, repeat comparable runs, and do not infer allocation counts, lock contention, or cache behavior from wall-clock measurements alone.
+
+
+## Repeated Runtime results (commit `2d7e8b4`)
+
+The five CI artifacts for `2d7e8b4` contain three independent Runtime processes each. The figures below are the median of the three executable-reported process medians for 256 no-op tasks; they are runner-local observations, not a cross-platform ranking.
+
+| Runner | Scheduler, 2 workers | Pool prototype, 2 workers | Ratio | Scheduler, 4 workers | Pool prototype, 4 workers | Ratio |
+|---|---:|---:|---:|---:|---:|---:|
+| Linux x86-64 | 3,319,751 ns | 70,131 ns | 47.3× | 2,132,848 ns | 72,826 ns | 29.3× |
+| Linux ARM64 | 1,881,861 ns | 124,072 ns | 15.2× | 1,394,053 ns | 133,087 ns | 10.5× |
+| Windows x86-64 | 1,808,700 ns | 65,200 ns | 27.7× | 4,022,800 ns | 63,000 ns | 63.9× |
+| macOS x86-64 | 10,704,208 ns | 150,065 ns | 71.3× | 7,439,933 ns | 213,277 ns | 34.9× |
+| macOS ARM64 | 1,696,958 ns | 35,417 ns | 47.9× | 1,339,708 ns | 107,083 ns | 12.5× |
+
+The repeated observations reinforce one narrow conclusion: creating and joining scoped workers for every call is expensive relative to this already-running comparison pool for a no-op workload. They do **not** prove that a persistent pool can be adopted safely or that it will improve a real application. The prototype has a different lifecycle and synchronization design; the scheduler also has result/error semantics and per-call worker startup that the prototype comparison does not model equivalently. CPU-heavy cases have smaller and runner-dependent ratios, so do not generalize the no-op result to all workloads.
+
+The ranges across the three process medians are also runner-dependent. For example, the Linux x86-64 scheduler's 2-worker no-op result ranged from 3,303,386 to 3,327,896 ns, while macOS x86-64 ranged from 8,825,760 to 10,851,809 ns. Three runs are useful diagnostic evidence but remain too few to estimate a reliable confidence interval or establish a production bottleneck. Allocation, copy, and cache claims still require direct profiling.
