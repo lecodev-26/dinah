@@ -24,8 +24,10 @@ fn report(case: &str, operations: usize, samples: &[Duration]) {
     let mut values: Vec<_> = samples.iter().map(Duration::as_nanos).collect();
     values.sort_unstable();
     let median = values[values.len() / 2];
+    let min = values[0];
+    let max = values[values.len() - 1];
     println!(
-        "case={case} operations={operations} samples={SAMPLES} iterations_per_sample={ITERATIONS_PER_SAMPLE} median_op_ns={median} ns_per_operation={:.3}",
+        "case={case} operations={operations} samples={SAMPLES} iterations_per_sample={ITERATIONS_PER_SAMPLE} min_op_ns={min} median_op_ns={median} max_op_ns={max} ns_per_operation={:.3}",
         median as f64 / operations.max(1) as f64,
     );
 }

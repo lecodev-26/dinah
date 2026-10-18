@@ -92,6 +92,8 @@ fn report(name: &str, task_count: usize, samples: &[Duration]) {
     let mut nanos: Vec<u128> = samples.iter().map(Duration::as_nanos).collect();
     nanos.sort_unstable();
     let median_ns = nanos[nanos.len() / 2];
+    let min_ns = nanos[0];
+    let max_ns = nanos[nanos.len() - 1];
     let operations = task_count.max(1) as u128;
     let ns_per_task = median_ns as f64 / operations as f64;
     let tasks_per_second = if median_ns == 0 {
@@ -100,7 +102,7 @@ fn report(name: &str, task_count: usize, samples: &[Duration]) {
         (operations as f64 * 1_000_000_000.0) / median_ns as f64
     };
     println!(
-        "case={name} tasks={task_count} samples={SAMPLES} median_total_ns={median_ns} ns_per_task={ns_per_task:.3} tasks_per_second={tasks_per_second:.0}"
+        "case={name} tasks={task_count} samples={SAMPLES} min_total_ns={min_ns} median_total_ns={median_ns} max_total_ns={max_ns} ns_per_task={ns_per_task:.3} tasks_per_second={tasks_per_second:.0}"
     );
 }
 

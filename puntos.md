@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 240
+- Completados: 241
 - En progreso: 22
-- Pendientes: 25
+- Pendientes: 24
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -110,7 +110,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 083 — Investigar SIMD (documentadas opciones, restricciones del crate y criterios de validación; se mantiene la ruta escalar hasta medir un caso real; CI verde: https://github.com/lecodev-26/dinah/actions/runs/38155044022)
 - [>] 084 — Implementar SIMD donde aporte beneficio real (benchmark directo/API y candidato seguro `wide::f32x4`; matriz repetida: mejora en Linux x86-64, regresión en ARM64 y resultados mixtos en otros runners; sin kernel de producción que justifique SIMD; detalles en `docs/simd-research.md`)
 - [>] 085 — Optimizar estructuras data-oriented (benchmark AoS/SoA repetido tres veces en cinco runners; SoA pierde de forma consistente al leer un campo en Windows y al leer ambos en Linux ARM64, pero el resto de diferencias son pequeñas o variables; falta una carga real y medir construcción/conversión/escrituras)
-- [ ] 086 — Añadir métricas de rendimiento
+- [x] 086 — Añadir métricas de rendimiento (todas las suites benchmark reportan mínimo, mediana y máximo observados por caso, además de métricas normalizadas cuando aplica; el rango no es intervalo de confianza)
 - [x] 087 — Crear benchmarks CPU (suite `benches/compute.rs`: bucle escalar, API secuencial, rutas paralelas de 2/4 workers y candidato `wide::f32x4`; 8 tamaños, 11 muestras por caso y mediana; ejecución multiplataforma archivada en el punto 088)
 - [x] 088 — Comparar secuencial/paralelo (benchmark release archivado en cinco runners; salida escalar/paralela verificada; análisis documentado: en el kernel ligero, 2 workers tardan 4,0–10,3× más incluso con 262.144 elementos y 4 workers 6,3–16,6× más; no se justifica paralelizar automáticamente este kernel)
 - [x] 089 — Testear determinismo (tests públicos repetidos en Core, Compute secuencial/paralelo/pipelines, Runtime —orden FIFO/resultados, cancelación, estados, métricas, trazas, `Shared<T>`, `TaskQueue` y `TaskFailure`— y Memory —secuencias de Buffer/SoaBuffer, errores sin mutación, alineación y capacidad cero—; CI y auditoría documental verdes para el commit `7171343`)
@@ -292,14 +292,14 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 235 — Perfilar Simulation (suite release registra los kernels y tamaños definidos en `benches/simulation.rs`)
 - [x] 236 — Perfilar Network (suite release registra estimación de latencia y operaciones de outbox/reliability)
 - [x] 237 — Perfilar Storage (suite release registra operaciones de MemoryStore y escaneo ordenado)
-- [>] 238 — Identificar hotspots (revisados los cinco artefactos del baseline `3a36b73` y el post-cambio `2aeee49`; el workload sintético muestra overhead de dispatch/creación de workers frente al pool persistente, pero la reutilización del batch no produjo una mejora consistente; faltan cargas representativas)
-- [>] 239 — Reducir allocations innecesarias (se reutiliza capacidad del vector batch en `Scheduler::run_parallel`; los resultados de `2aeee49` son mixtos y no demuestran una mejora consistente)
-- [>] 240 — Reducir copias (revisados costes intermedios del resultado y lotes; se conserva el lote completo antes de despachar y se mantiene el orden FIFO; faltan mediciones de copias/allocation específicas)
-- [>] 241 — Optimizar cache locality (la reutilización de batch reduce asignaciones repetidas en el código, pero no hay evidencia de mejora de locality; no se han medido cache misses)
-- [>] 242 — Optimizar paralelismo (el baseline confirma costes altos para no-op con workers por llamada; no añadir pool persistente sin diseño de lifecycle y cargas representativas)
-- [>] 243 — Optimizar scheduling (el batch reutiliza capacidad; nuevo cambio elimina el receiver compartido protegido por `Mutex` y asigna un canal por worker; benchmark de este cambio pendiente)
-- [>] 244 — Optimizar SIMD (suite Compute contiene casos comparables; la investigación sigue abierta y no se afirma ventaja SIMD sin comparar resultados por runner y semántica numérica)
-- [>] 245 — Benchmark antes/después (baseline `3a36b73` comparado con `2aeee49` en cinco runners; resultados mixtos sin mejora consistente; el cambio de canales por worker necesita su propia medición CI)
+- [>] 238 — Identificar hotspots (revisados artefactos de `3a36b73`, `2aeee49` y `74ad2f0` en cinco runners; los casos scheduler varían por OS/arquitectura; faltan cargas representativas y repeticiones controladas)
+- [>] 239 — Reducir allocations innecesarias (se reutiliza capacidad del vector batch; benchmark de `74ad2f0` no mide allocations y no demuestra mejora consistente)
+- [>] 240 — Reducir copias (se conserva el lote completo antes de despachar y el orden FIFO; benchmark comparativo no mide copias directamente)
+- [>] 241 — Optimizar cache locality (sin mediciones de cache misses; las medianas y sus rangos no permiten inferir locality)
+- [>] 242 — Optimizar paralelismo (los no-op con workers por llamada siguen mostrando costes elevados frente al pool persistente de benchmark; falta validar cargas representativas y lifecycle antes de considerar pool persistente)
+- [>] 243 — Optimizar scheduling (canal por worker elimina receiver compartido con `Mutex`; comparación CI `2aeee49`→`74ad2f0` es mixta y muestra regresiones en varios runners; repetir antes de concluir)
+- [>] 244 — Optimizar SIMD (suite Compute ofrece casos escalares y `wide::f32x4`; el nuevo rango min/mediana/max ayuda a ver dispersión, pero sigue sin justificar activar SIMD sin evidencia por runner y semántica numérica)
+- [>] 245 — Benchmark antes/después (comparados `2aeee49` y `74ad2f0` en cinco runners; resultado mixto; ahora cada caso expone mínimo/mediana/máximo, y hacen falta nuevas ejecuciones comparables)
 - [x] 246 — Documentar resultados (`docs/performance-baseline.md` registra comparación antes/después de `2aeee49`, ejemplos de medianas por runner y límites de inferencia; no afirma una mejora general)
 
 ## FASE 15 — Integración total

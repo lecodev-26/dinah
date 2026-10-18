@@ -20,9 +20,11 @@ fn measure(mut operation: impl FnMut()) -> Vec<Duration> {
 fn report(name: &str, samples: &[Duration]) {
     let mut nanos: Vec<_> = samples.iter().map(Duration::as_nanos).collect();
     nanos.sort_unstable();
+    let min = nanos[0];
+    let median = nanos[nanos.len() / 2];
+    let max = nanos[nanos.len() - 1];
     println!(
-        "case={name} iterations={ITERATIONS} samples={SAMPLES} median_op_ns={}",
-        nanos[nanos.len() / 2]
+        "case={name} iterations={ITERATIONS} samples={SAMPLES} min_op_ns={min} median_op_ns={median} max_op_ns={max}",
     );
 }
 fn main() {

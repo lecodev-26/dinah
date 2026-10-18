@@ -27,9 +27,11 @@ fn report(name: &str, operations: usize, samples: &[Duration]) {
     let mut nanos: Vec<_> = samples.iter().map(Duration::as_nanos).collect();
     nanos.sort_unstable();
     let median = nanos[nanos.len() / 2];
+    let min = nanos[0];
+    let max = nanos[nanos.len() - 1];
     let count = operations.max(1) as f64;
     println!(
-        "case={name} operations={operations} samples={SAMPLES} median_total_ns={median} ns_per_operation={:.3} operations_per_second={:.0}",
+        "case={name} operations={operations} samples={SAMPLES} min_total_ns={min} median_total_ns={median} max_total_ns={max} ns_per_operation={:.3} operations_per_second={:.0}",
         median as f64 / count,
         if median == 0 { 0.0 } else { count * 1_000_000_000.0 / median as f64 },
     );

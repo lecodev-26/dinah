@@ -49,8 +49,10 @@ fn report(case: &str, elements: usize, samples: &[Duration]) {
     let mut values: Vec<_> = samples.iter().map(Duration::as_nanos).collect();
     values.sort_unstable();
     let median = values[values.len() / 2];
+    let min = values[0];
+    let max = values[values.len() - 1];
     println!(
-        "case={case} elements={elements} samples={SAMPLES} iterations_per_sample={ITERATIONS_PER_SAMPLE} median_op_ns={median} ns_per_element={:.3} elements_per_second={:.0}",
+        "case={case} elements={elements} samples={SAMPLES} iterations_per_sample={ITERATIONS_PER_SAMPLE} min_op_ns={min} median_op_ns={median} max_op_ns={max} ns_per_element={:.3} elements_per_second={:.0}",
         median as f64 / elements.max(1) as f64,
         if median == 0 { 0.0 } else { elements as f64 * 1_000_000_000.0 / median as f64 },
     );
