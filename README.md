@@ -16,7 +16,7 @@
 
 <div align="center">
 
-**Repository snapshot:** 287 master checklist points · 205 complete · 8 in progress · 74 pending
+**Repository snapshot:** 287 master checklist points · 213 complete · 8 in progress · 66 pending
 **Code snapshot:** single Rust crate · 7 benchmark suites (Runtime, Memory, Compute, ECS, Simulation, Networking, Storage) · 1 runnable example · five-platform benchmark history
 **Current milestone:** Native foundations now include safe host/POSIX capability traits and a minimal scalar C ABI. The ABI still needs a real C compiler/linker smoke test; no direct hardware access or handwritten assembly is claimed. Networking has initial blocking TCP wrappers and prediction/reconciliation/replay primitives, but its wire encoder/decoder and full protocol integration remain pending.
 
@@ -148,7 +148,7 @@ These are medians of nine samples; construction is included in the clock and ste
 
 </div>
 
-**Current work — Phase 9: Native / Hardware.** Points 156–163 are implemented and documented: Storage final guide, HAL/platform contracts, safe Unix-family adapter, scalar C ABI and C++/Assembly research. The C ABI still needs a real C compiler/linker smoke test, and no direct hardware access or handwritten assembly is claimed. Networking remains a pre-alpha foundation with wire encoder/decoder and full protocol integration pending.
+**Current work — Phases 12–13: Security and Testing.** Security reviews now cover memory, concurrency, permissions, filesystem, networking, serialization and the scalar C ABI (points 198–203), and corruption, stress, concurrency, determinism and regression tests plus the Network, Storage and Native unit suites are in place. Still open: fuzzing (204), a formal dependency audit (209), full CI, coverage and test matrices (226–229), and a real C compiler/linker smoke test for the scalar ABI. Networking remains a pre-alpha foundation with wire encoder/decoder and full protocol integration pending.
 
 **Eight points remain in progress:**
 
@@ -163,19 +163,7 @@ These are medians of nine samples; construction is included in the clock and ste
 | 220 | Testing | Integration tests |
 | 225 | Testing | Benchmark suite |
 
-The CLI baseline and opt-in observability primitives are implemented; tracing, metrics and profiling still require explicit caller reporting and are not automatic. Security reviews now cover memory, concurrency, permissions, filesystem, networking, serialization and the scalar C ABI. Fuzzing, a formal dependency audit, longer stress runs, full integration tests and a real C compiler/linker smoke test remain open. These are targets, not completed capabilities. See [`roadmap.md`](roadmap.md) and the [`287-point master checklist`](puntos.md).
-
-## What's next
-
-The next milestone is to close the remaining security and validation gaps before attempting the first `dinah` v0.1 integration milestone. Work is prioritized by risk and evidence, not by a promise that the release is near. Concurrency, determinism, bounded stress and regression suites, plus the Network, Storage and Native unit suites, are already in place (points 207–208, 217–219 and 221–224), so the list below only covers what is still open.
-
-1. **Fuzzing (point 204):** add repeatable fuzz targets for the `DINAH.toml` starter parser and Storage journal replay; extend to network codecs when a codec exists.
-2. **Dependency and ABI assurance (point 209):** audit the lockfile and toolchain, and add a real C compiler/linker smoke test for the scalar ABI on supported runners (still pending under points 161 and 198).
-3. **Validation infrastructure (points 226–229):** complete CI, measure test coverage and define the Linux and supported-architecture test matrices.
-4. **Integration tests and benchmarks (points 220 and 225):** add end-to-end tests for the full architecture, and extend the benchmark suite to Networking, Storage and Native once those modules are implemented.
-5. **Integration (phases 15–16):** connect only APIs that are implemented, add end-to-end examples, review public API boundaries, and then decide whether the scoped `dinah` v0.1 milestone is genuinely met.
-
-**Current security status:** initial reviews and targeted corruption/concurrency tests are in place, but DINAH is still pre-alpha. It does not claim a production network stack, strong crash durability, stable public APIs or an independently audited security posture. The canonical task status is [`puntos.md`](puntos.md); phase definitions and release criteria are in [`roadmap.md`](roadmap.md).
+The CLI baseline and opt-in observability primitives are implemented; tracing, metrics and profiling still require explicit caller reporting and are not automatic. After Security and Testing, the roadmap continues through Optimization and Total integration, then the first `dinah` v0.1. These are targets, not completed capabilities. See [`roadmap.md`](roadmap.md) and the [`287-point master checklist`](puntos.md).
 
 <div align="center">
 
