@@ -6,8 +6,8 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 
 - Total de puntos numerados: 287
 - Completados: 242
-- En progreso: 26
-- Pendientes: 19
+- En progreso: 19
+- Pendientes: 26
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -48,9 +48,9 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 030 — Definir invariantes del sistema
 - [x] 031 — Crear tests del Core
 - [x] 032 — Crear documentación del Core
-- [>] 033 — Crear primeros benchmarks
+- [ ] 033 — APLAZADO: crear primeros benchmarks cuando exista una carga real del Core que se pueda medir sin claims sintéticos
 - [x] 034 — Revisar API pública
-- [>] 035 — Estabilizar Core v0.1 (auditoría inicial de API/documentación/tests registrada en `docs/core.md`; siguen abiertos el primer consumidor real de `HasCoreId` y la decisión de estabilidad que depende de él)
+- [ ] 035 — APLAZADO: estabilizar Core v0.1 cuando exista un consumidor real que justifique `HasCoreId` (auditoría inicial en `docs/core.md`)
 
 ## FASE 2 — Runtime
 
@@ -108,8 +108,8 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 081 — Crear reducción paralela (`try_reduce_parallel`, identidad por partición, combinación en orden, propagación del primer error por orden de entrada; CI verde: https://github.com/lecodev-26/dinah/actions/runs/38154040501)
 - [x] 082 — Crear pipelines (`ComputePipeline` inmediato sobre slice prestado; etapas secuenciales, por lotes y paralelas; errores tipados y tests de orden/corte/ownership; CI verde: https://github.com/lecodev-26/dinah/actions/runs/38154774490)
 - [x] 083 — Investigar SIMD (documentadas opciones, restricciones del crate y criterios de validación; se mantiene la ruta escalar hasta medir un caso real; CI verde: https://github.com/lecodev-26/dinah/actions/runs/38155044022)
-- [>] 084 — Implementar SIMD donde aporte beneficio real (benchmark directo/API y candidato seguro `wide::f32x4`; matriz repetida: mejora en Linux x86-64, regresión en ARM64 y resultados mixtos en otros runners; sin kernel de producción que justifique SIMD; detalles en `docs/simd-research.md`)
-- [>] 085 — Optimizar estructuras data-oriented (benchmark AoS/SoA repetido tres veces en cinco runners; SoA pierde de forma consistente al leer un campo en Windows y al leer ambos en Linux ARM64, pero el resto de diferencias son pequeñas o variables; falta una carga real y medir construcción/conversión/escrituras)
+- [ ] 084 — APLAZADO: implementar SIMD solo cuando un kernel de producción y benchmarks representativos justifiquen el cambio; evidencia mixta en `docs/simd-research.md`
+- [ ] 085 — APLAZADO: optimizar estructuras data-oriented cuando exista una carga real; falta medir construcción, conversión y escrituras además de los benchmarks exploratorios
 - [x] 086 — Añadir métricas de rendimiento (todas las suites benchmark reportan mínimo, mediana y máximo observados por caso, además de métricas normalizadas cuando aplica; el rango no es intervalo de confianza)
 - [x] 087 — Crear benchmarks CPU (suite `benches/compute.rs`: bucle escalar, API secuencial, rutas paralelas de 2/4 workers y candidato `wide::f32x4`; 8 tamaños, 11 muestras por caso y mediana; ejecución multiplataforma archivada en el punto 088)
 - [x] 088 — Comparar secuencial/paralelo (benchmark release archivado en cinco runners; salida escalar/paralela verificada; análisis documentado: en el kernel ligero, 2 workers tardan 4,0–10,3× más incluso con 262.144 elementos y 4 workers 6,3–16,6× más; no se justifica paralelizar automáticamente este kernel)
@@ -127,10 +127,10 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 097 — Crear iteración eficiente (`ComponentStorage::iter/iter_mut` recorren simultáneamente las columnas contiguas, devuelven pares entidad/componente alineados y permiten mutación segura de filas sin cambio estructural; tests para orden físico, storage vacío y actualización mutable)
 - [x] 098 — Integrar ECS con Runtime (`World::run_system` despacha una closure con préstamo exclusivo de `World` mediante `Scheduler::schedule`; conserva separados el error del scheduler y el del sistema, con tests unitarios y públicos; integración síncrona, sin prometer paralelismo)
 - [x] 099 — Integrar ECS con Compute (`ComponentStorage::for_each_mut` delega en `compute::for_each`, preserva el emparejamiento entidad/componente y no permite cambios estructurales; tests de alineación, mutación y storage vacío; integración interna secuencial, sin paralelismo ni API pública de World)
-- [>] 100 — Crear sistemas paralelos (contrato de seguridad y `SystemAccess` público implementados: declara lecturas/escrituras por tipo, fusiona duplicados de forma conservadora y detecta conflictos read/write; planificador determinista de fases contiguas implementado; ejecución que valide declaraciones, aislamiento estructural y ejecución paralela aún pendientes)
+- [ ] 100 — APLAZADO: crear sistemas paralelos tras disponer de una API segura de ejecución/query que valide declaraciones y aísle cambios estructurales; metadatos y planificador determinista ya existen
 - [x] 101 — Testear consistencia (tests de invariantes de `World` para contador de entidades vivas, slots retirados y lista libre sin duplicados; tests de `ComponentStorage` para alineación de columnas, índices sparse y generaciones obsoletas tras inserciones, reemplazos, `swap_remove` y reutilización)
 - [x] 102 — Benchmark ECS (benchmarks públicos de ciclo de vida de `World` para spawn, despawn, reutilización de slots y `contains`; CI y resultados de cinco plataformas registrados en `docs/ecs-benchmarks.md`)
-- [>] 103 — Optimizar acceso a memoria (World ya integra ComponentStorage<T>; el benchmark ECS ahora cubre get denso/disperso, generaciones obsoletas e insert/replace/remove. Siguen pendientes iteración pública, queries de varios componentes y resultados multiplataforma antes de decidir cambios de representación)
+- [ ] 103 — APLAZADO: optimizar acceso a memoria después de implementar iteración pública/queries y obtener resultados multiplataforma con cargas representativas
 - [x] 104 — Documentar arquitectura ECS (`docs/ecs.md` auditada contra la API actual: almacenamiento registrado por `TypeId`, operaciones públicas de componentes, limpieza en `despawn`, errores, ejemplo de uso y límites explícitos de queries/paralelismo)
 
 ## FASE 6 — Simulation
@@ -204,7 +204,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 162 — Investigar integración C++ (recomendado consumir el header C desde C++; sin exponer clases, excepciones ni ownership Rust)
 - [x] 163 — Investigar Assembly (criterios de evidencia, fallback, revisión ABI y CI por arquitectura; no se añadió assembly sin hotspots medidos)
 - [x] 164 — Identificar hotspots reales (auditoría de los siete benchmarks y criterio de evidencia; no se declara hotspot sin resultados comparables)
-- [ ] 165 — Optimizar hotspots
+- [ ] 165 — APLAZADO: optimizar hotspots cuando perfiles y mediciones comparables identifiquen un cuello de botella real
 - [x] 166 — Evaluar SIMD nativo donde corresponda (el benchmark compara scalar y candidato portable `wide::f32x4`; no se activa SIMD específico sin mejora medida)
 - [x] 167 — Evaluar instrucciones específicas cuando aporten beneficio (umbral documentado; no se añade assembly sin mejora repetible)
 - [x] 168 — Testear distintas arquitecturas (matriz Linux x86-64/ARM64, Windows x86-64 y macOS x86-64/ARM64)
@@ -252,7 +252,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 201 — Revisar permisos (privilegios efectivos, create_new, sockets y recomendaciones de mínimo privilegio documentados)
 - [x] 202 — Revisar filesystem (límites, TOCTOU, symlinks, journals sin límite global y falta de sync_all documentados)
 - [x] 203 — Revisar networking (TCP bloqueante, ausencia de framing/TLS/auth/rate limit y responsabilidades del consumidor documentadas)
-- [>] 204 — Añadir fuzzing (corpus determinista acotado para replay y parser de manifiesto; además rechaza escapes Unicode inválidos, surrogates y codepoints fuera de rango, con casos válidos `\uXXXX`/`\UXXXXXXXX`; sigue pendiente fuzzing coverage-guided con libFuzzer)
+- [ ] 204 — APLAZADO: añadir fuzzing coverage-guided con libFuzzer cuando el parser del manifiesto tenga un punto de entrada reutilizable por el harness; el corpus determinista actual sigue siendo regresión, no fuzzing
 - [x] 205 — Añadir tests de corrupción (longitudes excesivas, versión desconocida y opcode inválido; checksum y truncado ya cubiertos)
 - [x] 206 — Añadir tests de estrés (8 hilos × 2000 incrementos sobre el registro compartido; estrés acotado, no benchmark)
 - [x] 207 — Añadir tests de concurrencia (seis hilos operan sobre journals independientes y verifican actualizaciones/reapertura; no prueba multiwriter sobre un mismo archivo)
@@ -271,7 +271,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 217 — Unit tests Network (`src/network.rs`: transiciones half-close y consistencia de direcciones cerradas)
 - [x] 218 — Unit tests Storage (`src/storage.rs`: replay determinista y rechazo de DELETE con payload)
 - [x] 219 — Unit tests Native (`src/native.rs`: metadatos host, tiempo monotónico, proveedor Unix y contrato ABI escalar)
-- [>] 220 — Integration tests (`tests/system_pipeline.rs` cubre Core/Runtime/Memory/Compute/ECS/Simulation/Storage/observabilidad y `tests/system_integration.rs` añade Network, Native y CLI real; regresiones para Unicode inválido, tarea inexistente y exit code no cero en JSON validadas por CI verde de `02e30b0`; falta ampliar escenarios de integración)
+- [>] 220 — Integration tests (`tests/system_pipeline.rs` cubre Core/Runtime/Memory/Compute/ECS/Simulation/Storage/observabilidad y ahora reconciliación de predicción de red hacia Simulation/ECS/Storage; `tests/system_integration.rs` añade Network, Native y CLI real; falta ampliar escenarios de integración)
 - [x] 221 — Concurrency tests (`tests/robustness_regression.rs`: seis workers aislados actualizan y reabren journals independientes; no comparte una instancia mutable)
 - [x] 222 — Stress tests (6 workers × 128 actualizaciones, comprobación de 8 claves y replay al reabrir; stress acotado, no benchmark prolongado)
 - [x] 223 — Determinism tests (contratos repetidos públicos de Core, Runtime, Memory y Compute, más replay de Simulation; no implica determinismo temporal ni equivalencia bit a bit entre arquitecturas)
@@ -544,3 +544,5 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 - Avanzado el punto 266 con ejemplos ejecutables para Compute, Buffer, ECS y Storage. `examples/storage_basics.rs` cubre MemoryStore, DiskStore, replay al reabrir y eliminación; `docs/storage.md` enlaza ahora el comando reproducible `cargo run --example storage_basics` y recuerda los límites de durabilidad. La CI del commit `54e9a9b` confirmó la compilación de ejemplos; este punto sigue en progreso hasta revisar cobertura de los subsistemas restantes. Checks locales permitidos ejecutados; no se ha ejecutado `cargo test` localmente.
 
 - 2026-10-18 — Avanzado el punto 266 con `examples/network_basics.rs`: intercambio TCP de loopback usando Endpoint/Connection, lecturas parciales seguras, cierre de escritura y detección de EOF; `docs/network.md` incluye comando y límites explícitos. Se mantiene en progreso hasta validar este ejemplo por CI y revisar subsistemas restantes.
+
+- 2026-10-18 — Revisión de orden: se aplazan 033, 035, 084, 085, 100, 103, 165 y 204 con su dependencia concreta descrita en la checklist; no se declaran completados ni se inventan benchmarks/consumidores. Se continúa por el siguiente trabajo que pueda avanzar con evidencia real.
