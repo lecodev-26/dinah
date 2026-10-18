@@ -14,6 +14,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 BENCHMARKS = ("runtime", "memory", "compute", "ecs", "simulation", "network", "storage")
+RUNTIME_REPETITIONS = int(os.environ.get("DINAH_RUNTIME_BENCH_REPETITIONS", "3"))
+
+if not 1 <= RUNTIME_REPETITIONS <= 5:
+    raise ValueError("DINAH_RUNTIME_BENCH_REPETITIONS must be between 1 and 5")
 
 
 def run(command: list[str], *, output: Path | None = None) -> str:
@@ -61,18 +65,46 @@ def main() -> int:
 
     suite_results: dict[str, dict[str, object]] = {}
     for name in BENCHMARKS:
-        print(f"\n=== cargo bench --bench {name} ===", flush=True)
-        started = time.perf_counter()
-        result = run(
-            ["cargo", "bench", "--bench", name],
-            output=artifact_dir / f"{name}-benchmark-results.txt",
-        )
-        elapsed_seconds = time.perf_counter() - started
-        cases = [line.strip() for line in result.splitlines() if line.strip().startswith("case=")]
+        repetitions = RUNTIME_REPETITIONS if name == "runtime" else 1
+        repetition_results: list[dict[str, object]] = []
+        total_elapsed_seconds = 0.0
+        for repetition in range(1, repetitions + 1):
+            suffix = f"-run-{repetition}" if repetitions > 1 else ""
+            output_path = artifact_dir / f"{name}-benchmark-results{suffix}.txt"
+            print(
+                f"\n=== cargo bench --bench {name}"
+                f" (independent run {repetition}/{repetitions}) ===",
+                flush=True,
+            )
+            started = time.perf_counter()
+            result = run(["cargo", "bench", "--bench", name], output=output_path)
+            elapsed_seconds = time.perf_counter() - started
+            total_elapsed_seconds += elapsed_seconds
+            cases = [
+                line.strip()
+                for line in result.splitlines()
+                if line.strip().startswith("case=")
+            ]
+            repetition_results.append(
+                {
+                    "run": repetition,
+                    "elapsed_seconds": round(elapsed_seconds, 3),
+                    "cases": cases,
+                }
+            )
+            # Preserve the original filename and schema's top-level cases for
+            # existing consumers, using the first independent run as the baseline.
+            if repetitions > 1 and repetition == 1:
+                (artifact_dir / f"{name}-benchmark-results.txt").write_text(
+                    result, encoding="utf-8"
+                )
+
+        first_cases = repetition_results[0]["cases"]
         suite_results[name] = {
-            "elapsed_seconds": round(elapsed_seconds, 3),
-            "case_count": len(cases),
-            "cases": cases,
+            "elapsed_seconds": round(total_elapsed_seconds, 3),
+            "case_count": len(first_cases),
+            "cases": first_cases,
+            "repetitions": repetition_results,
         }
 
     # Keep this machine/commit-specific: values from unlike runners are not
@@ -106,10 +138,13 @@ def main() -> int:
         f"timestamp_utc={baseline['timestamp_utc']}",
         f"runner={platform.system()} {platform.machine()}",
         "Note: suite wall time is not a per-operation performance metric.",
+        f"runtime_independent_repetitions={RUNTIME_REPETITIONS}",
     ]
     for name, details in suite_results.items():
+        repetition_count = len(details["repetitions"])
         summary.append(
-            f"suite={name} elapsed_seconds={details['elapsed_seconds']} case_count={details['case_count']}"
+            f"suite={name} elapsed_seconds={details['elapsed_seconds']} "
+            f"case_count={details['case_count']} repetitions={repetition_count}"
         )
     (artifact_dir / "baseline-summary.txt").write_text("\n".join(summary) + "\n", encoding="utf-8")
     print("\n".join(summary))

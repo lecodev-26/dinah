@@ -292,14 +292,14 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 235 — Perfilar Simulation (suite release registra los kernels y tamaños definidos en `benches/simulation.rs`)
 - [x] 236 — Perfilar Network (suite release registra estimación de latencia y operaciones de outbox/reliability)
 - [x] 237 — Perfilar Storage (suite release registra operaciones de MemoryStore y escaneo ordenado)
-- [>] 238 — Identificar hotspots (revisados artefactos de `3a36b73`, `2aeee49` y `74ad2f0` en cinco runners; los casos scheduler varían por OS/arquitectura; faltan cargas representativas y repeticiones controladas)
+- [>] 238 — Identificar hotspots (revisados artefactos de `3a36b73`, `2aeee49` y `74ad2f0` en cinco runners; los casos scheduler varían por OS/arquitectura; runner Runtime configurado para tres procesos independientes por runner, pendiente inspeccionar la nueva evidencia CI)
 - [>] 239 — Reducir allocations innecesarias (se reutiliza capacidad del vector batch; benchmark de `74ad2f0` no mide allocations y no demuestra mejora consistente)
 - [>] 240 — Reducir copias (se conserva el lote completo antes de despachar y el orden FIFO; benchmark comparativo no mide copias directamente)
 - [>] 241 — Optimizar cache locality (sin mediciones de cache misses; las medianas y sus rangos no permiten inferir locality)
 - [>] 242 — Optimizar paralelismo (los no-op con workers por llamada siguen mostrando costes elevados frente al pool persistente de benchmark; falta validar cargas representativas y lifecycle antes de considerar pool persistente)
-- [>] 243 — Optimizar scheduling (canal por worker elimina receiver compartido con `Mutex`; comparación CI `2aeee49`→`74ad2f0` es mixta y muestra regresiones en varios runners; repetir antes de concluir)
+- [>] 243 — Optimizar scheduling (canal por worker elimina receiver compartido con `Mutex`; comparación CI `2aeee49`→`74ad2f0` es mixta y muestra regresiones en varios runners; se añaden tres ejecuciones independientes de Runtime por runner para el próximo baseline, sin afirmar aún una mejora)
 - [>] 244 — Optimizar SIMD (suite Compute ofrece casos escalares y `wide::f32x4`; el nuevo rango min/mediana/max ayuda a ver dispersión, pero sigue sin justificar activar SIMD sin evidencia por runner y semántica numérica)
-- [>] 245 — Benchmark antes/después (comparados `2aeee49` y `74ad2f0` en cinco runners; resultado mixto; ahora cada caso expone mínimo/mediana/máximo, y hacen falta nuevas ejecuciones comparables)
+- [>] 245 — Benchmark antes/después (comparados `2aeee49` y `74ad2f0` en cinco runners; resultado mixto; cada caso expone mínimo/mediana/máximo y Runtime guardará tres procesos independientes; falta revisar los nuevos artefactos y repetir la comparación con cambios de código controlados)
 - [x] 246 — Documentar resultados (`docs/performance-baseline.md` registra comparación antes/después de `2aeee49`, ejemplos de medianas por runner y límites de inferencia; no afirma una mejora general)
 
 ## FASE 15 — Integración total
@@ -564,3 +564,9 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 - 2026-10-18 — Punto 261 avanzado con inventario de API pública en `docs/public-api-review.md`. Documenta módulos y límites reales, identifica los contratos aún provisionales (HasCoreId, ECS queries/parallel systems, wire protocol, durabilidad y CLI sin sandbox) y enumera gates explícitos antes de congelar v0.1. Se corrigieron contadores y estado de integración/cobertura en README; el punto permanece en progreso hasta que se apruebe formalmente la superficie soportada.
 
 - 2026-10-18 — Tras el CI verde de `d5b6ce6`, se actualiza el punto 266: Clippy `--all-targets` compila los targets de ejemplo, aunque la revisión funcional/documental de todos los ejemplos sigue abierta. Punto 268 registra el umbral de líneas del 85 % ya configurado y deja explícitas las brechas restantes de ramas, rutas críticas y fuzzing. Punto 272 distingue el smoke test ABI completado de la revisión legal aún pendiente.
+
+
+### Repetibilidad de benchmarks Runtime — 2026-10-18
+
+- El runner de benchmarks ejecutará la suite Runtime en tres procesos independientes por runner (configurable entre 1 y 5 con `DINAH_RUNTIME_BENCH_REPETITIONS`). Cada ejecución se conserva en un archivo separado y en `baseline.json`; el archivo y campo `cases` históricos siguen representando la primera ejecución para compatibilidad. Las otras seis suites se ejecutan una vez para no multiplicar innecesariamente el coste de CI.
+- La repetición independiente ayuda a observar variación entre procesos en los casos del Scheduler, pero no es un estudio estadístico ni elimina efectos de orden, temperatura, caché o planificación del SO. No se ha declarado ninguna mejora de rendimiento; los puntos 238, 243 y 245 siguen abiertos hasta revisar los artefactos de CI y disponer de comparaciones controladas.
