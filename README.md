@@ -77,7 +77,7 @@ The design separates shared contracts from runtime execution, storage and comput
 | `src/compute` | Sequential and parallel iteration, batches, reductions and pipelines. |
 | `src/ecs` | Generational entities, `World`, component storage and access contracts. |
 | `src/simulation` | Fixed-step clock, deterministic step contract and bounded physics/fluid/cellular/raycast/swarm models. |
-| `docs/` | Module guides, design decisions, research, benchmark notes and engineering policies. |
+| `docs/` | Module guides, design decisions, research, benchmark notes, initial security review and engineering policies. |
 | `tests/` · `benches/` · `examples/` | Tests, performance suites and runnable examples. |
 | `scripts/` · `.github/workflows/` | Checklist/documentation checks, CI, benchmark matrix and artifact archiving. |
 | `artifacts/` | Retained benchmark outputs and run metadata. |
@@ -98,6 +98,7 @@ The design separates shared contracts from runtime execution, storage and comput
 | **Compute** | Sequential/batched/parallel operations, reductions and `ComputePipeline` exist. SIMD remains open until a real kernel demonstrates benefit with evidence. | [`docs/compute.md`](docs/compute.md) · [`docs/simd-research.md`](docs/simd-research.md) |
 | **Data / ECS** | Generational entities, `World`, sparse-set component storage and access-conflict planning exist. Full query and parallel-system execution work remains. | [`docs/ecs.md`](docs/ecs.md) · [`docs/ecs-benchmarks.md`](docs/ecs-benchmarks.md) |
 | **Simulation** | Fixed-step clock, deterministic step contract, ECS bindings, replay tests and five bounded models: ASCII physics, scalar fluid diffusion, cellular automata, 2D raycasting and 2D flocking. Not a general-purpose physics or CFD engine. | [`docs/simulation.md`](docs/simulation.md) |
+| **Observability** | Opt-in tracing, caller-reported counters/gauges, bounded profile samples, diagnostics and JSON metric snapshots. Not automatic subsystem instrumentation or a remote exporter. | [`docs/observability.md`](docs/observability.md) |
 | **Networking** | Initial blocking TCP wrappers, explicit reliability helpers and deterministic link simulation exist. Wire encoder/decoder remains unimplemented. | [`docs/network.md`](docs/network.md) |
 | **Storage** | Byte-oriented API, in-memory store, append-only journal with CRC-32 on v2 records and legacy v1 replay, ordered borrowed scans, and explicit bounded Runtime mutation dispatch. Transactions, secondary indexes, compaction and strong crash durability remain unimplemented. | [`docs/storage.md`](docs/storage.md) |
 

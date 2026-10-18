@@ -64,6 +64,22 @@ impl core::fmt::Display for MetricError {
 
 impl std::error::Error for MetricError {}
 
+fn push_json_string(output: &mut String, value: &str) {
+    output.push('"');
+    for character in value.chars() {
+        match character {
+            '"' => output.push_str("\\\""),
+            '\\' => output.push_str("\\\\"),
+            '\n' => output.push_str("\\n"),
+            '\r' => output.push_str("\\r"),
+            '\t' => output.push_str("\\t"),
+            character if character.is_control() => output.push(' '),
+            character => output.push(character),
+        }
+    }
+    output.push('"');
+}
+
 /// One named metric key and its recorded value.
 pub type MetricEntry = ((Subsystem, String), MetricValue);
 
@@ -128,6 +144,33 @@ impl MetricsRegistry {
                     .collect()
             })
             .map_err(|_| MetricError::Poisoned)
+    }
+
+    /// Exports a stable JSON array suitable for logs or an external collector.
+    /// Metric names and values are escaped; entries retain the registry's sorted order.
+    pub fn export_json(&self) -> Result<String, MetricError> {
+        let snapshot = self.snapshot()?;
+        let mut output = String::from("[");
+        for (index, ((subsystem, name), value)) in snapshot.iter().enumerate() {
+            if index != 0 {
+                output.push(',');
+            }
+            output.push_str("{\"subsystem\":");
+            push_json_string(&mut output, subsystem.as_str());
+            output.push_str(",\"name\":");
+            push_json_string(&mut output, name);
+            match value {
+                MetricValue::Counter(number) => {
+                    output.push_str(&format!(",\"kind\":\"counter\",\"value\":{number}"));
+                }
+                MetricValue::Gauge(number) => {
+                    output.push_str(&format!(",\"kind\":\"gauge\",\"value\":{number}"));
+                }
+            }
+            output.push('}');
+        }
+        output.push(']');
+        Ok(output)
     }
 }
 
@@ -292,6 +335,23 @@ mod tests {
         for subsystem in Subsystem::ALL {
             metrics.increment(subsystem, "events", 1).unwrap();
         }
+    }
+
+    #[test]
+    fn exports_metrics_as_escaped_stable_json() {
+        let metrics = MetricsRegistry::new();
+        metrics
+            .increment(Subsystem::Runtime, "tasks.\"done\"", 2)
+            .unwrap();
+        metrics
+            .set_gauge(Subsystem::Memory, "bytes\nactive", -4)
+            .unwrap();
+        let exported = metrics.export_json().unwrap();
+        assert!(exported.starts_with("["));
+        assert!(exported.contains("\\\"done\\\""));
+        assert!(exported.contains("bytes\\nactive"));
+        assert!(exported.contains("\"kind\":\"counter\",\"value\":2"));
+        assert!(exported.contains("\"kind\":\"gauge\",\"value\":-4"));
     }
 
     #[test]

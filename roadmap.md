@@ -98,9 +98,11 @@ Definir APIs de almacenamiento en memoria y disco, formato, persistencia, journa
 Estado actual (puntos 170–182): existe el binario dinah con init, validación run, listado de declaraciones task, inspect, catálogo benchmark y doctor básico. Hay opciones de salida text/json, logging verbose, mensajes de error y pruebas unitarias. Las tareas y benchmarks solo se enumeran: no se ejecutan desde el CLI. El parser de DINAH.toml es deliberadamente parcial, no un parser TOML completo.
 
 ### Fase 11 — Observabilidad
-**Base inicial implementada (puntos 183–190):** módulo público `dinah::observability` con tracing opt-in acotado, registro explícito de contadores y gauges para Runtime/Memory/Compute/Network/Storage, muestras de profiling bajo demanda y un informe de diagnóstico de volumen/capacidad. No instrumenta subsistemas automáticamente, no exporta métricas todavía y no constituye una auditoría de seguridad ni una herramienta de profiling de sistema. Próximos puntos: modos debug/release, exportación y benchmarks reproducibles.
+**Observabilidad (puntos 183–194):** módulo público `dinah::observability` con tracing opt-in acotado, registro explícito de contadores y gauges para Runtime/Memory/Compute/Network/Storage, muestras de profiling bajo demanda, diagnóstico y exportación JSON ordenada de snapshots. Los perfiles debug/release son los perfiles Cargo documentados y el runner de benchmarks registra el entorno para comparar ejecuciones. No instrumenta subsistemas automáticamente, no envía telemetría a servicios externos y no constituye profiling de CPU ni garantía de rendimiento.
 
 ### Fase 12 — Seguridad y robustez
+
+Revisión inicial documentada de superficie de ataque, límites de entrada, escape de salida JSON y ABI C escalar en `docs/security-review.md`. Esta revisión no sustituye fuzzing, pruebas de estrés, auditoría de dependencias ni smoke test de C/link, que siguen pendientes.
 Revisar entradas, serialización, FFI, memoria, concurrencia, permisos, filesystem y red. Incorporar fuzzing, pruebas de estrés y auditorías de dependencias.
 
 ### Fase 13 — Testing

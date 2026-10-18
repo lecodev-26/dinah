@@ -25,3 +25,9 @@ dinah --verbose doctor [PATH]
 - `--format text|json` chooses human-readable or JSON output for command results. `--verbose` writes a diagnostic line to stderr.
 
 The manifest reader intentionally supports only the starter subset needed by these commands. It is not a general TOML parser. Unknown options, invalid formats and malformed project names produce actionable errors and a non-zero process exit. CLI unit tests cover argument parsing, manifest creation/no-overwrite, metadata/task extraction and invalid manifests; the repository CI remains responsible for running the test suite.
+
+## Perfiles de compilación y límites de entrada
+
+Usa `cargo build` para el perfil de desarrollo (debug) y `cargo build --release` para el perfil optimizado. `cargo bench --bench <suite>` compila y ejecuta en modo release; `python3 scripts/run_benchmarks.py` ejecuta las siete suites y registra el sistema operativo, arquitectura, versiones de Rust/Cargo, commit y marca temporal en `benchmark-results/`. El CLI no cambia el perfil de compilación en tiempo de ejecución.
+
+El lector de `DINAH.toml` acepta únicamente el subconjunto documentado y rechaza archivos mayores de 1 MiB antes de leerlos. Esto reduce la exposición a entradas desproporcionadas, pero no convierte el parser en un parser TOML completo.

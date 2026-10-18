@@ -199,8 +199,26 @@ fn friendly_io(error: io::Error, action: &str) -> io::Error {
     io::Error::new(error.kind(), message)
 }
 
+const MAX_MANIFEST_BYTES: u64 = 1024 * 1024;
+
 fn read_manifest(path: &Path) -> io::Result<(String, String, Vec<String>)> {
     let manifest = path.join(MANIFEST);
+    let metadata = fs::metadata(&manifest).map_err(|error| {
+        if error.kind() == io::ErrorKind::NotFound {
+            io::Error::new(
+                io::ErrorKind::NotFound,
+                format!("{} not found; run dinah init first", manifest.display()),
+            )
+        } else {
+            friendly_io(error, "inspect project manifest")
+        }
+    })?;
+    if metadata.len() > MAX_MANIFEST_BYTES {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            format!("{} exceeds the 1 MiB manifest limit", manifest.display()),
+        ));
+    }
     let contents = fs::read_to_string(&manifest).map_err(|error| {
         if error.kind() == io::ErrorKind::NotFound {
             io::Error::new(
@@ -456,6 +474,17 @@ mod tests {
         assert_eq!(name, "sample");
         assert_eq!(version, "0.2.0");
         assert_eq!(tasks, vec!["build", "test"]);
+        fs::remove_dir_all(path).unwrap();
+    }
+
+    #[test]
+    fn rejects_manifest_larger_than_one_megabyte() {
+        let path = temp_dir();
+        let contents = format!("[project]\nname = \"sample\"\n#{}", "x".repeat(1024 * 1024));
+        fs::write(path.join("DINAH.toml"), contents).unwrap();
+        let error = read_manifest(&path).unwrap_err();
+        assert_eq!(error.kind(), std::io::ErrorKind::InvalidData);
+        assert!(error.to_string().contains("1 MiB manifest limit"));
         fs::remove_dir_all(path).unwrap();
     }
 

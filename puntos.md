@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 189
+- Completados: 197
 - En progreso: 8
-- Pendientes: 90
+- Pendientes: 82
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -236,17 +236,17 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 188 — Añadir métricas Storage (registro nombrado y explícito de contadores/gauges)
 - [x] 189 — Crear profiler hooks (medición explícita de operaciones y hook consumidor de muestras)
 - [x] 190 — Crear diagnóstico (resumen de métricas, muestras de profiling y capacidades de buffers)
-- [ ] 191 — Crear modo debug
-- [ ] 192 — Crear modo release
-- [ ] 193 — Crear exportación de métricas
-- [ ] 194 — Crear benchmarks reproducibles
+- [x] 191 — Crear modo debug (perfil de desarrollo Cargo documentado y separado del perfil optimizado; no es un modo runtime del CLI)
+- [x] 192 — Crear modo release (uso de `cargo build --release` y perfil release de benchmarks documentado)
+- [x] 193 — Crear exportación de métricas (`MetricsRegistry::export_json`, snapshot ordenado y escape de caracteres)
+- [x] 194 — Crear benchmarks reproducibles (runner de siete suites registra entorno, toolchain, commit y timestamp; resultados específicos del host)
 
 ## FASE 12 — Seguridad y robustez
 
-- [ ] 195 — Revisar superficie de ataque
-- [ ] 196 — Revisar entradas externas
-- [ ] 197 — Revisar serialización
-- [ ] 198 — Revisar FFI
+- [x] 195 — Revisar superficie de ataque (revisión inicial documentada; quedan pendientes fuzzing y auditorías formales)
+- [x] 196 — Revisar entradas externas (límite de manifiesto de 1 MiB y pruebas; parser sigue siendo subconjunto TOML)
+- [x] 197 — Revisar serialización (escape de exportación JSON y límites documentados; no implica decoder de red implementado)
+- [x] 198 — Revisar FFI (revisión de ABI escalar y header; smoke test C/link sigue pendiente)
 - [ ] 199 — Revisar memoria
 - [ ] 200 — Revisar concurrencia
 - [ ] 201 — Revisar permisos

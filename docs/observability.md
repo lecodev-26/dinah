@@ -10,7 +10,7 @@
 
 `MetricsRegistry` registra nombres de métricas por subsistema (`Runtime`, `Memory`, `Compute`, `Network`, `Storage`). `increment` mantiene contadores saturados para evitar overflow; `set_gauge` reemplaza un valor instantáneo. `snapshot` devuelve una vista ordenada y copiada. Las métricas reflejan únicamente llamadas explícitas de la aplicación: la biblioteca no infiere uso de memoria, bytes de red, duración de tareas ni operaciones de compute/storage por sí sola.
 
-Los nombres vacíos y el poisoning del mutex producen errores. Los nombres son etiquetas locales, no un esquema de telemetría versionado. No se definen cardinalidad máxima de etiquetas, agregaciones, ventanas temporales ni exportadores externos todavía.
+Los nombres vacíos y el poisoning del mutex producen errores. Los nombres son etiquetas locales, no un esquema de telemetría versionado. No se definen cardinalidad máxima de etiquetas, agregaciones ni ventanas temporales. `MetricsRegistry::export_json` exporta una instantánea ordenada como un array JSON con `subsystem`, `name`, `kind` y `value`; escapa comillas, barras y caracteres de control. Devuelve un `String` para que el llamador decida dónde escribirlo; no abre sockets ni envía datos a servicios externos.
 
 ## Profiler hooks
 
@@ -38,4 +38,4 @@ assert_eq!(report.metric_count, 1);
 # Ok::<(), Box<dyn std::error::Error>>(())
 ```
 
-La implementación es local, explícita y síncrona. No incluye exportación de métricas, modo debug/release específico ni benchmarks de observabilidad; esos puntos siguen pendientes.
+La implementación es local, explícita y síncrona. La exportación JSON es una representación de instantánea, no un protocolo remoto ni una garantía de compatibilidad de esquema entre versiones. Los perfiles de compilación debug/release son los de Cargo; los benchmarks reproducibles del repositorio usan `cargo bench` en release y guardan metadatos de entorno, pero los resultados siguen dependiendo del host y de la carga.
