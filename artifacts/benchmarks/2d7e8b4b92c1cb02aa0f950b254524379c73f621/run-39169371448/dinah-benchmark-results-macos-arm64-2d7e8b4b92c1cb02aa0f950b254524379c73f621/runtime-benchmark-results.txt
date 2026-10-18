@@ -1,0 +1,46 @@
+[1m[92m    Updating[0m crates.io index
+[1m[92m Downloading[0m crates ...
+[1m[92m  Downloaded[0m bytemuck v1.25.2
+[1m[92m  Downloaded[0m wide v1.7.1
+[1m[92m   Compiling[0m bytemuck v1.25.2
+[1m[92m   Compiling[0m dinah v0.1.0 (/Users/runner/work/dinah/dinah)
+[1m[92m   Compiling[0m wide v1.7.1
+[1m[92m    Finished[0m `bench` profile [optimized] target(s) in 11.15s
+[1m[92m     Running[0m benches/runtime.rs (target/release/deps/runtime-3e62718da8e85eb5)
+dinah runtime benchmark; build=release; statistic=median; samples=7
+Note: results are machine-specific observations, not performance guarantees.
+case=executor_noop tasks=100000 samples=7 min_total_ns=35084 median_total_ns=35208 max_total_ns=35292 ns_per_task=0.352 tasks_per_second=2840263576
+case=scheduler_immediate_noop tasks=100000 samples=7 min_total_ns=35084 median_total_ns=35208 max_total_ns=35250 ns_per_task=0.352 tasks_per_second=2840263576
+case=scheduler_queue_sequential tasks=1 samples=7 min_total_ns=41 median_total_ns=83 max_total_ns=375 ns_per_task=83.000 tasks_per_second=12048193
+case=scheduler_queue_sequential tasks=16 samples=7 min_total_ns=83 median_total_ns=83 max_total_ns=15333 ns_per_task=5.188 tasks_per_second=192771084
+case=scheduler_queue_sequential tasks=64 samples=7 min_total_ns=209 median_total_ns=250 max_total_ns=1750 ns_per_task=3.906 tasks_per_second=256000000
+case=scheduler_queue_sequential tasks=256 samples=7 min_total_ns=583 median_total_ns=625 max_total_ns=917 ns_per_task=2.441 tasks_per_second=409600000
+case=persistent_pool_startup_shutdown_2_workers tasks=1 samples=7 min_total_ns=47334 median_total_ns=105458 max_total_ns=210167 ns_per_task=105458.000 tasks_per_second=9482
+case=persistent_pool_startup_shutdown_4_workers tasks=1 samples=7 min_total_ns=108542 median_total_ns=158583 max_total_ns=313583 ns_per_task=158583.000 tasks_per_second=6306
+case=scheduler_queue_sequential_cpu_1m tasks=16 samples=7 min_total_ns=16404917 median_total_ns=16556041 max_total_ns=19908416 ns_per_task=1034752.562 tasks_per_second=966
+case=scheduler_queue_parallel_noop_2_workers tasks=16 samples=7 min_total_ns=258167 median_total_ns=277875 max_total_ns=376084 ns_per_task=17367.188 tasks_per_second=57580
+case=scheduler_queue_parallel_noop_4_workers tasks=16 samples=7 min_total_ns=263875 median_total_ns=303291 max_total_ns=352667 ns_per_task=18955.688 tasks_per_second=52755
+case=persistent_pool_noop_2_workers tasks=16 samples=7 min_total_ns=24667 median_total_ns=27166 max_total_ns=56625 ns_per_task=1697.875 tasks_per_second=588972
+case=persistent_pool_cpu_1m_2_workers tasks=16 samples=7 min_total_ns=8208292 median_total_ns=8694833 max_total_ns=11263708 ns_per_task=543427.062 tasks_per_second=1840
+case=persistent_pool_noop_4_workers tasks=16 samples=7 min_total_ns=11125 median_total_ns=15208 max_total_ns=25208 ns_per_task=950.500 tasks_per_second=1052078
+case=persistent_pool_cpu_1m_4_workers tasks=16 samples=7 min_total_ns=6115208 median_total_ns=6269292 max_total_ns=7033917 ns_per_task=391830.750 tasks_per_second=2552
+case=scheduler_queue_parallel_cpu_1m_2_workers tasks=16 samples=7 min_total_ns=9882875 median_total_ns=11731167 max_total_ns=12651292 ns_per_task=733197.938 tasks_per_second=1364
+case=scheduler_queue_parallel_cpu_1m_4_workers tasks=16 samples=7 min_total_ns=8390417 median_total_ns=8581250 max_total_ns=9029709 ns_per_task=536328.125 tasks_per_second=1865
+case=scheduler_queue_sequential_cpu_1m tasks=64 samples=7 min_total_ns=70627917 median_total_ns=74873875 max_total_ns=80493917 ns_per_task=1169904.297 tasks_per_second=855
+case=scheduler_queue_parallel_noop_2_workers tasks=64 samples=7 min_total_ns=336917 median_total_ns=372375 max_total_ns=400000 ns_per_task=5818.359 tasks_per_second=171870
+case=scheduler_queue_parallel_noop_4_workers tasks=64 samples=7 min_total_ns=300334 median_total_ns=311333 max_total_ns=318667 ns_per_task=4864.578 tasks_per_second=205568
+case=persistent_pool_noop_2_workers tasks=64 samples=7 min_total_ns=12000 median_total_ns=12459 max_total_ns=34209 ns_per_task=194.672 tasks_per_second=5136849
+case=persistent_pool_cpu_1m_2_workers tasks=64 samples=7 min_total_ns=35314333 median_total_ns=36852458 max_total_ns=38673958 ns_per_task=575819.656 tasks_per_second=1737
+case=persistent_pool_noop_4_workers tasks=64 samples=7 min_total_ns=18167 median_total_ns=28625 max_total_ns=77417 ns_per_task=447.266 tasks_per_second=2235808
+case=persistent_pool_cpu_1m_4_workers tasks=64 samples=7 min_total_ns=22136083 median_total_ns=24022625 max_total_ns=25759958 ns_per_task=375353.516 tasks_per_second=2664
+case=scheduler_queue_parallel_cpu_1m_2_workers tasks=64 samples=7 min_total_ns=35366292 median_total_ns=38653000 max_total_ns=44494791 ns_per_task=603953.125 tasks_per_second=1656
+case=scheduler_queue_parallel_cpu_1m_4_workers tasks=64 samples=7 min_total_ns=32688833 median_total_ns=33089541 max_total_ns=36932708 ns_per_task=517024.078 tasks_per_second=1934
+case=scheduler_queue_sequential_cpu_1m tasks=256 samples=7 min_total_ns=280938125 median_total_ns=290372125 max_total_ns=320450875 ns_per_task=1134266.113 tasks_per_second=882
+case=scheduler_queue_parallel_noop_2_workers tasks=256 samples=7 min_total_ns=1305833 median_total_ns=1696958 max_total_ns=2107833 ns_per_task=6628.742 tasks_per_second=150858
+case=scheduler_queue_parallel_noop_4_workers tasks=256 samples=7 min_total_ns=1104458 median_total_ns=1339708 max_total_ns=1611542 ns_per_task=5233.234 tasks_per_second=191086
+case=persistent_pool_noop_2_workers tasks=256 samples=7 min_total_ns=26917 median_total_ns=37333 max_total_ns=405000 ns_per_task=145.832 tasks_per_second=6857204
+case=persistent_pool_cpu_1m_2_workers tasks=256 samples=7 min_total_ns=138940500 median_total_ns=145599166 max_total_ns=174507542 ns_per_task=568746.742 tasks_per_second=1758
+case=persistent_pool_noop_4_workers tasks=256 samples=7 min_total_ns=43042 median_total_ns=107083 max_total_ns=140041 ns_per_task=418.293 tasks_per_second=2390669
+case=persistent_pool_cpu_1m_4_workers tasks=256 samples=7 min_total_ns=93585833 median_total_ns=96053917 max_total_ns=100597708 ns_per_task=375210.613 tasks_per_second=2665
+case=scheduler_queue_parallel_cpu_1m_2_workers tasks=256 samples=7 min_total_ns=155603833 median_total_ns=165465875 max_total_ns=174047167 ns_per_task=646351.074 tasks_per_second=1547
+case=scheduler_queue_parallel_cpu_1m_4_workers tasks=256 samples=7 min_total_ns=132081166 median_total_ns=133449750 max_total_ns=224812083 ns_per_task=521288.086 tasks_per_second=1918
