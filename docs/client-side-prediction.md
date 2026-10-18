@@ -19,7 +19,7 @@ Adoptar para la primera iteración un modelo **autoritativo de servidor + inputs
 5. Al recibir un snapshot, el cliente instala como base el estado autoritativo, descarta inputs reconocidos y vuelve a simular en orden los inputs pendientes posteriores al reconocimiento.
 6. La simulación corregida es el estado de juego. Cualquier suavizado visual debe ser una capa de presentación separada: no debe contaminar el estado usado para física, colisiones, reglas o próximos inputs.
 
-## Datos y contratos que deben fijarse antes de implementar
+## Datos y contratos conceptuales del protocolo de aplicación
 
 - **Input:** secuencia, tick o referencia temporal lógica y payload de dominio validado. Los tipos exactos pertenecen al protocolo de aplicación, no al wrapper TCP.
 - **Snapshot autoritativo:** tick del servidor, estado mínimo necesario para reanudar la simulación y última secuencia de input procesada. Debe ser posible distinguir snapshot viejo, duplicado o incompatible.
@@ -57,7 +57,7 @@ Los tests de `tests/network_prediction.rs` cubren aplicación inmediata, secuenc
 
 ## Secuencia de trabajo para puntos 128–131
 
-- **128 — Implementar prediction:** comenzar con un modelo de estado pequeño y puro, inputs explícitos y tick fijo; comparar resultado predictivo con la ejecución de referencia. No integrarlo aún con sockets. (Implementación inicial completada; faltan adaptadores de dominio/protocolo.)
+- **128 — Implementar prediction:** implementación genérica inicial completada y descrita arriba. La integración con sockets, adaptadores de dominio y un protocolo de aplicación siguen fuera del alcance actual.
 - **129 — Implementar reconciliation:** definir snapshot autoritativo y secuencia confirmada; aplicar snapshot y reejecutar solo los inputs posteriores a esa secuencia. Implementación inicial y tests de snapshots obsoletos/ACK inválido completados.
 - **130 — Implementar history/state buffers:** limitar capacidad y validar secuencias; implementación inicial rechaza overflow sin descartar inputs silenciosamente. El buffer no retiene datos sin límite.
 - **131 — Implementar deterministic resimulation:** replay repetible con la misma base/inputs mediante callback compartido y test de repetibilidad. El alcance demostrado no incluye determinismo multiplataforma.
@@ -68,7 +68,7 @@ Los tests iniciales deben ser deterministas y locales, con retrasos, duplicados,
 
 - Separación explícita entre predicción, reconciliación, historial, resimulación e interpolación visual.
 - Autoridad del servidor y confianza limitada en el cliente documentadas.
-- Protocolo conceptual de secuencias, snapshots y inputs pendientes descrito sin afirmar APIs existentes.
+- Separación conceptual entre secuencias, snapshots e inputs pendientes; la API genérica de `PredictionBuffer` existe, pero no implementa un protocolo de red ni adaptadores de dominio.
 - Determinismo, límites de memoria, errores, eventos no predecibles y políticas de corrección identificados.
 - Plan incremental para 128–131 y pruebas deterministas definido.
 

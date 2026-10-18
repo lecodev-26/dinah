@@ -36,9 +36,9 @@ Esta es contabilidad de reintentos **sobre un protocolo de aplicación**. TCP ya
 
 `tests/network_advanced.rs` cubre límites y secuencias de ACK/reintento, estimación RTT, timeout lógico, backoff, despacho Runtime, pérdida scripted, latencia por ticks y orden de entrega. `benches/network.rs` mide el coste local de registrar muestras RTT y de encolar/reconocer 64 mensajes. El runner de benchmarks ejecuta esta suite en las plataformas configuradas por CI. Las cifras, cuando se archiven, son observaciones específicas del entorno y no garantías de rendimiento.
 
-## Objetivo
+## Objetivo y estado actual
 
-Networking ofrecerá primitivas explícitas para intercambiar mensajes entre endpoints, con transporte y formato de wire separados de la lógica de aplicación. Más adelante podrá soportar simulación de latencia, pérdida, predicción y reconciliación para Simulation, pero estas capacidades no se presuponen en el diseño inicial.
+Networking separa el transporte de bytes, el formato de wire y la lógica de aplicación. Ya existen TCP bloqueante, auxiliares explícitos de fiabilidad/liveness, un simulador de entrega por ticks y predicción/reconciliación genéricas. Estos componentes no forman todavía un protocolo integrado: el encoder/decoder y framing del wire, la autenticación y los adaptadores de dominio siguen pendientes.
 
 ## Responsabilidades y fronteras
 
@@ -50,9 +50,9 @@ Networking ofrecerá primitivas explícitas para intercambiar mensajes entre end
 
 La primera implementación debe usar Rust seguro, sin `unsafe` ni dependencias externas hasta que un requisito concreto y una revisión de licencia/seguridad justifiquen una excepción.
 
-## API propuesta por capas
+## Borrador conceptual de API por capas
 
-La API pública se desarrollará incrementalmente; los nombres siguientes son propuestas de diseño, no tipos existentes todavía.
+El siguiente bloque conserva el diseño inicial como referencia arquitectónica; no es una lista fiable de tipos actualmente disponibles ni debe usarse como ejemplo de API compilable. Para el estado real, consulta «Primitivas implementadas» y «Estado y alcance actual». Las únicas afirmaciones de implementación son las descritas en esas secciones y en las firmas del código fuente.
 
 ```rust
 pub trait Transport {
@@ -219,7 +219,7 @@ El punto 121 queda definido cuando el contrato de transporte fija semántica de 
 
 ## Serialización y wire format — punto 123
 
-Este contrato fija una codificación de wire pequeña y explícita para el envelope definido en el punto 122. Es una decisión de diseño; no hay todavía encoder/decoder ni API pública implementados.
+Este contrato fija una codificación de wire pequeña y explícita para el envelope definido en el punto 122. Sigue siendo una decisión de diseño: no hay encoder/decoder ni API pública de framing implementados.
 
 ### Formato binario v1
 
