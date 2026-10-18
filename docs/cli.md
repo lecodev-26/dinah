@@ -24,7 +24,7 @@ dinah --verbose doctor [PATH]
 - `doctor` checks that the manifest is readable and the project name is present. It is a basic configuration check, not a security audit.
 - `--format text|json` chooses human-readable or JSON output for command results. `--verbose` writes a diagnostic line to stderr.
 
-The manifest reader intentionally supports only the starter subset needed by these commands. It is not a general TOML parser. Unknown options, invalid formats and malformed project names produce actionable errors and a non-zero process exit. CLI tests cover argument parsing, manifest creation/no-overwrite, metadata/task extraction, malformed/adversarial manifests, JSON control escaping, and end-to-end task, run, doctor, and benchmark output. The repository CI remains responsible for running the test suite.
+The manifest reader intentionally supports only the documented starter subset; it is not a general TOML parser. It validates section-header syntax, rejects duplicate `[project]`/`[tasks]` tables and duplicate keys, requires quoted project metadata and task descriptions, rejects malformed assignments and invalid basic-string escapes, and reports manifest line numbers for syntax errors. Unknown sections are ignored after basic assignment syntax is checked. Unknown options, invalid formats and malformed project names produce actionable errors and a non-zero process exit. CLI tests cover argument parsing, manifest creation/no-overwrite, metadata/task extraction, malformed/adversarial manifests, duplicate declarations, JSON control escaping, and end-to-end task, run, doctor, and benchmark output. The repository CI remains responsible for running the test suite.
 
 ## Perfiles de compilación y límites de entrada
 

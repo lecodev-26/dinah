@@ -12,9 +12,9 @@ Fecha de revisión: 2026-10-18. Alcance: superficie actual del crate, memoria, c
 ## 196 — Entradas externas
 
 - `DINAH.toml` se lee como UTF-8; errores de lectura se devuelven como errores de E/S. El parser soporta una sintaxis deliberadamente reducida y no es compatible con TOML completo.
-- Se aplica un límite de 1 MiB antes de cargar el contenido completo. Los nombres de proyecto vacíos o no entrecomillados se rechazan.
+- Se aplica un límite de 1 MiB antes de cargar el contenido completo. Los nombres de proyecto vacíos o no entrecomillados se rechazan. El subconjunto actual rechaza cabeceras de sección malformadas, tablas conocidas duplicadas, claves duplicadas, asignaciones sin `=` y cadenas básicas con escapes no admitidos; los errores sintácticos incluyen la línea. Las pruebas cubren estas rutas.
 - Las opciones desconocidas, formatos desconocidos y argumentos posicionales sobrantes se rechazan con salida no cero.
-- Riesgo residual: el parser básico no valida todas las reglas TOML ni normaliza rutas; no debe usarse como validador de seguridad de configuraciones complejas.
+- Riesgo residual: el parser básico no valida todas las reglas TOML, no implementa todas las reglas de escape/unicode de TOML ni normaliza rutas; no debe usarse como validador de seguridad de configuraciones complejas. Las pruebas de corpus son deterministas y acotadas, no sustituyen fuzzing coverage-guided.
 
 ## 197 — Serialización
 
@@ -117,7 +117,7 @@ Se priorizan APIs Rust seguras, límites de campo, escape JSON, detección de co
 ## Trabajo de robustez del corpus (punto 204, en progreso)
 
 - Storage ahora comprueba entradas binarias pseudoaleatorias deterministas de hasta 512 bytes, todas las truncaciones de un registro válido, mutaciones de cada byte y sufijos truncados tras registros concatenados. Los tests comprueban ausencia de panic, no que cada entrada deba ser aceptada.
-- El CLI cubre nombre vacío/no entrecomillado, campos duplicados, asignaciones fuera de secciones conocidas, comentarios junto a valores entrecomillados, límite de tamaño, escapes JSON y corpus determinista de entradas adversarias. Las pruebas de integración invocan task, run, doctor y benchmark en JSON. La semántica sigue siendo el subconjunto documentado, no TOML completo.
+- El CLI cubre nombre vacío/no entrecomillado, campos y tablas duplicados, cabeceras malformadas, asignaciones inválidas, descripciones de tarea no entrecomilladas, escapes de cadena no admitidos, asignaciones fuera de secciones conocidas, comentarios junto a valores entrecomillados, límite de tamaño, escapes JSON y corpus determinista de entradas adversarias. Las pruebas de integración invocan task, run, doctor y benchmark en JSON. La semántica sigue siendo el subconjunto documentado, no TOML completo.
 - Limitación explícita: estas pruebas son corpus determinista y no reemplazan libFuzzer, cobertura guiada, sanitizadores ni sesiones de larga duración.
 
 ## Controles automatizados de CI (2026-10-18)

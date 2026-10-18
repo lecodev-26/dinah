@@ -252,7 +252,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 201 — Revisar permisos (privilegios efectivos, create_new, sockets y recomendaciones de mínimo privilegio documentados)
 - [x] 202 — Revisar filesystem (límites, TOCTOU, symlinks, journals sin límite global y falta de sync_all documentados)
 - [x] 203 — Revisar networking (TCP bloqueante, ausencia de framing/TLS/auth/rate limit y responsabilidades del consumidor documentadas)
-- [>] 204 — Añadir fuzzing (corpus determinista acotado ampliado para replay y parser de manifiesto con entradas malformadas/comentarios/controles; sigue pendiente fuzzing coverage-guided con libFuzzer)
+- [>] 204 — Añadir fuzzing (corpus determinista acotado para replay y parser de manifiesto; el parser ahora rechaza cabeceras/assignments malformados, tablas y claves duplicadas, descripciones no entrecomilladas y escapes inválidos; sigue pendiente fuzzing coverage-guided con libFuzzer)
 - [x] 205 — Añadir tests de corrupción (longitudes excesivas, versión desconocida y opcode inválido; checksum y truncado ya cubiertos)
 - [x] 206 — Añadir tests de estrés (8 hilos × 2000 incrementos sobre el registro compartido; estrés acotado, no benchmark)
 - [x] 207 — Añadir tests de concurrencia (seis hilos operan sobre journals independientes y verifican actualizaciones/reapertura; no prueba multiwriter sobre un mismo archivo)
@@ -327,10 +327,10 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [ ] 264 — Congelar API v0.1
 - [>] 265 — Completar documentación (actualizados docs/cli.md y docs/security-review.md con límites del parser, escapes JSON y comandos cubiertos; falta completar toda la documentación pública)
 - [ ] 266 — Completar ejemplos
-- [>] 267 — Completar CLI (robustez de comentarios del manifiesto y escape JSON mejorados; ejecución de tareas y parser TOML completo siguen pendientes)
-- [>] 268 — Completar testing (añadidos corpus determinista acotado y smoke de CLI para task/run/doctor/benchmark; falta umbral de cobertura y rutas restantes)
+- [>] 267 — Completar CLI (parser del subconjunto starter endurecido con errores por línea, rechazo de tablas/claves duplicadas, cabeceras malformadas y strings/valores de tarea inválidos; ejecución de tareas y parser TOML completo siguen pendientes)
+- [>] 268 — Completar testing (añadidos tests para cabeceras y asignaciones malformadas, duplicados, escapes y descripciones de tareas; smoke CLI para task/run/doctor/benchmark; falta umbral de cobertura y rutas restantes)
 - [ ] 269 — Completar benchmarks
-- [>] 270 — Auditoría de seguridad (pruebas de escapes JSON, comentarios del manifiesto y corpus adversario acotado; no equivale a fuzzing coverage-guided ni auditoría externa)
+- [>] 270 — Auditoría de seguridad (pruebas de escapes JSON, comentarios del manifiesto, rechazo de sintaxis inválida y duplicados, y corpus adversario acotado; no equivale a fuzzing coverage-guided ni auditoría externa)
 - [x] 271 — Auditoría de dependencias (auditoría automatizada del lockfile ejecutada correctamente en CI del commit `fcde532`; no equivale a auditoría manual de licencias ni garantiza ausencia futura de vulnerabilidades)
 - [>] 272 — Revisar licencia (licencia dual y smoke test ABI en revisión; falta completar comprobación legal formal)
 - [ ] 273 — Preparar release
@@ -530,3 +530,8 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 - CI del commit `2aeee49` verificada: CI principal, benchmarks, calidad/seguridad, auditoría documental y archivo de artefactos terminaron correctamente. Se descargaron los cinco artefactos de benchmarks y se compararon los casos no-op con el baseline `3a36b73`.
 - La reutilización de la capacidad del batch no muestra una mejora consistente en los cinco runners. Se documentaron valores concretos y límites en `docs/performance-baseline.md`; se completa el punto 246, mientras 238–245 siguen abiertos por falta de evidencia representativa y de mediciones específicas.
 - Nuevo experimento en `src/runtime/scheduler.rs`: sustituir el receptor de tareas compartido (`Arc<Mutex<Receiver<_>>>`) por un canal dedicado por worker scoped. Cada lote sigue retirándose por completo de la cola antes del envío, no asigna más de una tarea a cada worker por lote, recoge resultados por índice para conservar orden FIFO y envía shutdown a todos los workers. Se reutilizan los tests existentes de concurrencia, errores y pánicos; CI y benchmarks de este nuevo cambio quedan pendientes.
+
+
+### Registro de progreso — 2026-10-18
+
+- Puntos 204, 261, 262, 265, 267, 268 y 270 avanzados: el parser de `DINAH.toml` sigue siendo deliberadamente un subconjunto, pero ahora rechaza errores sintácticos comunes, tablas conocidas/claves duplicadas y cadenas básicas con escapes no admitidos, e informa la línea del error. Se añaden cuatro grupos de pruebas de regresión y se alinean `docs/cli.md`, `docs/security-review.md` y el resumen de estado de `README.md`. No se marca como parser TOML completo, no se habilita ejecución de tareas y no se cierra fuzzing coverage-guided, umbral de cobertura, congelación API/arquitectura ni revisión legal. Checks locales de formato, diff y checklist correctos; CI del commit nuevo pendiente.

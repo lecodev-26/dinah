@@ -19,7 +19,7 @@
 
 <div align="center">
 
-**Repository snapshot:** 287 master checklist points · 213 complete · 8 in progress · 66 pending
+**Repository snapshot (2026-10-18):** 287 master checklist points · 241 complete · 25 in progress · 21 pending
 **Code snapshot:** single Rust crate · 7 benchmark suites (Runtime, Memory, Compute, ECS, Simulation, Networking, Storage) · 1 runnable example · five-platform benchmark history
 **Current milestone:** Native foundations now include safe host/POSIX capability traits and a minimal scalar C ABI. The ABI still needs a real C compiler/linker smoke test; no direct hardware access or handwritten assembly is claimed. Networking has initial blocking TCP wrappers and prediction/reconciliation/replay primitives, but its wire encoder/decoder and full protocol integration remain pending.
 
@@ -151,9 +151,9 @@ These are medians of nine samples; construction is included in the clock and ste
 
 </div>
 
-**Current work — Phases 12–13: Security and Testing.** Security reviews now cover memory, concurrency, permissions, filesystem, networking, serialization and the scalar C ABI (points 198–203), and corruption, stress, concurrency, determinism and regression tests plus the Network, Storage and Native unit suites are in place. Still open: fuzzing (204), a formal dependency audit (209), full CI, coverage and test matrices (226–229), and a real C compiler/linker smoke test for the scalar ABI. Networking remains a pre-alpha foundation with wire encoder/decoder and full protocol integration pending.
+**Current work — Phases 15–16: Total integration and v0.1 release readiness.** The 287-point checklist currently records 241 complete, 25 in progress and 21 pending. The v0.1 scope ends at point 277; points 278–287 belong to v0.2+. Remaining v0.1 work includes architecture/API review and freeze, strict definition of supported CLI behavior, broader integration/coverage, coverage-guided fuzzing, performance evidence, documentation/examples, license review and release packaging. Networking remains a pre-alpha foundation with wire encoder/decoder and full protocol integration pending.
 
-**Eight points remain in progress:**
+**Areas still in progress (see `puntos.md` for the authoritative status):**
 
 | Point | Area | Open work |
 |---|---|---|
@@ -166,7 +166,7 @@ These are medians of nine samples; construction is included in the clock and ste
 | 220 | Testing | Integration tests |
 | 225 | Testing | Benchmark suite |
 
-The CLI baseline and opt-in observability primitives are implemented; tracing, metrics and profiling still require explicit caller reporting and are not automatic. After Security and Testing, the roadmap continues through Optimization and Total integration, then the first `dinah` v0.1. These are targets, not completed capabilities. See [`roadmap.md`](roadmap.md) and the [`287-point master checklist`](puntos.md).
+The CLI baseline and opt-in observability primitives are implemented; tracing, metrics and profiling still require explicit caller reporting and are not automatic. The project is working toward the first `dinah` v0.1 release. Checklist counts measure tracked work items, not percentage of release effort; each open point must be closed with appropriate evidence. These are targets, not completed capabilities. See [`roadmap.md`](roadmap.md) and the [`287-point master checklist`](puntos.md).
 
 <div align="center">
 

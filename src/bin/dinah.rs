@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::env;
 use std::fs::{self, OpenOptions};
 use std::io::{self, Write};
@@ -229,37 +230,103 @@ fn read_manifest(path: &Path) -> io::Result<(String, String, Vec<String>)> {
             friendly_io(error, "read project manifest")
         }
     })?;
-    let mut section = String::new();
-    let mut name = None;
-    let mut version = None;
-    let mut tasks = Vec::new();
-    for source_line in contents.lines() {
-        let line = strip_manifest_comment(source_line).trim();
-        if line.starts_with('[') && line.ends_with(']') {
-            section = line[1..line.len() - 1].trim().to_owned();
-            continue;
-        }
-        if let Some((key, value)) = line.split_once('=') {
-            let key = key.trim();
-            let value = value.trim();
-            if section == "project" && key == "name" {
-                name = parse_quoted(value);
-            } else if section == "project" && key == "version" {
-                version = parse_quoted(value);
-            } else if section == "tasks" && !key.is_empty() {
-                tasks.push(key.to_owned());
-            }
-        }
-    }
-    let name = name.filter(|value| !value.is_empty()).ok_or_else(|| {
+
+    let invalid = |line: usize, reason: &str| {
         io::Error::new(
             io::ErrorKind::InvalidData,
             format!(
-                "{} must define a non-empty quoted project.name",
+                "{}:{line}: invalid starter manifest: {reason}",
                 manifest.display()
             ),
         )
-    })?;
+    };
+    let mut section = String::new();
+    let mut sections = HashSet::new();
+    let mut project_keys = HashSet::new();
+    let mut task_keys = HashSet::new();
+    let mut name = None;
+    let mut version = None;
+    let mut tasks = Vec::new();
+
+    for (line_index, source_line) in contents.lines().enumerate() {
+        let line_number = line_index + 1;
+        let line = strip_manifest_comment(source_line).trim();
+        if line.is_empty() {
+            continue;
+        }
+        if line.starts_with('[') || line.ends_with(']') {
+            if !line.starts_with('[')
+                || !line.ends_with(']')
+                || line.len() < 3
+                || line[1..line.len() - 1].contains(['[', ']'])
+            {
+                return Err(invalid(line_number, "malformed section header"));
+            }
+            section = line[1..line.len() - 1].trim().to_owned();
+            if section.is_empty() {
+                return Err(invalid(line_number, "section name must not be empty"));
+            }
+            if matches!(section.as_str(), "project" | "tasks") && !sections.insert(section.clone())
+            {
+                return Err(invalid(line_number, "duplicate section"));
+            }
+            continue;
+        }
+
+        let Some((key, value)) = line.split_once('=') else {
+            return Err(invalid(line_number, "expected key = value"));
+        };
+        let key = key.trim();
+        let value = value.trim();
+        if key.is_empty()
+            || !key
+                .bytes()
+                .all(|byte| byte.is_ascii_alphanumeric() || byte == b'_' || byte == b'-')
+        {
+            return Err(invalid(
+                line_number,
+                "keys must use letters, digits, '_' or '-'",
+            ));
+        }
+
+        if section == "project" {
+            if !project_keys.insert(key.to_owned()) {
+                return Err(invalid(line_number, "duplicate project key"));
+            }
+            match key {
+                "name" => {
+                    name = Some(parse_quoted(value).ok_or_else(|| {
+                        invalid(line_number, "project.name must be a quoted string")
+                    })?)
+                }
+                "version" => {
+                    version = Some(parse_quoted(value).ok_or_else(|| {
+                        invalid(line_number, "project.version must be a quoted string")
+                    })?)
+                }
+                _ => {}
+            }
+        } else if section == "tasks" {
+            if !task_keys.insert(key.to_owned()) {
+                return Err(invalid(line_number, "duplicate task key"));
+            }
+            parse_quoted(value)
+                .ok_or_else(|| invalid(line_number, "task descriptions must be quoted strings"))?;
+            tasks.push(key.to_owned());
+        }
+    }
+
+    let name = name
+        .filter(|value| !value.trim().is_empty())
+        .ok_or_else(|| {
+            io::Error::new(
+                io::ErrorKind::InvalidData,
+                format!(
+                    "{} must define a non-empty quoted project.name",
+                    manifest.display()
+                ),
+            )
+        })?;
     Ok((name, version.unwrap_or_else(|| "unspecified".into()), tasks))
 }
 
@@ -282,11 +349,30 @@ fn strip_manifest_comment(line: &str) -> &str {
 }
 
 fn parse_quoted(value: &str) -> Option<String> {
-    if value.len() >= 2 && value.starts_with('"') && value.ends_with('"') {
-        Some(value[1..value.len() - 1].trim().to_owned())
-    } else {
-        None
+    if value.len() < 2 || !value.starts_with('"') || !value.ends_with('"') {
+        return None;
     }
+    let inner = &value[1..value.len() - 1];
+    let mut escaped = false;
+    for character in inner.chars() {
+        if escaped {
+            if !matches!(character, '"' | '\\' | 'n' | 'r' | 't' | 'b' | 'f') {
+                return None;
+            }
+            escaped = false;
+        } else {
+            match character {
+                '\\' => escaped = true,
+                '"' => return None,
+                c if c.is_control() => return None,
+                _ => {}
+            }
+        }
+    }
+    if escaped {
+        return None;
+    }
+    Some(inner.trim().to_owned())
 }
 
 fn run(path: &Path, format: OutputFormat) -> io::Result<()> {
@@ -600,6 +686,75 @@ mod tests {
             let result = std::panic::catch_unwind(|| read_manifest(&path));
             assert!(result.is_ok(), "parser panicked for input {input:?}");
         }
+        fs::remove_dir_all(path).unwrap();
+    }
+
+    #[test]
+    fn manifest_parser_rejects_malformed_section_headers_and_assignments() {
+        let path = temp_dir();
+        for input in [
+            "[project\nname = \"sample\"",
+            "[]\n[project]\nname = \"sample\"",
+            "[project]\nname \"sample\"",
+            "[project]]\nname = \"sample\"",
+        ] {
+            fs::write(path.join("DINAH.toml"), input).unwrap();
+            let error = read_manifest(&path).unwrap_err();
+            assert_eq!(error.kind(), std::io::ErrorKind::InvalidData, "{input:?}");
+            assert!(
+                error.to_string().contains("invalid starter manifest"),
+                "{error}"
+            );
+        }
+        fs::remove_dir_all(path).unwrap();
+    }
+
+    #[test]
+    fn manifest_parser_rejects_duplicate_project_and_task_keys() {
+        let path = temp_dir();
+        for input in [
+            "[project]\nname = \"first\"\nname = \"second\"",
+            "[project]\nname = \"sample\"\n[tasks]\nbuild = \"first\"\nbuild = \"second\"",
+            "[project]\nname = \"sample\"\n[project]\nversion = \"1\"",
+        ] {
+            fs::write(path.join("DINAH.toml"), input).unwrap();
+            assert_eq!(
+                read_manifest(&path).unwrap_err().kind(),
+                std::io::ErrorKind::InvalidData
+            );
+        }
+        fs::remove_dir_all(path).unwrap();
+    }
+
+    #[test]
+    fn manifest_parser_requires_quoted_task_descriptions_and_valid_strings() {
+        let path = temp_dir();
+        for input in [
+            "[project]\nname = \"sample\"\n[tasks]\nbuild = cargo build",
+            "[project]\nname = \"sample\n",
+            "[project]\nname = \"bad\\qescape\"",
+            "[project]\nname = \"bad\"tail\"",
+        ] {
+            fs::write(path.join("DINAH.toml"), input).unwrap();
+            assert_eq!(
+                read_manifest(&path).unwrap_err().kind(),
+                std::io::ErrorKind::InvalidData
+            );
+        }
+        fs::remove_dir_all(path).unwrap();
+    }
+
+    #[test]
+    fn manifest_parser_keeps_unknown_sections_ignored_but_validates_their_syntax() {
+        let path = temp_dir();
+        fs::write(
+            path.join("DINAH.toml"),
+            "[project]\nname = \"sample\"\n[metadata]\nowner = \"team\"\n",
+        )
+        .unwrap();
+        let parsed = read_manifest(&path).unwrap();
+        assert_eq!(parsed.0, "sample");
+        assert!(parsed.2.is_empty());
         fs::remove_dir_all(path).unwrap();
     }
 
