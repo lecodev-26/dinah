@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 139
+- Completados: 147
 - En progreso: 8
-- Pendientes: 140
+- Pendientes: 132
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -173,17 +173,17 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 137 — Crear tests de red (`tests/network_advanced.rs` cubre ACK/reintentos, saturación, RTT, liveness, backoff, Runtime y escenarios deterministas de pérdida/latencia)
 - [x] 138 — Crear simulador de latencia (`NetworkSimulator` con latencia en ticks, pérdida scripted y orden estable por tick/secuencia; sin aleatoriedad implícita)
 - [x] 139 — Crear benchmarks (`benches/network.rs` mide RTT estimator y outbox; incluido en el runner multiplataforma, resultados pendientes de CI)
-- [ ] 140 — Documentar Network
+- [x] 140 — Documentar Network (estado real, límites, piezas implementadas y capacidades aún pendientes en `docs/network.md`)
 
 ## FASE 8 — Storage
 
-- [ ] 141 — Diseñar Storage API
-- [ ] 142 — Definir almacenamiento en memoria
-- [ ] 143 — Definir almacenamiento en disco
-- [ ] 144 — Crear formato interno
-- [ ] 145 — Crear persistencia
-- [ ] 146 — Crear journal
-- [ ] 147 — Crear recuperación
+- [x] 141 — Diseñar Storage API (`Storage` con `get`/`put`/`delete`, bytes opacos y errores tipados)
+- [x] 142 — Definir almacenamiento en memoria (`MemoryStore` basado en `BTreeMap`, ownership explícito y operaciones básicas)
+- [x] 143 — Definir almacenamiento en disco (`DiskStore` local con journal append-only; sin prometer durabilidad fuerte)
+- [x] 144 — Crear formato interno (registros versionados DNST, opcode y longitudes little-endian validadas)
+- [x] 145 — Crear persistencia (PUT/DELETE en journal, flush de buffers y replay al abrir)
+- [x] 146 — Crear journal (registros secuenciales; sin compactación ni coordinación entre procesos)
+- [x] 147 — Crear recuperación (replay ordenado, rechazo de registros completos inválidos y truncado de sufijo incompleto)
 - [ ] 148 — Crear checksums/integridad
 - [ ] 149 — Diseñar índices
 - [ ] 150 — Crear estructuras eficientes
@@ -505,3 +505,5 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 - 2026-10-18 — Bloque 128–131 implementado en `src/network/prediction.rs`, exportado como `dinah::network::prediction`. Incluye secuencias monotónicas, historial acotado, aplicación local inmediata, reconciliación con snapshots autoritativos, replay de inputs no confirmados y manejo de snapshots obsoletos/ACK futuros. Tests de contrato añadidos en `tests/network_prediction.rs`; CI pendiente. La transición de estado la aporta el consumidor y debe ser reproducible; no se declara determinismo universal.
 
 - 2026-10-18 — Puntos 132–139 completados en bloque: outbox fiable de nivel de aplicación, estimación RTT, política explícita de liveness/backoff, cola de trabajo Runtime, entrega por tick de Simulation, simulador determinista de pérdida/latencia, tests y benchmark de Networking. Los retries no sustituyen la fiabilidad TCP ni implican UDP; no hay reconexión automática. Formato, diff y checklist local validados; pendiente CI/auditoría/benchmarks del commit de este bloque.
+
+- 2026-10-18 — Puntos 140–147 completados: documentación de Networking actualizada y primer módulo Storage con API de bytes, MemoryStore, journal local versionado y recuperación básica. Checksums/integridad, transacciones y durabilidad fuerte siguen pendientes.

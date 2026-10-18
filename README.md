@@ -48,7 +48,7 @@ DINAH is **not a finished general-purpose runtime or a game engine**. The roadma
 
 </div>
 
-The design separates shared contracts from runtime execution, storage and compute concerns. Simulation builds on these foundations. Networking is currently a design boundary, not a completed network stack.
+The design separates shared contracts from runtime execution, storage and compute concerns. Simulation builds on these foundations. Networking has initial TCP byte-stream wrappers and bounded reliability/simulation helpers, but no completed wire encoder/decoder or production network stack. Storage now has an initial in-memory key-value API and an append-only local journal; it is not a transactional database.
 
 <div align="center">
 
@@ -98,7 +98,8 @@ The design separates shared contracts from runtime execution, storage and comput
 | **Compute** | Sequential/batched/parallel operations, reductions and `ComputePipeline` exist. SIMD remains open until a real kernel demonstrates benefit with evidence. | [`docs/compute.md`](docs/compute.md) · [`docs/simd-research.md`](docs/simd-research.md) |
 | **Data / ECS** | Generational entities, `World`, sparse-set component storage and access-conflict planning exist. Full query and parallel-system execution work remains. | [`docs/ecs.md`](docs/ecs.md) · [`docs/ecs-benchmarks.md`](docs/ecs-benchmarks.md) |
 | **Simulation** | Fixed-step clock, deterministic step contract, ECS bindings, replay tests and five bounded models: ASCII physics, scalar fluid diffusion, cellular automata, 2D raycasting and 2D flocking. Not a general-purpose physics or CFD engine. | [`docs/simulation.md`](docs/simulation.md) |
-| **Networking** | Initial blocking TCP connection and listening-endpoint wrappers exist. Wire encoder/decoder remains unimplemented; local connection lifecycle state is tracked. | [`docs/network.md`](docs/network.md) |
+| **Networking** | Initial blocking TCP wrappers, explicit reliability helpers and deterministic link simulation exist. Wire encoder/decoder remains unimplemented. | [`docs/network.md`](docs/network.md) |
+| **Storage** | Initial byte-oriented `Storage` API, in-memory store and append-only local journal with basic replay recovery. Checksums, transactions and strong crash durability remain unimplemented. | [`docs/storage.md`](docs/storage.md) |
 
 <div align="center">
 
@@ -108,7 +109,7 @@ The design separates shared contracts from runtime execution, storage and comput
 
 **Implemented foundations include:** runtime scheduling and task execution; memory buffers; sequential and parallel compute operations; generational ECS entities and sparse-set component storage; fixed-step simulation and five focused simulation models; CI, benchmark and documentation workflows.
 
-**Not yet complete:** stable public APIs, a production SIMD kernel, full parallel ECS system execution, transport and serialization for networking, storage, native/hardware integrations, CLI, observability and security roadmap phases, and the first v0.1 integration milestone. See the master checklist for exact status rather than treating planned work as shipped.
+**Not yet complete:** stable public APIs, a production SIMD kernel, full parallel ECS system execution, wire framing/serialization for networking, advanced storage integrity and transactions, native/hardware integrations, CLI, observability and security roadmap phases, and the first v0.1 integration milestone. See the master checklist for exact status rather than treating planned work as shipped.
 
 <div align="center">
 
@@ -191,7 +192,8 @@ The library API is pre-alpha and can change between commits. Start with [`docs/c
 | [Compute](docs/compute.md) · [SIMD research](docs/simd-research.md) | Compute operations and SIMD evidence |
 | [ECS](docs/ecs.md) | Entities, components and access contracts |
 | [Simulation](docs/simulation.md) | Simulation models and deterministic stepping |
-| [Networking](docs/network.md) | Initial API design and boundaries |
+| [Networking](docs/network.md) | Initial API design, TCP wrappers, reliability helpers and boundaries |
+| [Storage](docs/storage.md) | Initial byte key-value API, memory store and journal replay |
 | [Roadmap](roadmap.md) · [Master checklist](puntos.md) | Phases, milestones and status |
 | [Artifacts](artifacts/README.md) | Benchmark artifact archive |
 

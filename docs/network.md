@@ -1,6 +1,6 @@
 # dinah Networking — diseño de API y límites de v0.1
 
-Estado: implementación incremental (puntos 120–139). Los contratos de transporte, mensaje y wire format están documentados; existen una conexión TCP bloqueante, un endpoint TCP de escucha/aceptación y seguimiento local del ciclo de vida de conexión. El encoder/decoder de wire sigue sin implementarse. La predicción cliente y reconciliación genéricas están implementadas en `src/network/prediction.rs`; el diseño, los límites y el alcance están en `docs/client-side-prediction.md`. Se añadieron primitivas explícitas de reintentos a nivel de aplicación, estimación de RTT, seguimiento lógico de liveness/backoff, despacho acotado mediante Runtime y simulación de entregas por tick conectada a Simulation. No se integran automáticamente con el transporte TCP ni con un modelo de dominio concreto.
+Estado: implementación incremental (puntos 120–140). Los contratos de transporte, mensaje y wire format están documentados; existen una conexión TCP bloqueante, un endpoint TCP de escucha/aceptación y seguimiento local del ciclo de vida de conexión. El encoder/decoder de wire sigue sin implementarse. La predicción cliente y reconciliación genéricas están implementadas en `src/network/prediction.rs`; el diseño, los límites y el alcance están en `docs/client-side-prediction.md`. Se añadieron primitivas explícitas de reintentos a nivel de aplicación, estimación de RTT, seguimiento lógico de liveness/backoff, despacho acotado mediante Runtime y simulación de entregas por tick conectada a Simulation. No se integran automáticamente con el transporte TCP ni con un modelo de dominio concreto.
 
 ## Primitivas implementadas — puntos 132–139
 
@@ -259,3 +259,11 @@ El layout descrito es el wire format v1. Cambiar tamaño, orden, endianness o se
 - Lecturas parciales, EOF/truncamiento, overflow y errores de versión/tipo tienen comportamiento explícito.
 - Se prohíbe depender de layout Rust nativo o añadir dependencias sin necesidad justificada.
 - Se declara que este punto solo decide el contrato: la implementación del encoder/decoder y las pruebas de código se harán en puntos posteriores de implementación/testing.
+
+## Estado y alcance actual — punto 140
+
+Los puntos 120–139 tienen decisiones y primitivas incrementales documentadas arriba; el punto 140 cierra esta documentación de Networking sin afirmar que exista un stack completo. Hoy hay wrappers TCP bloqueantes (`Connection`, `Endpoint`), estado local de conexión, cola de trabajo explícita hacia Runtime, estimación de RTT, monitor de liveness/backoff, outbox de reintentos de aplicación, predicción/reconciliación genéricas y un simulador determinista por ticks.
+
+Siguen pendientes el framing/encoder/decoder del wire format, la autenticación, el cifrado, una política de protocolo completa, UDP, operaciones asíncronas, gestión automática de conexiones y garantías de entrega extremo a extremo. La API TCP mueve bytes y no delimita mensajes; los auxiliares de fiabilidad y simulación no se conectan automáticamente al socket. El simulador usa decisiones de pérdida suministradas por el consumidor y no modela congestión ni aleatoriedad implícita.
+
+El código de Networking evita dependencias externas y `unsafe`. Los timeouts, relojes, reintentos y el despacho se activan explícitamente desde el llamador. Esta separación permite probar cada contrato por separado y evita presentar funciones futuras como capacidades ya disponibles.
