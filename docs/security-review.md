@@ -1,6 +1,6 @@
 # DINAH — Modelo y revisión de seguridad (puntos 195–203, 205–206, 210)
 
-Fecha de revisión: 2026-10-18. Alcance: superficie actual del crate, memoria, concurrencia, permisos, filesystem, networking, entrada del CLI, journal de Storage, salida JSON y ABI C escalar. Se añadieron pruebas unitarias de transiciones de Connection, replay de Storage, regresión del ABI y una carga paralela acotada sobre journals independientes. Se amplió el corpus determinista de entradas adversarias para replay y manifiestos; no se presenta como fuzzing coverage-guided. Esta revisión estática no es una auditoría externa ni demuestra ausencia de vulnerabilidades.
+Fecha de revisión: 2026-10-19. Alcance: superficie actual del crate, memoria, concurrencia, permisos, filesystem, networking, entrada del CLI, journal de Storage, salida JSON y ABI C escalar. Se añadieron pruebas unitarias de transiciones de Connection, replay de Storage, regresión del ABI y una carga paralela acotada sobre journals independientes. Se amplió el corpus determinista de entradas adversarias para replay y manifiestos; no se presenta como fuzzing coverage-guided. Esta revisión estática no es una auditoría externa ni demuestra ausencia de vulnerabilidades.
 
 ## 195 — Superficie de ataque
 
