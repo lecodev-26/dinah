@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 147
+- Completados: 155
 - En progreso: 8
-- Pendientes: 132
+- Pendientes: 124
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -184,14 +184,14 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 145 — Crear persistencia (PUT/DELETE en journal, flush de buffers y replay al abrir)
 - [x] 146 — Crear journal (registros secuenciales; sin compactación ni coordinación entre procesos)
 - [x] 147 — Crear recuperación (replay ordenado, rechazo de registros completos inválidos y truncado de sufijo incompleto)
-- [ ] 148 — Crear checksums/integridad
-- [ ] 149 — Diseñar índices
-- [ ] 150 — Crear estructuras eficientes
-- [ ] 151 — Integrar Storage con Runtime
-- [ ] 152 — Testear corrupción
-- [ ] 153 — Testear recuperación
-- [ ] 154 — Testear concurrencia
-- [ ] 155 — Crear benchmarks
+- [x] 148 — Crear checksums/integridad (journal v2 añade CRC-32 IEEE por registro; replay rechaza checksum incorrecto y conserva lectura de registros v1)
+- [x] 149 — Diseñar índices (decisión documentada: BTreeMap como índice primario ordenado; no se añade índice secundario sin patrón de consulta y evidencia de rendimiento)
+- [x] 150 — Crear estructuras eficientes (`MemoryStore` y `DiskStore` exponen iteración ordenada por slices prestados sin clonar valores; índice BTreeMap reconstruido en replay)
+- [x] 151 — Integrar Storage con Runtime (`StorageWorkQueue` de capacidad acotada acepta Put/Delete y despacha FIFO mediante Scheduler en el hilo llamador)
+- [x] 152 — Testear corrupción (prueba de alteración de payload detectada por CRC-32 y rechazo de registros completos corruptos)
+- [x] 153 — Testear recuperación (sufijo truncado incluido checksum parcial, truncado previo a nuevos appends y compatibilidad de replay v1)
+- [x] 154 — Testear concurrencia (prueba paralela con journals independientes; no implica ni promete coordinación concurrente sobre un mismo archivo)
+- [x] 155 — Crear benchmarks (`benches/storage.rs` mide operaciones agrupadas de MemoryStore y escaneo ordenado; añadido a CI benchmark multiplataforma y archivado)
 - [ ] 156 — Documentar Storage
 
 ## FASE 9 — Native / Hardware

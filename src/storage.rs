@@ -2,8 +2,9 @@
 //!
 //! The API stores opaque byte values and does not deserialize application types.
 //! `MemoryStore` is process-local; `DiskStore` appends a versioned journal and
-//! replays complete records when opened. Checksums, concurrent access, compaction,
-//! indexing and crash-durability guarantees are deliberately separate concerns.
+//! replays complete records when opened. New records use CRC-32 integrity checks;
+//! legacy v1 records remain readable. Concurrent access, compaction and strong
+//! crash-durability guarantees are deliberately separate concerns.
 
 use std::collections::BTreeMap;
 use std::fmt;
@@ -12,7 +13,9 @@ use std::io::{self, Read, Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
 
 const MAGIC: &[u8; 4] = b"DNST";
-const FORMAT_VERSION: u8 = 1;
+const FORMAT_VERSION: u8 = 2;
+const LEGACY_FORMAT_VERSION: u8 = 1;
+const CHECKSUM_LEN: usize = 4;
 const OP_PUT: u8 = 1;
 const OP_DELETE: u8 = 2;
 const HEADER_LEN: usize = 14;
@@ -80,6 +83,13 @@ impl MemoryStore {
     pub fn is_empty(&self) -> bool {
         self.entries.is_empty()
     }
+    /// Iterates over borrowed key/value slices in deterministic bytewise key order.
+    /// This avoids cloning values for scans; references cannot outlive this store borrow.
+    pub fn iter(&self) -> impl Iterator<Item = (&[u8], &[u8])> {
+        self.entries
+            .iter()
+            .map(|(key, value)| (key.as_slice(), value.as_slice()))
+    }
 }
 impl Storage for MemoryStore {
     fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
@@ -143,6 +153,13 @@ impl DiskStore {
     pub fn is_empty(&self) -> bool {
         self.entries.is_empty()
     }
+    /// Iterates over borrowed key/value slices in deterministic bytewise key order.
+    /// This scans the recovered in-memory index and does not read the journal again.
+    pub fn iter(&self) -> impl Iterator<Item = (&[u8], &[u8])> {
+        self.entries
+            .iter()
+            .map(|(key, value)| (key.as_slice(), value.as_slice()))
+    }
     fn append(&mut self, operation: u8, key: &[u8], value: &[u8]) -> Result<(), StorageError> {
         validate_field(key)?;
         validate_field(value)?;
@@ -156,6 +173,8 @@ impl DiskStore {
         record.extend_from_slice(&value_len.to_le_bytes());
         record.extend_from_slice(key);
         record.extend_from_slice(value);
+        let checksum = crc32(&record[4..]);
+        record.extend_from_slice(&checksum.to_le_bytes());
         self.file.write_all(&record)?;
         self.file.flush()?;
         Ok(())
@@ -194,7 +213,7 @@ fn replay(bytes: &[u8]) -> Result<(Entries, usize), StorageError> {
     let mut entries = BTreeMap::new();
     let mut cursor = 0usize;
     while cursor < bytes.len() {
-        // Ignore an incomplete trailing header or body, as it can be a torn append.
+        // A short trailing header is a torn append, not a complete record.
         if bytes.len() - cursor < HEADER_LEN {
             break;
         }
@@ -202,7 +221,8 @@ fn replay(bytes: &[u8]) -> Result<(Entries, usize), StorageError> {
         if &header[..4] != MAGIC {
             return Err(StorageError::InvalidFormat("bad record magic"));
         }
-        if header[4] != FORMAT_VERSION {
+        let version = header[4];
+        if version != LEGACY_FORMAT_VERSION && version != FORMAT_VERSION {
             return Err(StorageError::InvalidFormat("unsupported version"));
         }
         let operation = header[5];
@@ -220,17 +240,35 @@ fn replay(bytes: &[u8]) -> Result<(Entries, usize), StorageError> {
                 "delete record contains a value",
             ));
         }
-        let record_len = HEADER_LEN
+        let payload_len = HEADER_LEN
             .checked_add(key_len)
             .and_then(|n| n.checked_add(value_len))
+            .ok_or(StorageError::InvalidFormat("record length overflow"))?;
+        let record_len = payload_len
+            .checked_add(if version == FORMAT_VERSION {
+                CHECKSUM_LEN
+            } else {
+                0
+            })
             .ok_or(StorageError::InvalidFormat("record length overflow"))?;
         if bytes.len() - cursor < record_len {
             break;
         }
+        if version == FORMAT_VERSION {
+            let expected = u32::from_le_bytes(
+                bytes[cursor + payload_len..cursor + record_len]
+                    .try_into()
+                    .expect("fixed checksum"),
+            );
+            let actual = crc32(&bytes[cursor + 4..cursor + payload_len]);
+            if actual != expected {
+                return Err(StorageError::InvalidFormat("record checksum mismatch"));
+            }
+        }
         let key_start = cursor + HEADER_LEN;
         let value_start = key_start + key_len;
         let key = bytes[key_start..value_start].to_vec();
-        let value = bytes[value_start..cursor + record_len].to_vec();
+        let value = bytes[value_start..cursor + payload_len].to_vec();
         match operation {
             OP_PUT => {
                 entries.insert(key, value);
@@ -244,3 +282,22 @@ fn replay(bytes: &[u8]) -> Result<(Entries, usize), StorageError> {
     }
     Ok((entries, cursor))
 }
+
+/// IEEE CRC-32. Detects accidental corruption; it is not a cryptographic MAC.
+fn crc32(bytes: &[u8]) -> u32 {
+    let mut crc = !0_u32;
+    for byte in bytes {
+        crc ^= u32::from(*byte);
+        for _ in 0..8 {
+            crc = if crc & 1 == 1 {
+                (crc >> 1) ^ 0xEDB8_8320
+            } else {
+                crc >> 1
+            };
+        }
+    }
+    !crc
+}
+
+/// Explicit Runtime bridge for queued storage mutations.
+pub mod runtime;

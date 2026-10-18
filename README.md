@@ -16,8 +16,8 @@
 
 <div align="center">
 
-**Repository snapshot:** 287 master checklist points · 139 complete · 8 in progress · 140 pending
-**Code snapshot:** single Rust crate · 6 benchmark suites (Runtime, Memory, Compute, ECS, Simulation, Networking) · 1 runnable example · five-platform benchmark history
+**Repository snapshot:** 287 master checklist points · 147 complete · 8 in progress · 132 pending
+**Code snapshot:** single Rust crate · 7 benchmark suites (Runtime, Memory, Compute, ECS, Simulation, Networking, Storage) · 1 runnable example · five-platform benchmark history
 **Current milestone:** Networking contracts and v1 wire format documented; initial blocking TCP connection and endpoint wrappers implemented; local connection lifecycle tracking and generic prediction/reconciliation/replay primitives implemented; wire encoder/decoder and full protocol/domain integration remain pending; retry and liveness policies are explicit primitives, not automatic transport behavior.
 
 </div>
@@ -48,7 +48,7 @@ DINAH is **not a finished general-purpose runtime or a game engine**. The roadma
 
 </div>
 
-The design separates shared contracts from runtime execution, storage and compute concerns. Simulation builds on these foundations. Networking has initial TCP byte-stream wrappers and bounded reliability/simulation helpers, but no completed wire encoder/decoder or production network stack. Storage now has an initial in-memory key-value API and an append-only local journal; it is not a transactional database.
+The design separates shared contracts from runtime execution, storage and compute concerns. Simulation builds on these foundations. Networking has initial TCP byte-stream wrappers and bounded reliability/simulation helpers, but no completed wire encoder/decoder or production network stack. Storage now has an in-memory key-value API, append-only journal with CRC-32 checksums and legacy v1 replay, ordered borrowed iteration, and an explicit bounded Runtime mutation queue; it is not a transactional database.
 
 <div align="center">
 
@@ -99,7 +99,7 @@ The design separates shared contracts from runtime execution, storage and comput
 | **Data / ECS** | Generational entities, `World`, sparse-set component storage and access-conflict planning exist. Full query and parallel-system execution work remains. | [`docs/ecs.md`](docs/ecs.md) · [`docs/ecs-benchmarks.md`](docs/ecs-benchmarks.md) |
 | **Simulation** | Fixed-step clock, deterministic step contract, ECS bindings, replay tests and five bounded models: ASCII physics, scalar fluid diffusion, cellular automata, 2D raycasting and 2D flocking. Not a general-purpose physics or CFD engine. | [`docs/simulation.md`](docs/simulation.md) |
 | **Networking** | Initial blocking TCP wrappers, explicit reliability helpers and deterministic link simulation exist. Wire encoder/decoder remains unimplemented. | [`docs/network.md`](docs/network.md) |
-| **Storage** | Initial byte-oriented `Storage` API, in-memory store and append-only local journal with basic replay recovery. Checksums, transactions and strong crash durability remain unimplemented. | [`docs/storage.md`](docs/storage.md) |
+| **Storage** | Byte-oriented API, in-memory store, append-only journal with CRC-32 on v2 records and legacy v1 replay, ordered borrowed scans, and explicit bounded Runtime mutation dispatch. Transactions, secondary indexes, compaction and strong crash durability remain unimplemented. | [`docs/storage.md`](docs/storage.md) |
 
 <div align="center">
 

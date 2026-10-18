@@ -67,3 +67,82 @@ fn disk_store_rejects_malformed_complete_records() {
     assert!(DiskStore::open(&path).is_err());
     fs::remove_file(path).unwrap();
 }
+
+#[test]
+fn disk_store_detects_payload_corruption_with_checksum() {
+    let path = temp_path();
+    {
+        let mut store = DiskStore::open(&path).unwrap();
+        store.put(b"key", b"value").unwrap();
+    }
+    let mut bytes = fs::read(&path).unwrap();
+    // v2 record: 14-byte header, then key and value, then CRC-32.
+    bytes[15] ^= 0x20;
+    fs::write(&path, bytes).unwrap();
+    assert!(DiskStore::open(&path)
+        .unwrap_err()
+        .to_string()
+        .contains("checksum"));
+    fs::remove_file(path).unwrap();
+}
+
+#[test]
+fn disk_store_recovers_a_torn_checksum_suffix_and_truncates_it() {
+    let path = temp_path();
+    {
+        let mut store = DiskStore::open(&path).unwrap();
+        store.put(b"safe", b"record").unwrap();
+    }
+    let original_len = fs::metadata(&path).unwrap().len();
+    let mut bytes = fs::read(&path).unwrap();
+    bytes.truncate(bytes.len() - 2);
+    fs::write(&path, bytes).unwrap();
+    {
+        let mut store = DiskStore::open(&path).unwrap();
+        assert_eq!(
+            store.get(b"safe"),
+            None,
+            "record with a torn checksum is not applied"
+        );
+        store.put(b"new", b"complete").unwrap();
+    }
+    assert!(fs::metadata(&path).unwrap().len() > original_len - 2);
+    let store = DiskStore::open(&path).unwrap();
+    assert_eq!(store.get(b"new"), Some(b"complete".to_vec()));
+    fs::remove_file(path).unwrap();
+}
+
+#[test]
+fn disk_store_reads_legacy_v1_records() {
+    let path = temp_path();
+    // Historical v1: magic, version/op, two little-endian lengths, key, value; no checksum.
+    let mut record = b"DNST\x01\x01".to_vec();
+    record.extend_from_slice(&1_u32.to_le_bytes());
+    record.extend_from_slice(&3_u32.to_le_bytes());
+    record.extend_from_slice(b"kold");
+    fs::write(&path, record).unwrap();
+    let mut store = DiskStore::open(&path).unwrap();
+    assert_eq!(store.get(b"k"), Some(b"old".to_vec()));
+    store.put(b"k", b"new").unwrap();
+    drop(store);
+    let store = DiskStore::open(&path).unwrap();
+    assert_eq!(store.get(b"k"), Some(b"new".to_vec()));
+    fs::remove_file(path).unwrap();
+}
+
+#[test]
+fn memory_store_iterates_in_key_order_without_changing_values() {
+    let mut store = MemoryStore::new();
+    store.put(b"z", b"last").unwrap();
+    store.put(b"a", b"first").unwrap();
+    store.put(b"m", b"middle").unwrap();
+    let rows: Vec<_> = store.iter().collect();
+    assert_eq!(
+        rows,
+        vec![
+            (b"a".as_slice(), b"first".as_slice()),
+            (b"m", b"middle"),
+            (b"z", b"last")
+        ]
+    );
+}

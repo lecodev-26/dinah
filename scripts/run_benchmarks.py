@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-BENCHMARKS = ("runtime", "memory", "compute", "ecs", "simulation", "network")
+BENCHMARKS = ("runtime", "memory", "compute", "ecs", "simulation", "network", "storage")
 
 
 def run(command: list[str], *, output: Path | None = None) -> str:

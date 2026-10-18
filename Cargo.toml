@@ -49,3 +49,9 @@ name = "network"
 path = "benches/network.rs"
 harness = false
 test = false
+
+[[bench]]
+name = "storage"
+path = "benches/storage.rs"
+harness = false
+test = false
