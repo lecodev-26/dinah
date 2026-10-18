@@ -11,7 +11,6 @@ use dinah::runtime::Scheduler;
 use dinah::simulation::Simulation;
 use dinah::storage::runtime::{StorageCommand, StorageWorkQueue};
 use dinah::storage::{DiskStore, MemoryStore, Storage};
-use std::io::Read;
 use std::net::Shutdown;
 use std::num::NonZeroUsize;
 use std::thread;
