@@ -5,8 +5,8 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 216
-- En progreso: 14
+- Completados: 218
+- En progreso: 12
 - Pendientes: 57
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
@@ -279,8 +279,8 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [>] 225 — Benchmark suite (suite release reproducible de Runtime, Memory, Compute, ECS y Simulation en cinco runners; faltan suites de Networking, Storage y Native cuando esos módulos existan)
 - [x] 226 — CI completa (CI principal, auditoría documental, archivo de artefactos y workflow de calidad/seguridad —auditoría de dependencias, smoke test C/link y LCOV— completados correctamente en `fcde532`; la matriz Linux queda separada en 228–229)
 - [>] 227 — Coverage (generación y subida del artefacto LCOV confirmadas en CI de `fcde532`; falta establecer y justificar un umbral de cobertura)
-- [>] 228 — Test matrix Linux (añadida matriz de pruebas/Clippy/rustdoc para Linux x86-64 y ARM64 en `.github/workflows/ci.yml`; pendiente validar ambos runners en CI)
-- [>] 229 — Test matrix arquitecturas soportadas (la matriz explícita de tests/compilación cubre Linux x86-64 y ARM64; Windows/macOS siguen cubiertos por benchmarks, no por esta matriz de tests; pendiente validar CI)
+- [x] 228 — Test matrix Linux (matriz de formato, tests, Clippy y rustdoc validada correctamente en Linux x86-64 y ARM64 por CI del commit `7a5e076`)
+- [x] 229 — Test matrix arquitecturas soportadas (matriz de tests/Clippy/rustdoc validada en Linux x86-64 y ARM64; Windows/macOS siguen cubiertos por benchmarks, no por esta matriz de tests)
 
 ## FASE 14 — Optimización
 
@@ -514,3 +514,5 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 - El commit `fcde532` pasó `dinah CI`, `dinah artifact archive` y `dinah quality and security`. El workflow de calidad confirmó `cargo audit`, el consumidor C compilado/enlazado/ejecutado y la generación/subida del artefacto LCOV. Esto permite cerrar 209, 226 y 271, y actualizar la evidencia de 161/198; no significa que la auditoría detecte o descarte todos los riesgos, ni fija un umbral de cobertura.
 - Se añadió a `.github/workflows/ci.yml` una matriz Linux x86-64/ARM64 con formato, tests de librería e integración, Clippy y rustdoc. Los puntos 228–229 permanecen en progreso hasta que la nueva matriz pase CI; Windows/macOS no se presentan como cubiertos por esta matriz de tests.
 - El punto 270 sigue en progreso porque los controles automatizados no sustituyen una auditoría externa. El punto 272 sigue en progreso hasta completar una revisión formal de licencias.
+
+- 2026-10-18 — CI de `7a5e076` verificada: pasaron los cuatro jobs de `dinah CI`, incluidos los runners `ubuntu-latest` (x86-64) y `ubuntu-24.04-arm` (ARM64), además del workflow de archivo de artefactos. Se cierran los puntos 228–229; la matriz de pruebas explícita sigue limitada a Linux.
