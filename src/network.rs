@@ -9,6 +9,40 @@ use std::io::{self, Read, Write};
 use std::net::{Shutdown, SocketAddr, TcpListener, TcpStream};
 use std::time::Duration;
 
+/// Locally observed lifecycle state of a TCP connection.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ConnectionState {
+    /// Both directions remain open.
+    Open,
+    /// The receive direction has reached EOF or was shut down locally.
+    ReadClosed,
+    /// The send direction was shut down locally.
+    WriteClosed,
+    /// Both directions are closed.
+    Closed,
+}
+
+impl ConnectionState {
+    fn read_closed(self) -> bool {
+        matches!(self, Self::ReadClosed | Self::Closed)
+    }
+    fn write_closed(self) -> bool {
+        matches!(self, Self::WriteClosed | Self::Closed)
+    }
+    fn with_read_closed(self) -> Self {
+        match self {
+            Self::Open | Self::ReadClosed => Self::ReadClosed,
+            Self::WriteClosed | Self::Closed => Self::Closed,
+        }
+    }
+    fn with_write_closed(self) -> Self {
+        match self {
+            Self::Open | Self::WriteClosed => Self::WriteClosed,
+            Self::ReadClosed | Self::Closed => Self::Closed,
+        }
+    }
+}
+
 /// Errors returned by [`Connection`] operations.
 #[derive(Debug)]
 pub enum ConnectionError {
@@ -97,6 +131,7 @@ impl Endpoint {
 #[derive(Debug)]
 pub struct Connection {
     stream: TcpStream,
+    state: ConnectionState,
 }
 
 impl Connection {
@@ -105,6 +140,7 @@ impl Connection {
     pub fn connect(address: SocketAddr) -> Result<Self, ConnectionError> {
         Ok(Self {
             stream: TcpStream::connect(address)?,
+            state: ConnectionState::Open,
         })
     }
 
@@ -122,12 +158,21 @@ impl Connection {
         }
         Ok(Self {
             stream: TcpStream::connect_timeout(&address, timeout)?,
+            state: ConnectionState::Open,
         })
     }
 
     /// Wraps an already established TCP stream, such as one accepted by a listener.
     pub fn from_tcp_stream(stream: TcpStream) -> Self {
-        Self { stream }
+        Self {
+            stream,
+            state: ConnectionState::Open,
+        }
+    }
+
+    /// Returns the locally observed lifecycle state.
+    pub fn state(&self) -> ConnectionState {
+        self.state
     }
 
     /// Returns the local socket address reported by the operating system.
@@ -154,7 +199,14 @@ impl Connection {
 
     /// Reads some bytes. Reads may be partial; `Ok(0)` on a non-empty buffer is EOF.
     pub fn read(&mut self, buffer: &mut [u8]) -> Result<usize, ConnectionError> {
-        Ok(self.stream.read(buffer)?)
+        if self.state.read_closed() || buffer.is_empty() {
+            return Ok(0);
+        }
+        let count = self.stream.read(buffer)?;
+        if count == 0 {
+            self.state = self.state.with_read_closed();
+        }
+        Ok(count)
     }
 
     /// Writes all bytes or returns the underlying I/O error.
@@ -162,13 +214,24 @@ impl Connection {
     /// If an error occurs after a prefix was written, stream state may be
     /// uncertain. This method does not restart the whole slice automatically.
     pub fn write_all(&mut self, bytes: &[u8]) -> Result<(), ConnectionError> {
+        if self.state.write_closed() {
+            return Err(ConnectionError::Io(io::Error::new(
+                io::ErrorKind::BrokenPipe,
+                "connection send direction is closed",
+            )));
+        }
         self.stream.write_all(bytes)?;
         Ok(())
     }
 
     /// Explicitly shuts down the selected stream directions.
-    pub fn shutdown(&self, how: Shutdown) -> Result<(), ConnectionError> {
+    pub fn shutdown(&mut self, how: Shutdown) -> Result<(), ConnectionError> {
         self.stream.shutdown(how)?;
+        self.state = match how {
+            Shutdown::Read => self.state.with_read_closed(),
+            Shutdown::Write => self.state.with_write_closed(),
+            Shutdown::Both => ConnectionState::Closed,
+        };
         Ok(())
     }
 }

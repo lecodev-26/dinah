@@ -12,13 +12,13 @@
 
 </div>
 
-> **Version status (updated 2026-10-14):** DINAH is pre-alpha and remains in active development. Core, Runtime, Memory, Compute and ECS foundations exist; Simulation's first five bounded models are implemented. Phase 7 (Networking) has completed points 120–125: API boundaries, the blocking byte-stream transport contract, logical message envelope and versioned binary wire format are documented; initial TCP connection and listening-endpoint wrappers are implemented. The wire encoder/decoder and connection-state management are not implemented yet. A green CI gate validates the checks that ran; it is not a claim of API stability, release readiness or performance guarantees.
+> **Version status (updated 2026-10-14):** DINAH is pre-alpha and remains in active development. Core, Runtime, Memory, Compute and ECS foundations exist; Simulation's first five bounded models are implemented. Phase 7 (Networking) has completed points 120–126: API boundaries, the blocking byte-stream transport contract, logical message envelope and versioned binary wire format are documented; initial TCP connection and listening-endpoint wrappers are implemented. The wire encoder/decoder remains unimplemented; local connection lifecycle state is tracked. A green CI gate validates the checks that ran; it is not a claim of API stability, release readiness or performance guarantees.
 
 <div align="center">
 
-**Repository snapshot:** 287 master checklist points · 125 complete · 8 in progress · 154 pending
+**Repository snapshot:** 287 master checklist points · 126 complete · 8 in progress · 153 pending
 **Code snapshot:** single Rust crate · 5 benchmark suites (Runtime, Memory, Compute, ECS, Simulation) · 1 runnable example · five-platform benchmark history
-**Current milestone:** Networking contracts and v1 wire format documented; initial blocking TCP connection and endpoint wrappers implemented; connection-state management is next.
+**Current milestone:** Networking contracts and v1 wire format documented; initial blocking TCP connection and endpoint wrappers implemented; local connection lifecycle tracking is implemented; wire encoder/decoder remains pending.
 
 </div>
 
@@ -98,7 +98,7 @@ The design separates shared contracts from runtime execution, storage and comput
 | **Compute** | Sequential/batched/parallel operations, reductions and `ComputePipeline` exist. SIMD remains open until a real kernel demonstrates benefit with evidence. | [`docs/compute.md`](docs/compute.md) · [`docs/simd-research.md`](docs/simd-research.md) |
 | **Data / ECS** | Generational entities, `World`, sparse-set component storage and access-conflict planning exist. Full query and parallel-system execution work remains. | [`docs/ecs.md`](docs/ecs.md) · [`docs/ecs-benchmarks.md`](docs/ecs-benchmarks.md) |
 | **Simulation** | Fixed-step clock, deterministic step contract, ECS bindings, replay tests and five bounded models: ASCII physics, scalar fluid diffusion, cellular automata, 2D raycasting and 2D flocking. Not a general-purpose physics or CFD engine. | [`docs/simulation.md`](docs/simulation.md) |
-| **Networking** | Initial blocking TCP connection and listening-endpoint wrappers exist. Wire encoder/decoder and connection-state management remain unimplemented. | [`docs/network.md`](docs/network.md) |
+| **Networking** | Initial blocking TCP connection and listening-endpoint wrappers exist. Wire encoder/decoder remains unimplemented; local connection lifecycle state is tracked. | [`docs/network.md`](docs/network.md) |
 
 <div align="center">
 
@@ -146,7 +146,7 @@ These are medians of nine samples; construction is included in the clock and ste
 
 </div>
 
-**Current phase — Phase 7: Networking.** Points 120–125 are complete: API boundaries, blocking byte-stream transport contract, logical message envelope, versioned binary wire format, and initial TCP connection/listening-endpoint wrappers. The next milestone is **126 — connection-state management**. Phase 7 spans points 120–140 and will be implemented incrementally.
+**Current phase — Phase 7: Networking.** Points 120–126 are complete: API boundaries, blocking byte-stream transport contract, logical message envelope, versioned binary wire format, and initial TCP connection/listening-endpoint wrappers. The next milestone is **127 — investigate client-side prediction**. Phase 7 spans points 120–140 and will be implemented incrementally.
 
 **Eight points remain in progress:**
 

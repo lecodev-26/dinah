@@ -1,6 +1,6 @@
 # dinah Networking — diseño de API y límites de v0.1
 
-Estado: implementación incremental (puntos 120–125). Los contratos de transporte, mensaje y wire format están documentados; existen una conexión TCP bloqueante y un endpoint TCP de escucha/aceptación. El encoder/decoder de wire y la gestión de estado no están implementados todavía.
+Estado: implementación incremental (puntos 120–126). Los contratos de transporte, mensaje y wire format están documentados; existen una conexión TCP bloqueante y un endpoint TCP de escucha/aceptación. El encoder/decoder de wire y la gestión de estado no están implementados todavía.
 
 ## Objetivo
 

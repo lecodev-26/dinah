@@ -1,5 +1,5 @@
 //! Public contract tests for blocking TCP connections.
-use dinah::network::{Connection, ConnectionError, Endpoint};
+use dinah::network::{Connection, ConnectionError, ConnectionState, Endpoint};
 use std::io::{Read, Write};
 use std::net::{Shutdown, TcpListener, TcpStream};
 use std::thread;
@@ -23,6 +23,7 @@ fn connection_exchanges_bytes_and_reports_eof() {
     let mut connection = Connection::connect_timeout(address, Duration::from_secs(2))
         .expect("connect to local listener");
     assert_eq!(connection.peer_addr().expect("peer address"), address);
+    assert_eq!(connection.state(), ConnectionState::Open);
     connection.write_all(b"ping").expect("write request");
     let mut response = [0_u8; 4];
     let mut read = 0;
@@ -35,6 +36,7 @@ fn connection_exchanges_bytes_and_reports_eof() {
     }
     assert_eq!(&response, b"pong");
     assert_eq!(connection.read(&mut [0_u8; 1]).expect("observe EOF"), 0);
+    assert_eq!(connection.state(), ConnectionState::ReadClosed);
     server.join().expect("server thread completes");
 }
 
@@ -56,7 +58,7 @@ fn existing_tcp_stream_can_be_wrapped_and_closed_explicitly() {
         let mut byte = [0_u8; 1];
         assert_eq!(stream.read(&mut byte).expect("read shutdown EOF"), 0);
     });
-    let connection =
+    let mut connection =
         Connection::from_tcp_stream(TcpStream::connect(address).expect("connect client"));
     assert_eq!(
         connection.local_addr().expect("local address").ip(),
@@ -65,6 +67,10 @@ fn existing_tcp_stream_can_be_wrapped_and_closed_explicitly() {
     connection
         .shutdown(Shutdown::Write)
         .expect("explicit write shutdown");
+    assert_eq!(connection.state(), ConnectionState::WriteClosed);
+    assert!(
+        matches!(connection.write_all(b"x"), Err(ConnectionError::Io(ref e)) if e.kind() == std::io::ErrorKind::BrokenPipe)
+    );
     server.join().expect("server thread completes");
 }
 
