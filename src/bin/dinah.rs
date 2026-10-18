@@ -401,7 +401,7 @@ fn parse_quoted(value: &str) -> Option<String> {
             decoded.push(character);
         }
     }
-    Some(decoded.trim().to_owned())
+    Some(decoded)
 }
 
 fn task_command(path: &Path, requested: &str) -> io::Result<String> {
