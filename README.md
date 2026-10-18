@@ -9,7 +9,7 @@
 
 [![CI](https://github.com/lecodev-26/dinah/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/lecodev-26/dinah/actions/workflows/ci.yml) [![Benchmarks](https://github.com/lecodev-26/dinah/actions/workflows/benchmarks.yml/badge.svg?branch=main)](https://github.com/lecodev-26/dinah/actions/workflows/benchmarks.yml) [![Documentation audit](https://github.com/lecodev-26/dinah/actions/workflows/documentation-audit.yml/badge.svg?branch=main)](https://github.com/lecodev-26/dinah/actions/workflows/documentation-audit.yml) [![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-e87524.svg)](https://github.com/lecodev-26/dinah/blob/main/LICENSE-MIT)
 
-<a href="roadmap.md"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/dark/b-rel.svg"><img src="assets/light/b-rel.svg" alt="Roadmap" width="104"></picture></a>&nbsp;<a href="puntos.md"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/dark/b-sec.svg"><img src="assets/light/b-sec.svg" alt="Master checklist" width="154"></picture></a>&nbsp;<a href="docs"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/dark/b-docs.svg"><img src="assets/light/b-docs.svg" alt="Documentation" width="151"></picture></a>&nbsp;<a href="artifacts/README.md"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/dark/b-arena.svg"><img src="assets/light/b-arena.svg" alt="Benchmark artifacts" width="171"></picture></a>
+<a href="roadmap.md"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/dark/b-rel.svg"><img src="assets/light/b-rel.svg" alt="Roadmap" width="104"></picture></a>&nbsp;<a href="puntos.md"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/dark/b-sec.svg"><img src="assets/light/b-sec.svg" alt="Master checklist" width="154"></picture></a>&nbsp;<a href="docs/index.md"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/dark/b-docs.svg"><img src="assets/light/b-docs.svg" alt="Documentation" width="151"></picture></a>&nbsp;<a href="artifacts/README.md"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/dark/b-arena.svg"><img src="assets/light/b-arena.svg" alt="Benchmark artifacts" width="171"></picture></a>
 
 **A modular Rust foundation for runtime execution, compute, data-oriented systems and simulation.**<br>A plain-language overview of DINAH's architecture, current implementation and roadmap.
 
@@ -190,6 +190,7 @@ The library API is pre-alpha and can change between commits. Start with [`docs/c
 
 | Document | Covers |
 |---|---|
+| [Documentation index](docs/index.md) | Guided navigation to API guides, engineering evidence and runnable examples |
 | [Core](docs/core.md) | Shared types and contracts |
 | [Runtime](docs/runtime.md) | Scheduling, tasks and execution |
 | [Memory](docs/memory.md) · [Memory model](docs/memory-model.md) | Buffer and storage foundations |
