@@ -69,3 +69,22 @@ The five runner artifacts for `4f223d7` were archived under `artifacts/benchmark
 For transparency, the observed 256-no-op-task scheduler/prototype lifecycle ratios from those artifacts were 0.828×/1.074× (Linux ARM64, 2/4 workers), 1.176×/1.259× (Linux x86-64), 0.963×/1.229× (macOS ARM64), 0.597×/1.042× (macOS x86-64), and 4.320×/5.347× (Windows x86-64). They are medians of three process-level medians, not confidence intervals. The wide runner-dependent spread, plus the discovered batch-assignment mismatch, prevents a general performance conclusion; the values are retained as historical observations only.
 
 The next benchmark revision replaces the shared receiver with one dedicated channel per worker. Each batch sends at most one task to each selected worker and waits for every task in that batch before sending the next. This fixes the task-assignment flaw in the comparison harness. The prototype still differs from `Scheduler::run_parallel` in its queue/dispatch implementation, task return/error semantics, panic behavior, and collection/order of results. The revised measurements must be reviewed before updating conclusions. No production scheduler code or public API is changed by this experiment.
+
+## Per-worker channel harness results (commit `735ee2c`)
+
+CI passed for the harness correction and its five runner artifacts were inspected. The comparison now assigns at most one job to each selected worker per batch through dedicated channels and waits at each batch boundary. For 256 no-op tasks, the median-of-three-process-medians results were:
+
+| Runner | Workers | Scheduler (ns) | Pool lifecycle (ns) | Ratio |
+|---|---:|---:|---:|---:|
+| Linux ARM64 | 2 | 1,925,648 | 1,936,594 | 0.994× |
+| Linux ARM64 | 4 | 1,421,945 | 1,486,218 | 0.957× |
+| Linux x86-64 | 2 | 2,305,416 | 2,262,502 | 1.019× |
+| Linux x86-64 | 4 | 1,634,788 | 1,587,758 | 1.030× |
+| Windows x86-64 | 2 | 546,000 | 592,500 | 0.922× |
+| Windows x86-64 | 4 | 2,924,200 | 2,725,300 | 1.073× |
+| macOS x86-64 | 2 | 9,490,300 | 9,354,686 | 1.014× |
+| macOS x86-64 | 4 | 7,285,856 | 7,105,391 | 1.025× |
+| macOS ARM64 | 2 | 1,292,583 | 1,360,167 | 0.950× |
+| macOS ARM64 | 4 | 977,667 | 975,833 | 1.002× |
+
+Here ratio is Scheduler divided by the pool prototype including its per-sample startup/shutdown; values below 1 mean the Scheduler sample was faster. The ratios cluster near parity on most runner/worker combinations, unlike the prior invalid batch-assignment comparison. However, this is still a synthetic no-op workload, only three process repetitions, and a benchmark-only prototype: dispatch details, result/error/panic handling and result ordering are not fully equivalent. The Windows four-worker and macOS ARM64 four-worker lifecycle ranges are especially wide, so their medians need cautious interpretation. This is evidence that the corrected harness no longer reproduces the prior large lifecycle gap for this workload, not evidence of a production scheduler optimization. No production code or public API was changed; items 238–245 remain open pending representative workloads, profiling where relevant, and a controlled before/after change to production code.
