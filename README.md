@@ -19,9 +19,9 @@
 
 <div align="center">
 
-**Repository snapshot (2026-10-18):** 287 master checklist points · 242 complete · 26 in progress · 19 pending
+**Repository snapshot (2026-10-18):** 287 master checklist points · 244 complete · 17 in progress · 26 pending
 **Code snapshot:** single Rust crate · 7 benchmark suites (Runtime, Memory, Compute, ECS, Simulation, Networking, Storage) · 8 runnable examples · five-platform benchmark history
-**Current milestone:** Native foundations now include safe host/POSIX capability traits and a minimal scalar C ABI. The ABI still needs a real C compiler/linker smoke test; no direct hardware access or handwritten assembly is claimed. Networking has initial blocking TCP wrappers and prediction/reconciliation/replay primitives, but its wire encoder/decoder and full protocol integration remain pending.
+**Current milestone:** Native foundations now include safe host/POSIX capability traits and a minimal scalar C ABI. The scalar ABI has passed a real C compiler/linker smoke test in CI; this is a limited ABI check, not broad cross-target compatibility. No direct hardware access or handwritten assembly is claimed. Networking has initial blocking TCP wrappers and prediction/reconciliation/replay primitives, but its wire encoder/decoder and full protocol integration remain pending.
 
 </div>
 
@@ -113,7 +113,7 @@ The design separates shared contracts from runtime execution, storage and comput
 
 **Implemented foundations include:** runtime scheduling and task execution; memory buffers; sequential and parallel compute operations; generational ECS entities and sparse-set component storage; fixed-step simulation and five focused simulation models; CI, benchmark and documentation workflows.
 
-**Not yet complete:** stable public APIs, a production SIMD kernel, full parallel ECS system execution, full wire framing/serialization and authenticated transport, transactional storage and compaction, direct hardware integration, C ABI linker smoke tests across targets, full CLI manifest/TOML compatibility, automatic observability, fuzzing and formal dependency audits, end-to-end integration and the first v0.1 milestone. See the master checklist for exact status rather than treating planned work as shipped.
+**Not yet complete:** stable public APIs, a production SIMD kernel, full parallel ECS system execution, full wire framing/serialization and authenticated transport, transactional storage and compaction, direct hardware integration, full CLI manifest/TOML compatibility, automatic observability, coverage-guided fuzzing, full-system application validation and the first v0.1 milestone. A limited C ABI smoke test and focused integration pipelines now run in CI; neither implies broad cross-target ABI support or a production application. See the master checklist for exact status rather than treating planned work as shipped.
 
 <div align="center">
 
@@ -151,20 +151,20 @@ These are medians of nine samples; construction is included in the clock and ste
 
 </div>
 
-**Current work — Phases 15–16: Total integration and v0.1 release readiness.** The 287-point checklist currently records 242 complete, 26 in progress and 19 pending. The v0.1 scope ends at point 277; points 278–287 belong to v0.2+. Remaining v0.1 work includes architecture/API review and freeze, strict definition of supported CLI behavior, broader integration/coverage, coverage-guided fuzzing, performance evidence, documentation/examples, license review and release packaging. Networking remains a pre-alpha foundation with wire encoder/decoder and full protocol integration pending.
+**Current work — Phases 15–16: Total integration and v0.1 release readiness.** The 287-point checklist currently records 244 complete, 17 in progress and 26 pending. The v0.1 scope ends at point 277; points 278–287 belong to v0.2+. Remaining v0.1 work includes architecture/API review and freeze, strict definition of supported CLI behavior, broader integration/coverage, coverage-guided fuzzing, performance evidence, documentation/examples, license review and release packaging. Networking remains a pre-alpha foundation with wire encoder/decoder and full protocol integration pending.
 
-**Areas still in progress (see `puntos.md` for the authoritative status):**
+**Selected areas still in progress (see `puntos.md` for the authoritative status):**
 
 | Point | Area | Open work |
 |---|---|---|
-| 033 | Core | First benchmarks |
+| 033 | Core | First benchmarks when a representative Core workload exists |
 | 035 | Core | Stabilize Core v0.1 |
 | 084 | Compute | SIMD only where a real benefit is demonstrated |
 | 085 | Compute | Data-oriented layout optimization |
 | 100 | Data / ECS | Validated and isolated parallel systems execution |
 | 103 | Data / ECS | Further memory-access optimization and evidence |
-| 220 | Testing | Integration tests |
-| 225 | Testing | Benchmark suite |
+| 227 | Testing | Initial 85% line-coverage floor enforced; critical-path and branch coverage review remains |
+| 257 | Integration | Public subsystem pipelines exist; this is not a complete production application |
 
 The CLI baseline and opt-in observability primitives are implemented; tracing, metrics and profiling still require explicit caller reporting and are not automatic. The project is working toward the first `dinah` v0.1 release. Checklist counts measure tracked work items, not percentage of release effort; each open point must be closed with appropriate evidence. These are targets, not completed capabilities. See [`roadmap.md`](roadmap.md) and the [`287-point master checklist`](puntos.md).
 
