@@ -5,12 +5,16 @@ use dinah::ecs::World;
 use dinah::memory::Buffer;
 use dinah::network::prediction::{AuthoritativeSnapshot, PredictionBuffer, ReconcileOutcome};
 use dinah::network::simulator::NetworkSimulator;
+use dinah::network::{Connection, Endpoint};
 use dinah::observability::{MetricsRegistry, Subsystem};
 use dinah::runtime::Scheduler;
 use dinah::simulation::Simulation;
 use dinah::storage::runtime::{StorageCommand, StorageWorkQueue};
 use dinah::storage::{DiskStore, MemoryStore, Storage};
+use std::io::Read;
+use std::net::Shutdown;
 use std::num::NonZeroUsize;
+use std::thread;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 #[test]
@@ -270,4 +274,73 @@ fn simulated_network_delivery_updates_simulation_before_disk_persistence() {
     );
     drop(recovered);
     std::fs::remove_file(path).expect("temporary journal is removed");
+}
+
+#[test]
+fn tcp_delivery_flows_into_simulation_and_runtime_disk_storage() {
+    // Exercise the implemented TCP byte stream end-to-end without implying a
+    // message framing protocol: this test deliberately sends one fixed-width value.
+    let endpoint = Endpoint::bind("127.0.0.1:0".parse().unwrap()).unwrap();
+    let address = endpoint.local_addr().unwrap();
+    let sender = thread::spawn(move || {
+        let mut connection = Connection::connect_timeout(address, Duration::from_secs(2)).unwrap();
+        connection.write_all(&7_u64.to_le_bytes()).unwrap();
+        connection.shutdown(Shutdown::Write).unwrap();
+    });
+
+    let (mut connection, _peer) = endpoint.accept().unwrap();
+    let mut input = [0_u8; 8];
+    let mut received = 0;
+    while received < input.len() {
+        let count = connection.read(&mut input[received..]).unwrap();
+        assert_ne!(
+            count, 0,
+            "TCP peer closed before the complete value arrived"
+        );
+        received += count;
+    }
+    sender.join().unwrap();
+    let received_value = u64::from_le_bytes(input);
+
+    let mut simulation = Simulation::new(10_u64, Duration::from_millis(16)).unwrap();
+    let time = simulation
+        .step(|state, time| {
+            assert_eq!(time.tick, 1);
+            *state += received_value;
+            Ok::<_, &'static str>(())
+        })
+        .unwrap();
+    assert_eq!(time.tick, 1);
+    assert_eq!(*simulation.state(), 17);
+
+    let nonce = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let path = std::env::temp_dir().join(format!(
+        "dinah-tcp-pipeline-{}-{nonce}.journal",
+        std::process::id()
+    ));
+    {
+        let mut store = DiskStore::open(&path).unwrap();
+        let mut queue = StorageWorkQueue::new(NonZeroUsize::new(1).unwrap());
+        queue
+            .enqueue(StorageCommand::Put {
+                key: b"simulation/tcp-tick-1".to_vec(),
+                value: simulation.state().to_le_bytes().to_vec(),
+            })
+            .unwrap();
+        assert!(queue
+            .dispatch_next(&Scheduler::new(), &mut store)
+            .unwrap()
+            .unwrap()
+            .is_ok());
+    }
+    let recovered = DiskStore::open(&path).unwrap();
+    assert_eq!(
+        recovered.get(b"simulation/tcp-tick-1"),
+        Some(17_u64.to_le_bytes().to_vec())
+    );
+    drop(recovered);
+    std::fs::remove_file(path).unwrap();
 }
