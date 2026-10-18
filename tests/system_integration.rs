@@ -13,12 +13,12 @@ fn runtime_dispatches_network_work_and_reports_result_explicitly() {
     let mut queue = NetworkWorkQueue::<&'static str>::new(NonZeroUsize::new(2).unwrap());
     let delivered = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
     let task_output = std::sync::Arc::clone(&delivered);
-    queue
+    assert!(queue
         .enqueue(Box::new(move || {
             task_output.lock().unwrap().push(b"packet-1".to_vec());
             Ok(())
         }))
-        .unwrap();
+        .is_ok());
 
     assert_eq!(queue.len(), 1, "enqueue must not execute network work");
     assert_eq!(queue.dispatch_next(&scheduler), Some(Ok(Ok(()))));
