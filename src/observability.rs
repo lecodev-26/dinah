@@ -8,7 +8,7 @@ use std::num::NonZeroUsize;
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
-use crate::runtime::tracing::{TraceBuffer, TraceEvent, TraceRecordError};
+use crate::runtime::{TraceBuffer, TraceEvent, TraceRecordError};
 
 /// Subsystem label for a caller-reported metric.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -260,7 +260,7 @@ impl ProfilerHook for Vec<ProfileSample> {
 #[cfg(test)]
 mod tests {
     use super::{MetricValue, MetricsRegistry, Observability, Subsystem};
-    use crate::runtime::tracing::TraceEvent;
+    use crate::runtime::TraceEvent;
     use std::num::NonZeroUsize;
 
     #[test]
