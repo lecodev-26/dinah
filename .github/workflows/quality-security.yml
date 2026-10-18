@@ -1,0 +1,69 @@
+name: dinah quality and security
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'src/**'
+      - 'tests/**'
+      - 'include/**'
+      - 'scripts/**'
+      - '.github/workflows/quality-security.yml'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dinah-quality-security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dependency-audit:
+    name: Cargo advisory audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install cargo-audit
+        run: cargo install cargo-audit --locked
+      - name: Audit locked dependency graph
+        run: cargo audit --locked
+
+  c-abi-smoke:
+    name: Compile and link C ABI smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build static library
+        run: cargo build --release --lib --locked
+      - name: Compile and link C consumer
+        run: cc -Wall -Wextra -Werror -Iinclude tests/ffi_smoke.c target/release/libdinah.a -ldl -lpthread -lm -lrt -lutil -o /tmp/dinah-ffi-smoke
+      - name: Run C consumer
+        run: /tmp/dinah-ffi-smoke
+
+  coverage:
+    name: Rust source coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+      - uses: taiki-e/install-action@cargo-llvm-cov
+      - name: Generate LCOV report
+        run: cargo llvm-cov --workspace --lib --tests --lcov --output-path lcov.info
+      - name: Upload LCOV report
+        uses: actions/upload-artifact@v4
+        with:
+          name: dinah-lcov-${{ github.sha }}
+          path: lcov.info
+          if-no-files-found: error
+          retention-days: 30

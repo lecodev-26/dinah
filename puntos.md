@@ -6,8 +6,8 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 
 - Total de puntos numerados: 287
 - Completados: 213
-- En progreso: 9
-- Pendientes: 65
+- En progreso: 17
+- Pendientes: 57
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -257,7 +257,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 206 — Añadir tests de estrés (8 hilos × 2000 incrementos sobre el registro compartido; estrés acotado, no benchmark)
 - [x] 207 — Añadir tests de concurrencia (seis hilos operan sobre journals independientes y verifican actualizaciones/reapertura; no prueba multiwriter sobre un mismo archivo)
 - [x] 208 — Añadir tests de determinismo (replay de bytes idénticos y orden/overwrite estable de MemoryStore; no garantiza determinismo temporal entre plataformas)
-- [ ] 209 — Auditoría de dependencias
+- [>] 209 — Auditoría de dependencias (workflow `quality-security.yml` ejecuta `cargo audit --locked`; resultado pendiente de CI)
 - [x] 210 — Documentar modelo de seguridad (activos, límites de confianza, garantías, no-garantías y controles pendientes)
 
 ## FASE 13 — Testing
@@ -277,10 +277,10 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 223 — Determinism tests (contratos repetidos públicos de Core, Runtime, Memory y Compute, más replay de Simulation; no implica determinismo temporal ni equivalencia bit a bit entre arquitecturas)
 - [x] 224 — Regression tests (`tests/robustness_regression.rs`: ABI escalar y orden/overwrite repetibles de MemoryStore)
 - [>] 225 — Benchmark suite (suite release reproducible de Runtime, Memory, Compute, ECS y Simulation en cinco runners; faltan suites de Networking, Storage y Native cuando esos módulos existan)
-- [ ] 226 — CI completa
-- [ ] 227 — Coverage
-- [ ] 228 — Test matrix Linux
-- [ ] 229 — Test matrix arquitecturas soportadas
+- [>] 226 — CI completa (añadidos jobs de auditoría de dependencias, smoke test C/link y cobertura; pendiente validar CI)
+- [>] 227 — Coverage (workflow genera artefacto LCOV con `cargo llvm-cov`; pendiente validar CI y establecer umbral)
+- [>] 228 — Test matrix Linux (ampliación de controles CI en curso; aún falta matriz Linux explícita)
+- [>] 229 — Test matrix arquitecturas soportadas (hay matriz de benchmarks; falta matriz de tests/compilación)
 
 ## FASE 14 — Optimización
 
@@ -330,9 +330,9 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [ ] 267 — Completar CLI
 - [ ] 268 — Completar testing
 - [ ] 269 — Completar benchmarks
-- [ ] 270 — Auditoría de seguridad
-- [ ] 271 — Auditoría de dependencias
-- [ ] 272 — Revisar licencia
+- [>] 270 — Auditoría de seguridad (se amplían controles automatizados; no equivale a auditoría externa)
+- [>] 271 — Auditoría de dependencias (auditoría automatizada del lockfile añadida; pendiente primer resultado CI)
+- [>] 272 — Revisar licencia (licencia dual y smoke test ABI en revisión; falta completar comprobación legal formal)
 - [ ] 273 — Preparar release
 - [ ] 274 — Crear changelog
 - [ ] 275 — Crear documentación pública
