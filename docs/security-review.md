@@ -27,13 +27,13 @@ Fecha de revisión: 2026-10-18. Alcance: superficie actual del crate, memoria, c
 - `include/dinah.h` y `dinah::native::ffi` exponen solo consultas escalares de enteros de ancho fijo: versión ABI, flags y familia de plataforma. No aceptan punteros, buffers, callbacks ni ownership transferido.
 - El crate mantiene `#![deny(unsafe_code)]`; el módulo FFI solo permite nombres de símbolos y no contiene bloques unsafe.
 - El consumidor debe comprobar `dinah_abi_version()` antes de usar otras funciones. Los bits no definidos en `dinah_abi_features()` están reservados.
-- Riesgo residual: sigue pendiente un smoke test con compilador y linker C reales; la revisión del header y pruebas Rust no sustituyen esa integración.
+- Evidencia de integración: el workflow `quality-security.yml` compila `tests/ffi_smoke.c` con un compilador C, lo enlaza contra `target/release/libdinah.a` y ejecuta el binario; el job pasó en CI del commit `fcde532`. Esto valida solo las consultas escalares presentes en ese smoke test y no demuestra compatibilidad ABI general, cobertura de todos los targets ni estabilidad de release.
 
 ## Acciones pendientes
 
 - Ejecutar fuzzing coverage-guided (libFuzzer) para parser de manifiesto y replay del journal; el corpus determinista actual solo es una primera barrera de regresión.
 - Fuzzing y auditoría formal de dependencias siguen pendientes. Las pruebas de estrés/concurrencia actuales son acotadas; no incluyen model checking, escritores concurrentes sobre el mismo journal ni cargas prolongadas.
-- Ejecutar el smoke test C/link en CI antes de declarar estable el ABI.
+- Mantener el smoke test C/link en CI y ampliarlo solo cuando se añadan nuevas funciones ABI; antes de declarar estable el ABI, revisar compatibilidad, versionado y targets soportados.
 - La ejecución de tareas se ha añadido con selección explícita; evaluar aislamiento de procesos y controles de recursos antes de considerar proyectos no confiables. Repetir esta revisión al introducir deserialización de red, acceso a archivos externos o APIs FFI basadas en punteros.
 
 

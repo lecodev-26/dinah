@@ -22,4 +22,4 @@ The benchmark CI matrix builds and executes the benchmark suite on five OS/archi
 
 ## C ABI
 
-`include/dinah.h` declares only fixed-width scalar query functions. Consumers can check the ABI version before using feature flags and platform-family metadata. No pointer ownership, borrowed string, allocation, callback or unwind boundary crosses the ABI. A real C compiler/linker smoke test remains outstanding.
+`include/dinah.h` declares only fixed-width scalar query functions. Consumers can check the ABI version before using feature flags and platform-family metadata. No pointer ownership, borrowed string, allocation, callback or unwind boundary crosses the ABI. The CI workflow `quality-security.yml` compiles `tests/ffi_smoke.c` with a real C compiler, links it against the static Rust library and executes the resulting binary (verified for commit `fcde532`). This is a narrow smoke test of the current scalar ABI, not broad cross-target ABI compatibility or a stability guarantee.
