@@ -37,7 +37,7 @@ jobs:
           GITHUB_SHA: ${{ github.sha }}
         run: python3 scripts/documentation_audit.py
       - name: Open or update documentation review PR
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: automation/documentation-audit
