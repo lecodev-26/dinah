@@ -1,6 +1,6 @@
-# DINAH — Revisión inicial de seguridad (puntos 195–198)
+# DINAH — Modelo y revisión de seguridad (puntos 195–203, 205–206, 210)
 
-Fecha de revisión: 2026-10-18. Alcance: superficie actual del crate, lector de manifiestos del CLI, formatos de salida JSON y ABI C escalar. Esta revisión estática no es una auditoría externa ni demuestra ausencia de vulnerabilidades.
+Fecha de revisión: 2026-10-18. Alcance: superficie actual del crate, memoria, concurrencia, permisos, filesystem, networking, entrada del CLI, journal de Storage, salida JSON y ABI C escalar. Esta revisión estática no es una auditoría externa ni demuestra ausencia de vulnerabilidades.
 
 ## 195 — Superficie de ataque
 
@@ -35,3 +35,71 @@ Fecha de revisión: 2026-10-18. Alcance: superficie actual del crate, lector de 
 - Añadir pruebas de corrupción, estrés y concurrencia, y ejecutar una auditoría formal de dependencias.
 - Ejecutar el smoke test C/link en CI antes de declarar estable el ABI.
 - Repetir esta revisión cuando se introduzcan ejecución de tareas, deserialización de red, acceso a archivos externos o APIs FFI basadas en punteros.
+
+
+## 199 — Revisión de memoria
+
+- `#![deny(unsafe_code)]` está habilitado a nivel de crate; el único `allow(unsafe_code)` se limita al módulo de nombres de símbolos C, que no contiene bloques unsafe ni punteros.
+- `Buffer<T>` y `SoaBuffer<A, B>` exponen solo elementos inicializados a través de referencias de Rust. Sus capacidades son límites de elementos, no límites de bytes ni garantía de memoria residente.
+- La mayoría de las reservas de `Buffer` son fallibles; otros contenedores estándar y clones de claves/valores pueden abortar o entrar en rutas de asignación infalibles según el allocator. No se afirma resistencia total a agotamiento de memoria.
+- Riesgo residual: no existe fuzzing ni Miri en CI; las pruebas de invariantes y el sistema de tipos no sustituyen esas herramientas.
+
+## 200 — Revisión de concurrencia
+
+- Las APIs mutables de Storage, Connection y buffers requieren `&mut self`; no prometen uso concurrente de la misma instancia sin sincronización externa.
+- `MetricsRegistry` usa `Mutex`; el poisoning se convierte en error. `TaskQueue` es deliberadamente local y no sincronizado. Los tests de Storage con threads abren journals independientes, no el mismo archivo.
+- El scheduler usa threads acotados por la llamada, pero un panic de worker puede propagarse por los puntos de unión. No hay promesa de cancelación de tareas de sistema operativo ni aislamiento de procesos.
+- Riesgo residual: faltan pruebas de estrés prolongadas, loom/model checking y una política para múltiples escritores que abran simultáneamente el mismo journal.
+
+## 201 — Revisión de permisos
+
+- DINAH no eleva privilegios, cambia permisos de archivos ni crea servicios privilegiados. El CLI usa los permisos efectivos del proceso y devuelve errores de E/S cuando el sistema operativo deniega una operación.
+- El manifiesto nuevo se crea con `create_new(true)`, lo que evita reemplazar un archivo existente; los permisos finales dependen del sistema operativo y su umask.
+- Las conexiones TCP pueden enlazar o conectar direcciones elegidas por el llamador. No existe autenticación, autorización, cifrado ni control de peers integrado.
+- Recomendación operativa: ejecutar con privilegios mínimos, limitar los paths de salida y no exponer endpoints a redes no confiables sin controles en la aplicación.
+
+## 202 — Revisión del filesystem
+
+- El CLI acepta un path proporcionado por el usuario y usa `DINAH.toml` dentro de ese directorio. El límite de 1 MiB reduce entradas excesivas, pero `metadata` seguido de lectura no elimina carreras TOCTOU ni garantiza el comportamiento de symlinks en todos los sistemas.
+- `DiskStore` abre el path indicado con lectura, append y create. No canonicaliza ni confina el path a un sandbox, no coordina instancias que abran el mismo journal y no llama a `sync_all`.
+- El journal se lee completo a memoria al abrirlo; aunque cada campo está limitado a 16 MiB, el tamaño total del archivo no tiene un límite global en esta versión. Los journals deben proceder de una ubicación confiable.
+- Riesgo residual: añadir límite global configurable, pruebas de permisos/symlinks por plataforma y política explícita para apertura de journal ya existente.
+
+## 203 — Revisión de networking
+
+- La capa actual es TCP bloqueante de bajo nivel. No añade framing, decoder de mensajes, autenticación, TLS, rate limiting, reconexión automática ni tareas de fondo.
+- Los métodos de lectura pueden devolver datos parciales y el llamador debe definir límites de mensajes. `set_read_timeout` y `set_write_timeout` están disponibles, pero no se aplican por defecto.
+- No aceptar bytes recibidos como objetos confiables ni exponer un listener a redes no confiables sin límites de tamaño, tiempo, identidad y frecuencia implementados por la aplicación.
+
+## 205 — Pruebas de corrupción
+
+- `tests/storage.rs` comprueba magic inválido, checksum v2 incorrecto, sufijos incompletos, checksum truncado y compatibilidad con v1. Se añade cobertura para longitudes declaradas por encima del límite y para valores de versión/opcode inválidos.
+- CRC-32 sirve para detectar corrupción accidental de registros completos, no alteraciones deliberadas. Una corrupción completa debe fallar; solo el sufijo final incompleto se recupera como escritura interrumpida.
+
+## 206 — Pruebas de estrés
+
+- La suite añadida a `src/observability.rs` estresa incrementos concurrentes en el registro compartido con varios hilos y verifica el resultado agregado.
+- Es una prueba de estrés acotada y determinista, no un benchmark de rendimiento ni una prueba de agotamiento de recursos. Las pruebas prolongadas, fuzzing y model checking siguen pendientes.
+
+## 210 — Modelo de seguridad
+
+### Activos
+
+Integridad de memoria, archivos de configuración y journals, comportamiento determinista de las APIs, disponibilidad del proceso y límites de confianza entre la aplicación y conexiones externas.
+
+### Límites de confianza
+
+- Los archivos del usuario, datos de red y archivos de journal existentes se consideran entradas no confiables.
+- El sistema operativo controla permisos, sockets y semántica del filesystem; DINAH no evita por sí solo rutas fuera de un directorio permitido.
+- Las aplicaciones consumidoras validan payloads, definen framing y autenticación de red y gestionan copias de seguridad de Storage.
+
+### Garantías actuales y no-garantías
+
+Se priorizan APIs Rust seguras, límites de campo, escape JSON, detección de corrupción accidental y errores explícitos. No se garantiza seguridad frente a denegación de servicio, pérdida de energía, escritores concurrentes al mismo journal, pares de red maliciosos, vulnerabilidades de dependencias o errores del sistema operativo.
+
+### Controles pendientes
+
+- Fuzzing de parser de manifiesto, replay del journal y futuros codecs de red.
+- Auditoría de dependencias/toolchain y revisión periódica de avisos de seguridad.
+- Pruebas de estrés de larga duración, permisos y symlinks en las plataformas soportadas.
+- Smoke test real de compilación y enlace C en CI antes de declarar estable la ABI.

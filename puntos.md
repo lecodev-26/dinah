@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 197
+- Completados: 205
 - En progreso: 8
-- Pendientes: 82
+- Pendientes: 74
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -247,18 +247,18 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 196 — Revisar entradas externas (límite de manifiesto de 1 MiB y pruebas; parser sigue siendo subconjunto TOML)
 - [x] 197 — Revisar serialización (escape de exportación JSON y límites documentados; no implica decoder de red implementado)
 - [x] 198 — Revisar FFI (revisión de ABI escalar y header; smoke test C/link sigue pendiente)
-- [ ] 199 — Revisar memoria
-- [ ] 200 — Revisar concurrencia
-- [ ] 201 — Revisar permisos
-- [ ] 202 — Revisar filesystem
-- [ ] 203 — Revisar networking
+- [x] 199 — Revisar memoria (invariantes de buffers y uso de unsafe revisados; límites y riesgos de asignación documentados)
+- [x] 200 — Revisar concurrencia (ownership, Mutex/poisoning, colas y límites de concurrencia documentados)
+- [x] 201 — Revisar permisos (privilegios efectivos, create_new, sockets y recomendaciones de mínimo privilegio documentados)
+- [x] 202 — Revisar filesystem (límites, TOCTOU, symlinks, journals sin límite global y falta de sync_all documentados)
+- [x] 203 — Revisar networking (TCP bloqueante, ausencia de framing/TLS/auth/rate limit y responsabilidades del consumidor documentadas)
 - [ ] 204 — Añadir fuzzing
-- [ ] 205 — Añadir tests de corrupción
-- [ ] 206 — Añadir tests de estrés
+- [x] 205 — Añadir tests de corrupción (longitudes excesivas, versión desconocida y opcode inválido; checksum y truncado ya cubiertos)
+- [x] 206 — Añadir tests de estrés (8 hilos × 2000 incrementos sobre el registro compartido; estrés acotado, no benchmark)
 - [ ] 207 — Añadir tests de concurrencia
 - [ ] 208 — Añadir tests de determinismo
 - [ ] 209 — Auditoría de dependencias
-- [ ] 210 — Documentar modelo de seguridad
+- [x] 210 — Documentar modelo de seguridad (activos, límites de confianza, garantías, no-garantías y controles pendientes)
 
 ## FASE 13 — Testing
 

@@ -146,3 +146,35 @@ fn memory_store_iterates_in_key_order_without_changing_values() {
         ]
     );
 }
+
+#[test]
+fn disk_store_rejects_oversized_declared_field_lengths() {
+    let path = temp_path();
+    // A complete header whose key length exceeds the 16 MiB field limit.
+    let mut header = b"DNST".to_vec();
+    header.extend_from_slice(&[2, 1]);
+    header.extend_from_slice(&(16_u32 * 1024 * 1024 + 1).to_le_bytes());
+    header.extend_from_slice(&0_u32.to_le_bytes());
+    fs::write(&path, header).unwrap();
+    let error = DiskStore::open(&path).unwrap_err();
+    assert!(error.to_string().contains("field length exceeds limit"));
+    fs::remove_file(path).unwrap();
+}
+
+#[test]
+fn disk_store_rejects_unknown_version_and_operation() {
+    for (version, operation, expected) in [
+        (99_u8, 1_u8, "unsupported version"),
+        (2_u8, 99_u8, "unknown operation"),
+    ] {
+        let path = temp_path();
+        let mut header = b"DNST".to_vec();
+        header.extend_from_slice(&[version, operation]);
+        header.extend_from_slice(&0_u32.to_le_bytes());
+        header.extend_from_slice(&0_u32.to_le_bytes());
+        fs::write(&path, header).unwrap();
+        let error = DiskStore::open(&path).unwrap_err();
+        assert!(error.to_string().contains(expected));
+        fs::remove_file(path).unwrap();
+    }
+}

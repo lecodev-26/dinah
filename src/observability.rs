@@ -355,6 +355,38 @@ mod tests {
     }
 
     #[test]
+    fn concurrent_metric_increments_preserve_all_updates() {
+        use std::sync::Arc;
+        use std::thread;
+
+        const WORKERS: usize = 8;
+        const INCREMENTS: usize = 2_000;
+        let registry = Arc::new(MetricsRegistry::new());
+        let workers: Vec<_> = (0..WORKERS)
+            .map(|_| {
+                let registry = Arc::clone(&registry);
+                thread::spawn(move || {
+                    for _ in 0..INCREMENTS {
+                        registry
+                            .increment(Subsystem::Runtime, "concurrent.operations", 1)
+                            .unwrap();
+                    }
+                })
+            })
+            .collect();
+        for worker in workers {
+            worker.join().expect("metric worker should finish");
+        }
+        assert_eq!(
+            registry.snapshot().unwrap(),
+            vec![(
+                (Subsystem::Runtime, "concurrent.operations".to_owned()),
+                MetricValue::Counter((WORKERS * INCREMENTS) as u64),
+            )]
+        );
+    }
+
+    #[test]
     fn rejects_empty_metric_names() {
         assert!(MetricsRegistry::new()
             .increment(Subsystem::Compute, " ", 1)
