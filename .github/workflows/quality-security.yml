@@ -32,7 +32,7 @@ jobs:
       - name: Install cargo-audit
         run: cargo install cargo-audit --locked
       - name: Audit locked dependency graph
-        run: cargo audit --locked
+        run: cargo audit
 
   c-abi-smoke:
     name: Compile and link C ABI smoke test
