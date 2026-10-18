@@ -1,5 +1,5 @@
 //! Explicit integration of Runtime, Network, Native and observability.
-use dinah::native::{Hal, HostPlatform};
+use dinah::native::{Hal, HostPlatform, Platform};
 use dinah::network::runtime::NetworkWorkQueue;
 use dinah::observability::{MetricsRegistry, Subsystem};
 use dinah::runtime::Scheduler;
