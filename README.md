@@ -1,7 +1,8 @@
 <div align="center">
 
-<img src="assets/logo.png" alt="DINAH logo" width="132">           <p align="center">
-  <img src="./silueta_naranja.png" width="400" alt="Dinah" />
+<p align="center">
+  <img src="assets/logo.png" alt="DINAH logo" width="132" />&nbsp;&nbsp;&nbsp;
+  <img src="assets/silueta_naranja_transparente.png" alt="Silueta naranja de DINAH" width="180" />
 </p>
 
 <img src="assets/banner.jpg" alt="DINAH: modular Rust runtime, compute and simulation foundation" width="100%">
