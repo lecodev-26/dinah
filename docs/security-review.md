@@ -120,8 +120,8 @@ Se priorizan APIs Rust seguras, límites de campo, escape JSON, detección de co
 - El CLI cubre nombre vacío/no entrecomillado, campos duplicados y asignaciones fuera de secciones conocidas. La semántica sigue siendo el subconjunto documentado, no TOML completo.
 - Limitación explícita: estas pruebas son corpus determinista y no reemplazan libFuzzer, cobertura guiada, sanitizadores ni sesiones de larga duración.
 
-## Controles automatizados de CI añadidos (2026-10-18)
+## Controles automatizados de CI (2026-10-18)
 
-- `.github/workflows/quality-security.yml` ejecuta `cargo audit --locked` contra la base pública de avisos, genera un artefacto LCOV con `cargo llvm-cov` y compila/enlaza/ejecuta un consumidor C mínimo contra `libdinah.a`.
-- `tests/ffi_smoke.c` comprueba los tres símbolos escalares públicos y las condiciones básicas de ABI desde C real.
-- Estos controles quedan pendientes de validar en su primera ejecución CI. La auditoría automatizada no sustituye una revisión manual de licencias ni una auditoría de seguridad externa; el informe LCOV tampoco establece por sí solo un umbral de cobertura.
+- `.github/workflows/quality-security.yml` ejecuta `cargo audit` sobre el lockfile, genera un artefacto LCOV con `cargo llvm-cov` y compila/enlaza/ejecuta un consumidor C mínimo contra `libdinah.a`. La ejecución del commit `fcde532` pasó.
+- `tests/ffi_smoke.c` comprueba los tres símbolos escalares públicos y las condiciones básicas de ABI; la compilación, el enlace y la ejecución pasaron en CI.
+- El artefacto LCOV se generó y subió correctamente, pero aún no se ha fijado un umbral de cobertura. La auditoría automatizada no sustituye una revisión manual de licencias ni una auditoría de seguridad externa.

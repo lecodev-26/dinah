@@ -5,8 +5,8 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 213
-- En progreso: 17
+- Completados: 216
+- En progreso: 14
 - Pendientes: 57
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
@@ -200,7 +200,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 158 — Definir abstracciones de plataforma (trait `Platform` y proveedor estándar `HostPlatform`, con límites documentados)
 - [x] 159 — Crear capa POSIX/Linux (adaptador `native::posix` bajo `cfg(unix)` mediante APIs seguras de std; no declara soporte de syscalls Linux directas)
 - [x] 160 — Diseñar FFI (contrato escalar versionado, ownership explícito y criterios para futuras APIs de punteros documentados)
-- [x] 161 — Crear C ABI (consultas escalares versionadas, símbolos exportados, `include/dinah.h` y crate-type rlib/cdylib/staticlib; smoke test C/link aún pendiente)
+- [x] 161 — Crear C ABI (consultas escalares versionadas, símbolos exportados, `include/dinah.h` y crate-type rlib/cdylib/staticlib; consumidor C compilado, enlazado y ejecutado correctamente en CI del commit `fcde532`)
 - [x] 162 — Investigar integración C++ (recomendado consumir el header C desde C++; sin exponer clases, excepciones ni ownership Rust)
 - [x] 163 — Investigar Assembly (criterios de evidencia, fallback, revisión ABI y CI por arquitectura; no se añadió assembly sin hotspots medidos)
 - [x] 164 — Identificar hotspots reales (auditoría de los siete benchmarks y criterio de evidencia; no se declara hotspot sin resultados comparables)
@@ -246,7 +246,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 195 — Revisar superficie de ataque (revisión inicial documentada; quedan pendientes fuzzing y auditorías formales)
 - [x] 196 — Revisar entradas externas (límite de manifiesto de 1 MiB y pruebas; parser sigue siendo subconjunto TOML)
 - [x] 197 — Revisar serialización (escape de exportación JSON y límites documentados; no implica decoder de red implementado)
-- [x] 198 — Revisar FFI (revisión de ABI escalar y header; smoke test C/link sigue pendiente)
+- [x] 198 — Revisar FFI (revisión de ABI escalar/header más smoke test C real compilado, enlazado y ejecutado en CI del commit `fcde532`)
 - [x] 199 — Revisar memoria (invariantes de buffers y uso de unsafe revisados; límites y riesgos de asignación documentados)
 - [x] 200 — Revisar concurrencia (ownership, Mutex/poisoning, colas y límites de concurrencia documentados)
 - [x] 201 — Revisar permisos (privilegios efectivos, create_new, sockets y recomendaciones de mínimo privilegio documentados)
@@ -257,7 +257,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 206 — Añadir tests de estrés (8 hilos × 2000 incrementos sobre el registro compartido; estrés acotado, no benchmark)
 - [x] 207 — Añadir tests de concurrencia (seis hilos operan sobre journals independientes y verifican actualizaciones/reapertura; no prueba multiwriter sobre un mismo archivo)
 - [x] 208 — Añadir tests de determinismo (replay de bytes idénticos y orden/overwrite estable de MemoryStore; no garantiza determinismo temporal entre plataformas)
-- [>] 209 — Auditoría de dependencias (workflow `quality-security.yml` ejecuta `cargo audit --locked`; resultado pendiente de CI)
+- [x] 209 — Auditoría de dependencias (el workflow `quality-security.yml` ejecuta `cargo audit` sobre el lockfile; ejecución CI correcta en el commit `fcde532`, sin afirmar que no existan avisos futuros)
 - [x] 210 — Documentar modelo de seguridad (activos, límites de confianza, garantías, no-garantías y controles pendientes)
 
 ## FASE 13 — Testing
@@ -277,10 +277,10 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 223 — Determinism tests (contratos repetidos públicos de Core, Runtime, Memory y Compute, más replay de Simulation; no implica determinismo temporal ni equivalencia bit a bit entre arquitecturas)
 - [x] 224 — Regression tests (`tests/robustness_regression.rs`: ABI escalar y orden/overwrite repetibles de MemoryStore)
 - [>] 225 — Benchmark suite (suite release reproducible de Runtime, Memory, Compute, ECS y Simulation en cinco runners; faltan suites de Networking, Storage y Native cuando esos módulos existan)
-- [>] 226 — CI completa (añadidos jobs de auditoría de dependencias, smoke test C/link y cobertura; pendiente validar CI)
-- [>] 227 — Coverage (workflow genera artefacto LCOV con `cargo llvm-cov`; pendiente validar CI y establecer umbral)
-- [>] 228 — Test matrix Linux (ampliación de controles CI en curso; aún falta matriz Linux explícita)
-- [>] 229 — Test matrix arquitecturas soportadas (hay matriz de benchmarks; falta matriz de tests/compilación)
+- [x] 226 — CI completa (CI principal, auditoría documental, archivo de artefactos y workflow de calidad/seguridad —auditoría de dependencias, smoke test C/link y LCOV— completados correctamente en `fcde532`; la matriz Linux queda separada en 228–229)
+- [>] 227 — Coverage (generación y subida del artefacto LCOV confirmadas en CI de `fcde532`; falta establecer y justificar un umbral de cobertura)
+- [>] 228 — Test matrix Linux (añadida matriz de pruebas/Clippy/rustdoc para Linux x86-64 y ARM64 en `.github/workflows/ci.yml`; pendiente validar ambos runners en CI)
+- [>] 229 — Test matrix arquitecturas soportadas (la matriz explícita de tests/compilación cubre Linux x86-64 y ARM64; Windows/macOS siguen cubiertos por benchmarks, no por esta matriz de tests; pendiente validar CI)
 
 ## FASE 14 — Optimización
 
@@ -331,7 +331,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [ ] 268 — Completar testing
 - [ ] 269 — Completar benchmarks
 - [>] 270 — Auditoría de seguridad (se amplían controles automatizados; no equivale a auditoría externa)
-- [>] 271 — Auditoría de dependencias (auditoría automatizada del lockfile añadida; pendiente primer resultado CI)
+- [x] 271 — Auditoría de dependencias (auditoría automatizada del lockfile ejecutada correctamente en CI del commit `fcde532`; no equivale a auditoría manual de licencias ni garantiza ausencia futura de vulnerabilidades)
 - [>] 272 — Revisar licencia (licencia dual y smoke test ABI en revisión; falta completar comprobación legal formal)
 - [ ] 273 — Preparar release
 - [ ] 274 — Crear changelog
@@ -507,3 +507,10 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 - 2026-10-18 — Puntos 132–139 completados en bloque: outbox fiable de nivel de aplicación, estimación RTT, política explícita de liveness/backoff, cola de trabajo Runtime, entrega por tick de Simulation, simulador determinista de pérdida/latencia, tests y benchmark de Networking. Los retries no sustituyen la fiabilidad TCP ni implican UDP; no hay reconexión automática. Formato, diff y checklist local validados; pendiente CI/auditoría/benchmarks del commit de este bloque.
 
 - 2026-10-18 — Puntos 140–147 completados: documentación de Networking actualizada y primer módulo Storage con API de bytes, MemoryStore, journal local versionado y recuperación básica. Checksums/integridad, transacciones y durabilidad fuerte siguen pendientes.
+
+
+### CI, seguridad y matriz Linux — 2026-10-18
+
+- El commit `fcde532` pasó `dinah CI`, `dinah artifact archive` y `dinah quality and security`. El workflow de calidad confirmó `cargo audit`, el consumidor C compilado/enlazado/ejecutado y la generación/subida del artefacto LCOV. Esto permite cerrar 209, 226 y 271, y actualizar la evidencia de 161/198; no significa que la auditoría detecte o descarte todos los riesgos, ni fija un umbral de cobertura.
+- Se añadió a `.github/workflows/ci.yml` una matriz Linux x86-64/ARM64 con formato, tests de librería e integración, Clippy y rustdoc. Los puntos 228–229 permanecen en progreso hasta que la nueva matriz pase CI; Windows/macOS no se presentan como cubiertos por esta matriz de tests.
+- El punto 270 sigue en progreso porque los controles automatizados no sustituyen una auditoría externa. El punto 272 sigue en progreso hasta completar una revisión formal de licencias.
