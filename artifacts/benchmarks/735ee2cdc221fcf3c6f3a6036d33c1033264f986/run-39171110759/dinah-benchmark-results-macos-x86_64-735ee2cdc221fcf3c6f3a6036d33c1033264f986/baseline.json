@@ -1,0 +1,725 @@
+{
+  "commit": "735ee2cdc221fcf3c6f3a6036d33c1033264f986",
+  "environment": {
+    "cargo": "cargo 1.99.1 (5f94df478 2026-08-27)",
+    "machine": "x86_64",
+    "os": "macOS-15.7.9-x86_64-i386-64bit-Mach-O",
+    "processor": "i386",
+    "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)\nbinary: rustc\ncommit-hash: 58cf8f9c35b355199727627d07ae34a4e2846d67\ncommit-date: 2026-10-13\nhost: x86_64-apple-darwin\nrelease: 1.99.1\nLLVM version: 23.1.1",
+    "system": "Darwin"
+  },
+  "measurement_notes": [
+    "Per-case measurements are reported by each benchmark executable.",
+    "elapsed_seconds is suite wall time including process startup and compilation/cache effects.",
+    "Compare cases only when workload, toolchain, and runner context match.",
+    "Runtime repeated_case_summary aggregates per-process medians; it is descriptive, not a confidence interval.",
+    "The persistent pool is a benchmark-only prototype and excludes per-call worker startup.",
+    "This is benchmark-based profiling, not a sampled CPU or allocation profile."
+  ],
+  "runtime_repeated_case_summary": {
+    "cases": {
+      "executor_noop": {
+        "max_run_median_ns": 72452,
+        "median_of_run_medians_ns": 72140,
+        "min_run_median_ns": 63402,
+        "run_medians_ns": [
+          63402,
+          72452,
+          72140
+        ],
+        "runs": 3
+      },
+      "persistent_pool_cpu_1m_2_workers": {
+        "max_run_median_ns": 30184851,
+        "median_of_run_medians_ns": 30088685,
+        "min_run_median_ns": 26842862,
+        "run_medians_ns": [
+          30088685,
+          30184851,
+          26842862
+        ],
+        "runs": 3
+      },
+      "persistent_pool_cpu_1m_4_workers": {
+        "max_run_median_ns": 29026309,
+        "median_of_run_medians_ns": 17877892,
+        "min_run_median_ns": 15662041,
+        "run_medians_ns": [
+          17877892,
+          15662041,
+          29026309
+        ],
+        "runs": 3
+      },
+      "persistent_pool_noop_2_workers": {
+        "max_run_median_ns": 9247136,
+        "median_of_run_medians_ns": 8831088,
+        "min_run_median_ns": 8828137,
+        "run_medians_ns": [
+          9247136,
+          8831088,
+          8828137
+        ],
+        "runs": 3
+      },
+      "persistent_pool_noop_4_workers": {
+        "max_run_median_ns": 6434722,
+        "median_of_run_medians_ns": 6308595,
+        "min_run_median_ns": 6094479,
+        "run_medians_ns": [
+          6434722,
+          6094479,
+          6308595
+        ],
+        "runs": 3
+      },
+      "persistent_pool_noop_lifecycle_2_workers": {
+        "max_run_median_ns": 9466989,
+        "median_of_run_medians_ns": 9354686,
+        "min_run_median_ns": 8970582,
+        "run_medians_ns": [
+          9354686,
+          9466989,
+          8970582
+        ],
+        "runs": 3
+      },
+      "persistent_pool_noop_lifecycle_4_workers": {
+        "max_run_median_ns": 7307346,
+        "median_of_run_medians_ns": 7105391,
+        "min_run_median_ns": 6853097,
+        "run_medians_ns": [
+          7105391,
+          6853097,
+          7307346
+        ],
+        "runs": 3
+      },
+      "persistent_pool_startup_shutdown_2_workers": {
+        "max_run_median_ns": 236949,
+        "median_of_run_medians_ns": 232639,
+        "min_run_median_ns": 209036,
+        "run_medians_ns": [
+          232639,
+          236949,
+          209036
+        ],
+        "runs": 3
+      },
+      "persistent_pool_startup_shutdown_4_workers": {
+        "max_run_median_ns": 509982,
+        "median_of_run_medians_ns": 447187,
+        "min_run_median_ns": 446078,
+        "run_medians_ns": [
+          447187,
+          509982,
+          446078
+        ],
+        "runs": 3
+      },
+      "scheduler_immediate_noop": {
+        "max_run_median_ns": 73581,
+        "median_of_run_medians_ns": 71773,
+        "min_run_median_ns": 61381,
+        "run_medians_ns": [
+          73581,
+          71773,
+          61381
+        ],
+        "runs": 3
+      },
+      "scheduler_queue_parallel_cpu_1m_2_workers": {
+        "max_run_median_ns": 27225507,
+        "median_of_run_medians_ns": 27040062,
+        "min_run_median_ns": 26630908,
+        "run_medians_ns": [
+          27225507,
+          26630908,
+          27040062
+        ],
+        "runs": 3
+      },
+      "scheduler_queue_parallel_cpu_1m_4_workers": {
+        "max_run_median_ns": 16392005,
+        "median_of_run_medians_ns": 16268163,
+        "min_run_median_ns": 15600026,
+        "run_medians_ns": [
+          16268163,
+          16392005,
+          15600026
+        ],
+        "runs": 3
+      },
+      "scheduler_queue_parallel_noop_2_workers": {
+        "max_run_median_ns": 9642681,
+        "median_of_run_medians_ns": 9490300,
+        "min_run_median_ns": 9389403,
+        "run_medians_ns": [
+          9490300,
+          9642681,
+          9389403
+        ],
+        "runs": 3
+      },
+      "scheduler_queue_parallel_noop_4_workers": {
+        "max_run_median_ns": 7942222,
+        "median_of_run_medians_ns": 7285856,
+        "min_run_median_ns": 6599822,
+        "run_medians_ns": [
+          7942222,
+          7285856,
+          6599822
+        ],
+        "runs": 3
+      },
+      "scheduler_queue_sequential": {
+        "max_run_median_ns": 2688,
+        "median_of_run_medians_ns": 2023,
+        "min_run_median_ns": 1664,
+        "run_medians_ns": [
+          2688,
+          2023,
+          1664
+        ],
+        "runs": 3
+      },
+      "scheduler_queue_sequential_cpu_1m": {
+        "max_run_median_ns": 35217649,
+        "median_of_run_medians_ns": 34548734,
+        "min_run_median_ns": 34292620,
+        "run_medians_ns": [
+          34292620,
+          34548734,
+          35217649
+        ],
+        "runs": 3
+      }
+    },
+    "scheduler_vs_persistent_pool": {
+      "cpu_1m_2_workers": {
+        "note": "steady-state pool comparison excludes per-call worker startup; ratio is workload-specific",
+        "persistent_pool_median_of_run_medians_ns": 30088685,
+        "scheduler_median_of_run_medians_ns": 27040062,
+        "scheduler_to_pool_ratio": 0.899
+      },
+      "cpu_1m_4_workers": {
+        "note": "steady-state pool comparison excludes per-call worker startup; ratio is workload-specific",
+        "persistent_pool_median_of_run_medians_ns": 17877892,
+        "scheduler_median_of_run_medians_ns": 16268163,
+        "scheduler_to_pool_ratio": 0.91
+      },
+      "noop_2_workers": {
+        "note": "steady-state pool comparison excludes per-call worker startup; ratio is workload-specific",
+        "persistent_pool_median_of_run_medians_ns": 8831088,
+        "scheduler_median_of_run_medians_ns": 9490300,
+        "scheduler_to_pool_ratio": 1.075
+      },
+      "noop_4_workers": {
+        "note": "steady-state pool comparison excludes per-call worker startup; ratio is workload-specific",
+        "persistent_pool_median_of_run_medians_ns": 6308595,
+        "scheduler_median_of_run_medians_ns": 7285856,
+        "scheduler_to_pool_ratio": 1.155
+      }
+    },
+    "scheduler_vs_pool_lifecycle": {
+      "noop_2_workers": {
+        "note": "both include per-call worker startup/shutdown; queueing, result/error semantics and worker dispatch still differ",
+        "pool_lifecycle_median_of_run_medians_ns": 9354686,
+        "scheduler_median_of_run_medians_ns": 9490300,
+        "scheduler_to_pool_lifecycle_ratio": 1.014
+      },
+      "noop_4_workers": {
+        "note": "both include per-call worker startup/shutdown; queueing, result/error semantics and worker dispatch still differ",
+        "pool_lifecycle_median_of_run_medians_ns": 7105391,
+        "scheduler_median_of_run_medians_ns": 7285856,
+        "scheduler_to_pool_lifecycle_ratio": 1.025
+      }
+    }
+  },
+  "schema_version": 1,
+  "suites": {
+    "compute": {
+      "case_count": 40,
+      "cases": [
+        "case=direct_scalar_transform elements=64 samples=11 iterations_per_sample=10 min_op_ns=18 median_op_ns=20 max_op_ns=342 ns_per_element=0.312 elements_per_second=3200000000",
+        "case=compute_for_each_transform elements=64 samples=11 iterations_per_sample=10 min_op_ns=16 median_op_ns=20 max_op_ns=52 ns_per_element=0.312 elements_per_second=3200000000",
+        "case=compute_for_each_parallel_2_workers elements=64 samples=11 iterations_per_sample=10 min_op_ns=255246 median_op_ns=277999 max_op_ns=298149 ns_per_element=4343.734 elements_per_second=230217",
+        "case=compute_for_each_parallel_4_workers elements=64 samples=11 iterations_per_sample=10 min_op_ns=466217 median_op_ns=514015 max_op_ns=570592 ns_per_element=8031.484 elements_per_second=124510",
+        "case=wide_f32x4_candidate_transform elements=64 samples=11 iterations_per_sample=10 min_op_ns=31 median_op_ns=31 max_op_ns=71 ns_per_element=0.484 elements_per_second=2064516129",
+        "case=direct_scalar_transform elements=65 samples=11 iterations_per_sample=10 min_op_ns=13 median_op_ns=13 max_op_ns=62 ns_per_element=0.200 elements_per_second=5000000000",
+        "case=compute_for_each_transform elements=65 samples=11 iterations_per_sample=10 min_op_ns=13 median_op_ns=13 max_op_ns=41 ns_per_element=0.200 elements_per_second=5000000000",
+        "case=compute_for_each_parallel_2_workers elements=65 samples=11 iterations_per_sample=10 min_op_ns=248077 median_op_ns=264732 max_op_ns=344046 ns_per_element=4072.800 elements_per_second=245531",
+        "case=compute_for_each_parallel_4_workers elements=65 samples=11 iterations_per_sample=10 min_op_ns=453227 median_op_ns=478860 max_op_ns=505810 ns_per_element=7367.077 elements_per_second=135739",
+        "case=wide_f32x4_candidate_transform elements=65 samples=11 iterations_per_sample=10 min_op_ns=40 median_op_ns=53 max_op_ns=1768 ns_per_element=0.815 elements_per_second=1226415094",
+        "case=direct_scalar_transform elements=1024 samples=11 iterations_per_sample=10 min_op_ns=97 median_op_ns=149 max_op_ns=198 ns_per_element=0.146 elements_per_second=6872483221",
+        "case=compute_for_each_transform elements=1024 samples=11 iterations_per_sample=10 min_op_ns=97 median_op_ns=97 max_op_ns=123 ns_per_element=0.095 elements_per_second=10556701031",
+        "case=compute_for_each_parallel_2_workers elements=1024 samples=11 iterations_per_sample=10 min_op_ns=238858 median_op_ns=262515 max_op_ns=289354 ns_per_element=256.362 elements_per_second=3900729",
+        "case=compute_for_each_parallel_4_workers elements=1024 samples=11 iterations_per_sample=10 min_op_ns=497915 median_op_ns=548965 max_op_ns=593679 ns_per_element=536.099 elements_per_second=1865328",
+        "case=wide_f32x4_candidate_transform elements=1024 samples=11 iterations_per_sample=10 min_op_ns=184 median_op_ns=186 max_op_ns=237 ns_per_element=0.182 elements_per_second=5505376344",
+        "case=direct_scalar_transform elements=1027 samples=11 iterations_per_sample=10 min_op_ns=186 median_op_ns=192 max_op_ns=244 ns_per_element=0.187 elements_per_second=5348958333",
+        "case=compute_for_each_transform elements=1027 samples=11 iterations_per_sample=10 min_op_ns=192 median_op_ns=193 max_op_ns=224 ns_per_element=0.188 elements_per_second=5321243523",
+        "case=compute_for_each_parallel_2_workers elements=1027 samples=11 iterations_per_sample=10 min_op_ns=225151 median_op_ns=285302 max_op_ns=322904 ns_per_element=277.801 elements_per_second=3599694",
+        "case=compute_for_each_parallel_4_workers elements=1027 samples=11 iterations_per_sample=10 min_op_ns=446393 median_op_ns=556631 max_op_ns=622609 ns_per_element=541.997 elements_per_second=1845028",
+        "case=wide_f32x4_candidate_transform elements=1027 samples=11 iterations_per_sample=10 min_op_ns=162 median_op_ns=185 max_op_ns=239 ns_per_element=0.180 elements_per_second=5551351351",
+        "case=direct_scalar_transform elements=16384 samples=11 iterations_per_sample=10 min_op_ns=2765 median_op_ns=2893 max_op_ns=5081 ns_per_element=0.177 elements_per_second=5663325268",
+        "case=compute_for_each_transform elements=16384 samples=11 iterations_per_sample=10 min_op_ns=2535 median_op_ns=3021 max_op_ns=3318 ns_per_element=0.184 elements_per_second=5423369745",
+        "case=compute_for_each_parallel_2_workers elements=16384 samples=11 iterations_per_sample=10 min_op_ns=251894 median_op_ns=277805 max_op_ns=317253 ns_per_element=16.956 elements_per_second=58976620",
+        "case=compute_for_each_parallel_4_workers elements=16384 samples=11 iterations_per_sample=10 min_op_ns=524095 median_op_ns=568936 max_op_ns=625312 ns_per_element=34.725 elements_per_second=28797615",
+        "case=wide_f32x4_candidate_transform elements=16384 samples=11 iterations_per_sample=10 min_op_ns=2516 median_op_ns=2529 max_op_ns=4930 ns_per_element=0.154 elements_per_second=6478449980",
+        "case=direct_scalar_transform elements=16387 samples=11 iterations_per_sample=10 min_op_ns=2634 median_op_ns=2722 max_op_ns=6173 ns_per_element=0.166 elements_per_second=6020205731",
+        "case=compute_for_each_transform elements=16387 samples=11 iterations_per_sample=10 min_op_ns=2621 median_op_ns=2757 max_op_ns=3308 ns_per_element=0.168 elements_per_second=5943779470",
+        "case=compute_for_each_parallel_2_workers elements=16387 samples=11 iterations_per_sample=10 min_op_ns=251044 median_op_ns=272948 max_op_ns=304017 ns_per_element=16.656 elements_per_second=60037077",
+        "case=compute_for_each_parallel_4_workers elements=16387 samples=11 iterations_per_sample=10 min_op_ns=536408 median_op_ns=587191 max_op_ns=719477 ns_per_element=35.833 elements_per_second=27907444",
+        "case=wide_f32x4_candidate_transform elements=16387 samples=11 iterations_per_sample=10 min_op_ns=2485 median_op_ns=2683 max_op_ns=3067 ns_per_element=0.164 elements_per_second=6107715244",
+        "case=direct_scalar_transform elements=262144 samples=11 iterations_per_sample=10 min_op_ns=50023 median_op_ns=52034 max_op_ns=63911 ns_per_element=0.198 elements_per_second=5037936734",
+        "case=compute_for_each_transform elements=262144 samples=11 iterations_per_sample=10 min_op_ns=50872 median_op_ns=54086 max_op_ns=76992 ns_per_element=0.206 elements_per_second=4846799541",
+        "case=compute_for_each_parallel_2_workers elements=262144 samples=11 iterations_per_sample=10 min_op_ns=305585 median_op_ns=340782 max_op_ns=375172 ns_per_element=1.300 elements_per_second=769242507",
+        "case=compute_for_each_parallel_4_workers elements=262144 samples=11 iterations_per_sample=10 min_op_ns=648249 median_op_ns=733354 max_op_ns=1276113 ns_per_element=2.798 elements_per_second=357459017",
+        "case=wide_f32x4_candidate_transform elements=262144 samples=11 iterations_per_sample=10 min_op_ns=42910 median_op_ns=50206 max_op_ns=84963 ns_per_element=0.192 elements_per_second=5221367964",
+        "case=direct_scalar_transform elements=262147 samples=11 iterations_per_sample=10 min_op_ns=48684 median_op_ns=52859 max_op_ns=144823 ns_per_element=0.202 elements_per_second=4959363590",
+        "case=compute_for_each_transform elements=262147 samples=11 iterations_per_sample=10 min_op_ns=49880 median_op_ns=66709 max_op_ns=182762 ns_per_element=0.254 elements_per_second=3929709634",
+        "case=compute_for_each_parallel_2_workers elements=262147 samples=11 iterations_per_sample=10 min_op_ns=337261 median_op_ns=424403 max_op_ns=531584 ns_per_element=1.619 elements_per_second=617684135",
+        "case=compute_for_each_parallel_4_workers elements=262147 samples=11 iterations_per_sample=10 min_op_ns=567358 median_op_ns=695913 max_op_ns=2196292 ns_per_element=2.655 elements_per_second=376695075",
+        "case=wide_f32x4_candidate_transform elements=262147 samples=11 iterations_per_sample=10 min_op_ns=49808 median_op_ns=65072 max_op_ns=146827 ns_per_element=0.248 elements_per_second=4028568355"
+      ],
+      "elapsed_seconds": 4.237,
+      "repetitions": [
+        {
+          "cases": [
+            "case=direct_scalar_transform elements=64 samples=11 iterations_per_sample=10 min_op_ns=18 median_op_ns=20 max_op_ns=342 ns_per_element=0.312 elements_per_second=3200000000",
+            "case=compute_for_each_transform elements=64 samples=11 iterations_per_sample=10 min_op_ns=16 median_op_ns=20 max_op_ns=52 ns_per_element=0.312 elements_per_second=3200000000",
+            "case=compute_for_each_parallel_2_workers elements=64 samples=11 iterations_per_sample=10 min_op_ns=255246 median_op_ns=277999 max_op_ns=298149 ns_per_element=4343.734 elements_per_second=230217",
+            "case=compute_for_each_parallel_4_workers elements=64 samples=11 iterations_per_sample=10 min_op_ns=466217 median_op_ns=514015 max_op_ns=570592 ns_per_element=8031.484 elements_per_second=124510",
+            "case=wide_f32x4_candidate_transform elements=64 samples=11 iterations_per_sample=10 min_op_ns=31 median_op_ns=31 max_op_ns=71 ns_per_element=0.484 elements_per_second=2064516129",
+            "case=direct_scalar_transform elements=65 samples=11 iterations_per_sample=10 min_op_ns=13 median_op_ns=13 max_op_ns=62 ns_per_element=0.200 elements_per_second=5000000000",
+            "case=compute_for_each_transform elements=65 samples=11 iterations_per_sample=10 min_op_ns=13 median_op_ns=13 max_op_ns=41 ns_per_element=0.200 elements_per_second=5000000000",
+            "case=compute_for_each_parallel_2_workers elements=65 samples=11 iterations_per_sample=10 min_op_ns=248077 median_op_ns=264732 max_op_ns=344046 ns_per_element=4072.800 elements_per_second=245531",
+            "case=compute_for_each_parallel_4_workers elements=65 samples=11 iterations_per_sample=10 min_op_ns=453227 median_op_ns=478860 max_op_ns=505810 ns_per_element=7367.077 elements_per_second=135739",
+            "case=wide_f32x4_candidate_transform elements=65 samples=11 iterations_per_sample=10 min_op_ns=40 median_op_ns=53 max_op_ns=1768 ns_per_element=0.815 elements_per_second=1226415094",
+            "case=direct_scalar_transform elements=1024 samples=11 iterations_per_sample=10 min_op_ns=97 median_op_ns=149 max_op_ns=198 ns_per_element=0.146 elements_per_second=6872483221",
+            "case=compute_for_each_transform elements=1024 samples=11 iterations_per_sample=10 min_op_ns=97 median_op_ns=97 max_op_ns=123 ns_per_element=0.095 elements_per_second=10556701031",
+            "case=compute_for_each_parallel_2_workers elements=1024 samples=11 iterations_per_sample=10 min_op_ns=238858 median_op_ns=262515 max_op_ns=289354 ns_per_element=256.362 elements_per_second=3900729",
+            "case=compute_for_each_parallel_4_workers elements=1024 samples=11 iterations_per_sample=10 min_op_ns=497915 median_op_ns=548965 max_op_ns=593679 ns_per_element=536.099 elements_per_second=1865328",
+            "case=wide_f32x4_candidate_transform elements=1024 samples=11 iterations_per_sample=10 min_op_ns=184 median_op_ns=186 max_op_ns=237 ns_per_element=0.182 elements_per_second=5505376344",
+            "case=direct_scalar_transform elements=1027 samples=11 iterations_per_sample=10 min_op_ns=186 median_op_ns=192 max_op_ns=244 ns_per_element=0.187 elements_per_second=5348958333",
+            "case=compute_for_each_transform elements=1027 samples=11 iterations_per_sample=10 min_op_ns=192 median_op_ns=193 max_op_ns=224 ns_per_element=0.188 elements_per_second=5321243523",
+            "case=compute_for_each_parallel_2_workers elements=1027 samples=11 iterations_per_sample=10 min_op_ns=225151 median_op_ns=285302 max_op_ns=322904 ns_per_element=277.801 elements_per_second=3599694",
+            "case=compute_for_each_parallel_4_workers elements=1027 samples=11 iterations_per_sample=10 min_op_ns=446393 median_op_ns=556631 max_op_ns=622609 ns_per_element=541.997 elements_per_second=1845028",
+            "case=wide_f32x4_candidate_transform elements=1027 samples=11 iterations_per_sample=10 min_op_ns=162 median_op_ns=185 max_op_ns=239 ns_per_element=0.180 elements_per_second=5551351351",
+            "case=direct_scalar_transform elements=16384 samples=11 iterations_per_sample=10 min_op_ns=2765 median_op_ns=2893 max_op_ns=5081 ns_per_element=0.177 elements_per_second=5663325268",
+            "case=compute_for_each_transform elements=16384 samples=11 iterations_per_sample=10 min_op_ns=2535 median_op_ns=3021 max_op_ns=3318 ns_per_element=0.184 elements_per_second=5423369745",
+            "case=compute_for_each_parallel_2_workers elements=16384 samples=11 iterations_per_sample=10 min_op_ns=251894 median_op_ns=277805 max_op_ns=317253 ns_per_element=16.956 elements_per_second=58976620",
+            "case=compute_for_each_parallel_4_workers elements=16384 samples=11 iterations_per_sample=10 min_op_ns=524095 median_op_ns=568936 max_op_ns=625312 ns_per_element=34.725 elements_per_second=28797615",
+            "case=wide_f32x4_candidate_transform elements=16384 samples=11 iterations_per_sample=10 min_op_ns=2516 median_op_ns=2529 max_op_ns=4930 ns_per_element=0.154 elements_per_second=6478449980",
+            "case=direct_scalar_transform elements=16387 samples=11 iterations_per_sample=10 min_op_ns=2634 median_op_ns=2722 max_op_ns=6173 ns_per_element=0.166 elements_per_second=6020205731",
+            "case=compute_for_each_transform elements=16387 samples=11 iterations_per_sample=10 min_op_ns=2621 median_op_ns=2757 max_op_ns=3308 ns_per_element=0.168 elements_per_second=5943779470",
+            "case=compute_for_each_parallel_2_workers elements=16387 samples=11 iterations_per_sample=10 min_op_ns=251044 median_op_ns=272948 max_op_ns=304017 ns_per_element=16.656 elements_per_second=60037077",
+            "case=compute_for_each_parallel_4_workers elements=16387 samples=11 iterations_per_sample=10 min_op_ns=536408 median_op_ns=587191 max_op_ns=719477 ns_per_element=35.833 elements_per_second=27907444",
+            "case=wide_f32x4_candidate_transform elements=16387 samples=11 iterations_per_sample=10 min_op_ns=2485 median_op_ns=2683 max_op_ns=3067 ns_per_element=0.164 elements_per_second=6107715244",
+            "case=direct_scalar_transform elements=262144 samples=11 iterations_per_sample=10 min_op_ns=50023 median_op_ns=52034 max_op_ns=63911 ns_per_element=0.198 elements_per_second=5037936734",
+            "case=compute_for_each_transform elements=262144 samples=11 iterations_per_sample=10 min_op_ns=50872 median_op_ns=54086 max_op_ns=76992 ns_per_element=0.206 elements_per_second=4846799541",
+            "case=compute_for_each_parallel_2_workers elements=262144 samples=11 iterations_per_sample=10 min_op_ns=305585 median_op_ns=340782 max_op_ns=375172 ns_per_element=1.300 elements_per_second=769242507",
+            "case=compute_for_each_parallel_4_workers elements=262144 samples=11 iterations_per_sample=10 min_op_ns=648249 median_op_ns=733354 max_op_ns=1276113 ns_per_element=2.798 elements_per_second=357459017",
+            "case=wide_f32x4_candidate_transform elements=262144 samples=11 iterations_per_sample=10 min_op_ns=42910 median_op_ns=50206 max_op_ns=84963 ns_per_element=0.192 elements_per_second=5221367964",
+            "case=direct_scalar_transform elements=262147 samples=11 iterations_per_sample=10 min_op_ns=48684 median_op_ns=52859 max_op_ns=144823 ns_per_element=0.202 elements_per_second=4959363590",
+            "case=compute_for_each_transform elements=262147 samples=11 iterations_per_sample=10 min_op_ns=49880 median_op_ns=66709 max_op_ns=182762 ns_per_element=0.254 elements_per_second=3929709634",
+            "case=compute_for_each_parallel_2_workers elements=262147 samples=11 iterations_per_sample=10 min_op_ns=337261 median_op_ns=424403 max_op_ns=531584 ns_per_element=1.619 elements_per_second=617684135",
+            "case=compute_for_each_parallel_4_workers elements=262147 samples=11 iterations_per_sample=10 min_op_ns=567358 median_op_ns=695913 max_op_ns=2196292 ns_per_element=2.655 elements_per_second=376695075",
+            "case=wide_f32x4_candidate_transform elements=262147 samples=11 iterations_per_sample=10 min_op_ns=49808 median_op_ns=65072 max_op_ns=146827 ns_per_element=0.248 elements_per_second=4028568355"
+          ],
+          "elapsed_seconds": 4.237,
+          "run": 1
+        }
+      ]
+    },
+    "ecs": {
+      "case_count": 24,
+      "cases": [
+        "case=world_spawn_fresh operations=64 samples=7 min_total_ns=1216 median_total_ns=1373 max_total_ns=22466 ns_per_operation=21.453 operations_per_second=46613256",
+        "case=world_despawn_after_spawn operations=64 samples=7 min_total_ns=2573 median_total_ns=2720 max_total_ns=7677 ns_per_operation=42.500 operations_per_second=23529412",
+        "case=world_spawn_despawn_reuse operations=192 samples=7 min_total_ns=3083 median_total_ns=3205 max_total_ns=3662 ns_per_operation=16.693 operations_per_second=59906396",
+        "case=world_contains_scan operations=64 samples=7 min_total_ns=231 median_total_ns=258 max_total_ns=311 ns_per_operation=4.031 operations_per_second=248062016",
+        "case=world_component_get_dense operations=64 samples=7 min_total_ns=1755 median_total_ns=1818 max_total_ns=4227 ns_per_operation=28.406 operations_per_second=35203520",
+        "case=world_component_get_sparse operations=4 samples=7 min_total_ns=141 median_total_ns=178 max_total_ns=221 ns_per_operation=44.500 operations_per_second=22471910",
+        "case=world_component_get_stale_generation operations=64 samples=7 min_total_ns=286 median_total_ns=364 max_total_ns=440 ns_per_operation=5.688 operations_per_second=175824176",
+        "case=world_component_insert_replace_remove operations=65 samples=7 min_total_ns=2806 median_total_ns=2918 max_total_ns=3211 ns_per_operation=44.892 operations_per_second=22275531",
+        "case=world_spawn_fresh operations=1024 samples=7 min_total_ns=9405 median_total_ns=10127 max_total_ns=16449 ns_per_operation=9.890 operations_per_second=101115829",
+        "case=world_despawn_after_spawn operations=1024 samples=7 min_total_ns=18584 median_total_ns=19106 max_total_ns=23356 ns_per_operation=18.658 operations_per_second=53595729",
+        "case=world_spawn_despawn_reuse operations=3072 samples=7 min_total_ns=24285 median_total_ns=25200 max_total_ns=26547 ns_per_operation=8.203 operations_per_second=121904762",
+        "case=world_contains_scan operations=1024 samples=7 min_total_ns=2633 median_total_ns=3048 max_total_ns=3522 ns_per_operation=2.977 operations_per_second=335958005",
+        "case=world_component_get_dense operations=1024 samples=7 min_total_ns=28270 median_total_ns=29055 max_total_ns=31605 ns_per_operation=28.374 operations_per_second=35243504",
+        "case=world_component_get_sparse operations=64 samples=7 min_total_ns=1778 median_total_ns=2131 max_total_ns=2326 ns_per_operation=33.297 operations_per_second=30032848",
+        "case=world_component_get_stale_generation operations=1024 samples=7 min_total_ns=4217 median_total_ns=4433 max_total_ns=5736 ns_per_operation=4.329 operations_per_second=230994812",
+        "case=world_component_insert_replace_remove operations=1025 samples=7 min_total_ns=34907 median_total_ns=36850 max_total_ns=41429 ns_per_operation=35.951 operations_per_second=27815468",
+        "case=world_spawn_fresh operations=16384 samples=7 min_total_ns=140571 median_total_ns=143022 max_total_ns=252881 ns_per_operation=8.729 operations_per_second=114555803",
+        "case=world_despawn_after_spawn operations=16384 samples=7 min_total_ns=276708 median_total_ns=284988 max_total_ns=524233 ns_per_operation=17.394 operations_per_second=57490140",
+        "case=world_spawn_despawn_reuse operations=49152 samples=7 min_total_ns=327425 median_total_ns=372792 max_total_ns=402879 ns_per_operation=7.584 operations_per_second=131848323",
+        "case=world_contains_scan operations=16384 samples=7 min_total_ns=50247 median_total_ns=55070 max_total_ns=57224 ns_per_operation=3.361 operations_per_second=297512257",
+        "case=world_component_get_dense operations=16384 samples=7 min_total_ns=464351 median_total_ns=481017 max_total_ns=494250 ns_per_operation=29.359 operations_per_second=34061166",
+        "case=world_component_get_sparse operations=1024 samples=7 min_total_ns=27966 median_total_ns=30418 max_total_ns=62340 ns_per_operation=29.705 operations_per_second=33664278",
+        "case=world_component_get_stale_generation operations=16384 samples=7 min_total_ns=70949 median_total_ns=74039 max_total_ns=75722 ns_per_operation=4.519 operations_per_second=221288780",
+        "case=world_component_insert_replace_remove operations=16385 samples=7 min_total_ns=564465 median_total_ns=583961 max_total_ns=601139 ns_per_operation=35.640 operations_per_second=28058381"
+      ],
+      "elapsed_seconds": 1.697,
+      "repetitions": [
+        {
+          "cases": [
+            "case=world_spawn_fresh operations=64 samples=7 min_total_ns=1216 median_total_ns=1373 max_total_ns=22466 ns_per_operation=21.453 operations_per_second=46613256",
+            "case=world_despawn_after_spawn operations=64 samples=7 min_total_ns=2573 median_total_ns=2720 max_total_ns=7677 ns_per_operation=42.500 operations_per_second=23529412",
+            "case=world_spawn_despawn_reuse operations=192 samples=7 min_total_ns=3083 median_total_ns=3205 max_total_ns=3662 ns_per_operation=16.693 operations_per_second=59906396",
+            "case=world_contains_scan operations=64 samples=7 min_total_ns=231 median_total_ns=258 max_total_ns=311 ns_per_operation=4.031 operations_per_second=248062016",
+            "case=world_component_get_dense operations=64 samples=7 min_total_ns=1755 median_total_ns=1818 max_total_ns=4227 ns_per_operation=28.406 operations_per_second=35203520",
+            "case=world_component_get_sparse operations=4 samples=7 min_total_ns=141 median_total_ns=178 max_total_ns=221 ns_per_operation=44.500 operations_per_second=22471910",
+            "case=world_component_get_stale_generation operations=64 samples=7 min_total_ns=286 median_total_ns=364 max_total_ns=440 ns_per_operation=5.688 operations_per_second=175824176",
+            "case=world_component_insert_replace_remove operations=65 samples=7 min_total_ns=2806 median_total_ns=2918 max_total_ns=3211 ns_per_operation=44.892 operations_per_second=22275531",
+            "case=world_spawn_fresh operations=1024 samples=7 min_total_ns=9405 median_total_ns=10127 max_total_ns=16449 ns_per_operation=9.890 operations_per_second=101115829",
+            "case=world_despawn_after_spawn operations=1024 samples=7 min_total_ns=18584 median_total_ns=19106 max_total_ns=23356 ns_per_operation=18.658 operations_per_second=53595729",
+            "case=world_spawn_despawn_reuse operations=3072 samples=7 min_total_ns=24285 median_total_ns=25200 max_total_ns=26547 ns_per_operation=8.203 operations_per_second=121904762",
+            "case=world_contains_scan operations=1024 samples=7 min_total_ns=2633 median_total_ns=3048 max_total_ns=3522 ns_per_operation=2.977 operations_per_second=335958005",
+            "case=world_component_get_dense operations=1024 samples=7 min_total_ns=28270 median_total_ns=29055 max_total_ns=31605 ns_per_operation=28.374 operations_per_second=35243504",
+            "case=world_component_get_sparse operations=64 samples=7 min_total_ns=1778 median_total_ns=2131 max_total_ns=2326 ns_per_operation=33.297 operations_per_second=30032848",
+            "case=world_component_get_stale_generation operations=1024 samples=7 min_total_ns=4217 median_total_ns=4433 max_total_ns=5736 ns_per_operation=4.329 operations_per_second=230994812",
+            "case=world_component_insert_replace_remove operations=1025 samples=7 min_total_ns=34907 median_total_ns=36850 max_total_ns=41429 ns_per_operation=35.951 operations_per_second=27815468",
+            "case=world_spawn_fresh operations=16384 samples=7 min_total_ns=140571 median_total_ns=143022 max_total_ns=252881 ns_per_operation=8.729 operations_per_second=114555803",
+            "case=world_despawn_after_spawn operations=16384 samples=7 min_total_ns=276708 median_total_ns=284988 max_total_ns=524233 ns_per_operation=17.394 operations_per_second=57490140",
+            "case=world_spawn_despawn_reuse operations=49152 samples=7 min_total_ns=327425 median_total_ns=372792 max_total_ns=402879 ns_per_operation=7.584 operations_per_second=131848323",
+            "case=world_contains_scan operations=16384 samples=7 min_total_ns=50247 median_total_ns=55070 max_total_ns=57224 ns_per_operation=3.361 operations_per_second=297512257",
+            "case=world_component_get_dense operations=16384 samples=7 min_total_ns=464351 median_total_ns=481017 max_total_ns=494250 ns_per_operation=29.359 operations_per_second=34061166",
+            "case=world_component_get_sparse operations=1024 samples=7 min_total_ns=27966 median_total_ns=30418 max_total_ns=62340 ns_per_operation=29.705 operations_per_second=33664278",
+            "case=world_component_get_stale_generation operations=16384 samples=7 min_total_ns=70949 median_total_ns=74039 max_total_ns=75722 ns_per_operation=4.519 operations_per_second=221288780",
+            "case=world_component_insert_replace_remove operations=16385 samples=7 min_total_ns=564465 median_total_ns=583961 max_total_ns=601139 ns_per_operation=35.640 operations_per_second=28058381"
+          ],
+          "elapsed_seconds": 1.697,
+          "run": 1
+        }
+      ]
+    },
+    "memory": {
+      "case_count": 28,
+      "cases": [
+        "case=buffer_push_preallocated operations=64 samples=7 min_total_ns=245 median_total_ns=268 max_total_ns=1334 ns_per_operation=4.188 operations_per_second=238805970",
+        "case=buffer_bulk_extend operations=64 samples=7 min_total_ns=178 median_total_ns=179 max_total_ns=309 ns_per_operation=2.797 operations_per_second=357541899",
+        "case=soa_push_rows operations=64 samples=7 min_total_ns=491 median_total_ns=519 max_total_ns=2946 ns_per_operation=8.109 operations_per_second=123314066",
+        "case=soa_bulk_extend operations=64 samples=7 min_total_ns=404 median_total_ns=449 max_total_ns=680 ns_per_operation=7.016 operations_per_second=142538976",
+        "case=soa_scan_two_columns operations=64 samples=7 min_total_ns=92 median_total_ns=113 max_total_ns=116 ns_per_operation=1.766 operations_per_second=566371681",
+        "case=layout_aos_scan_one_field operations=64 samples=7 min_total_ns=122 median_total_ns=140 max_total_ns=159 ns_per_operation=2.188 operations_per_second=457142857",
+        "case=layout_soa_scan_one_field operations=64 samples=7 min_total_ns=96 median_total_ns=114 max_total_ns=2905 ns_per_operation=1.781 operations_per_second=561403509",
+        "case=layout_aos_scan_both_fields operations=64 samples=7 min_total_ns=105 median_total_ns=118 max_total_ns=155 ns_per_operation=1.844 operations_per_second=542372881",
+        "case=layout_soa_scan_both_fields operations=64 samples=7 min_total_ns=110 median_total_ns=121 max_total_ns=159 ns_per_operation=1.891 operations_per_second=528925620",
+        "case=buffer_push_preallocated operations=1024 samples=7 min_total_ns=1445 median_total_ns=1453 max_total_ns=6307 ns_per_operation=1.419 operations_per_second=704748796",
+        "case=buffer_bulk_extend operations=1024 samples=7 min_total_ns=257 median_total_ns=277 max_total_ns=4243 ns_per_operation=0.271 operations_per_second=3696750903",
+        "case=soa_push_rows operations=1024 samples=7 min_total_ns=3556 median_total_ns=4528 max_total_ns=12033 ns_per_operation=4.422 operations_per_second=226148410",
+        "case=soa_bulk_extend operations=1024 samples=7 min_total_ns=755 median_total_ns=790 max_total_ns=1577 ns_per_operation=0.771 operations_per_second=1296202532",
+        "case=soa_scan_two_columns operations=1024 samples=7 min_total_ns=362 median_total_ns=425 max_total_ns=1862 ns_per_operation=0.415 operations_per_second=2409411765",
+        "case=layout_aos_scan_one_field operations=1024 samples=7 min_total_ns=636 median_total_ns=801 max_total_ns=1369 ns_per_operation=0.782 operations_per_second=1278401998",
+        "case=layout_soa_scan_one_field operations=1024 samples=7 min_total_ns=587 median_total_ns=588 max_total_ns=736 ns_per_operation=0.574 operations_per_second=1741496599",
+        "case=layout_aos_scan_both_fields operations=1024 samples=7 min_total_ns=841 median_total_ns=959 max_total_ns=1066 ns_per_operation=0.937 operations_per_second=1067778936",
+        "case=layout_soa_scan_both_fields operations=1024 samples=7 min_total_ns=958 median_total_ns=985 max_total_ns=1090 ns_per_operation=0.962 operations_per_second=1039593909",
+        "case=buffer_push_preallocated operations=16384 samples=7 min_total_ns=22398 median_total_ns=33472 max_total_ns=93230 ns_per_operation=2.043 operations_per_second=489483748",
+        "case=buffer_bulk_extend operations=16384 samples=7 min_total_ns=3883 median_total_ns=3979 max_total_ns=63443 ns_per_operation=0.243 operations_per_second=4117617492",
+        "case=soa_push_rows operations=16384 samples=7 min_total_ns=46130 median_total_ns=53685 max_total_ns=169221 ns_per_operation=3.277 operations_per_second=305187669",
+        "case=soa_bulk_extend operations=16384 samples=7 min_total_ns=10387 median_total_ns=11774 max_total_ns=12078 ns_per_operation=0.719 operations_per_second=1391540683",
+        "case=soa_scan_two_columns operations=16384 samples=7 min_total_ns=4587 median_total_ns=6354 max_total_ns=8630 ns_per_operation=0.388 operations_per_second=2578533207",
+        "case=layout_aos_scan_one_field operations=16384 samples=7 min_total_ns=8470 median_total_ns=9042 max_total_ns=13108 ns_per_operation=0.552 operations_per_second=1811988498",
+        "case=layout_soa_scan_one_field operations=16384 samples=7 min_total_ns=8594 median_total_ns=9085 max_total_ns=12135 ns_per_operation=0.555 operations_per_second=1803412218",
+        "case=layout_aos_scan_both_fields operations=16384 samples=7 min_total_ns=14182 median_total_ns=14252 max_total_ns=15969 ns_per_operation=0.870 operations_per_second=1149593040",
+        "case=layout_soa_scan_both_fields operations=16384 samples=7 min_total_ns=13731 median_total_ns=14950 max_total_ns=16659 ns_per_operation=0.912 operations_per_second=1095919732",
+        "case=shared_mutex_lock_update operations=10000 samples=7 min_total_ns=263284 median_total_ns=294865 max_total_ns=326353 ns_per_operation=29.486 operations_per_second=33913825"
+      ],
+      "elapsed_seconds": 1.343,
+      "repetitions": [
+        {
+          "cases": [
+            "case=buffer_push_preallocated operations=64 samples=7 min_total_ns=245 median_total_ns=268 max_total_ns=1334 ns_per_operation=4.188 operations_per_second=238805970",
+            "case=buffer_bulk_extend operations=64 samples=7 min_total_ns=178 median_total_ns=179 max_total_ns=309 ns_per_operation=2.797 operations_per_second=357541899",
+            "case=soa_push_rows operations=64 samples=7 min_total_ns=491 median_total_ns=519 max_total_ns=2946 ns_per_operation=8.109 operations_per_second=123314066",
+            "case=soa_bulk_extend operations=64 samples=7 min_total_ns=404 median_total_ns=449 max_total_ns=680 ns_per_operation=7.016 operations_per_second=142538976",
+            "case=soa_scan_two_columns operations=64 samples=7 min_total_ns=92 median_total_ns=113 max_total_ns=116 ns_per_operation=1.766 operations_per_second=566371681",
+            "case=layout_aos_scan_one_field operations=64 samples=7 min_total_ns=122 median_total_ns=140 max_total_ns=159 ns_per_operation=2.188 operations_per_second=457142857",
+            "case=layout_soa_scan_one_field operations=64 samples=7 min_total_ns=96 median_total_ns=114 max_total_ns=2905 ns_per_operation=1.781 operations_per_second=561403509",
+            "case=layout_aos_scan_both_fields operations=64 samples=7 min_total_ns=105 median_total_ns=118 max_total_ns=155 ns_per_operation=1.844 operations_per_second=542372881",
+            "case=layout_soa_scan_both_fields operations=64 samples=7 min_total_ns=110 median_total_ns=121 max_total_ns=159 ns_per_operation=1.891 operations_per_second=528925620",
+            "case=buffer_push_preallocated operations=1024 samples=7 min_total_ns=1445 median_total_ns=1453 max_total_ns=6307 ns_per_operation=1.419 operations_per_second=704748796",
+            "case=buffer_bulk_extend operations=1024 samples=7 min_total_ns=257 median_total_ns=277 max_total_ns=4243 ns_per_operation=0.271 operations_per_second=3696750903",
+            "case=soa_push_rows operations=1024 samples=7 min_total_ns=3556 median_total_ns=4528 max_total_ns=12033 ns_per_operation=4.422 operations_per_second=226148410",
+            "case=soa_bulk_extend operations=1024 samples=7 min_total_ns=755 median_total_ns=790 max_total_ns=1577 ns_per_operation=0.771 operations_per_second=1296202532",
+            "case=soa_scan_two_columns operations=1024 samples=7 min_total_ns=362 median_total_ns=425 max_total_ns=1862 ns_per_operation=0.415 operations_per_second=2409411765",
+            "case=layout_aos_scan_one_field operations=1024 samples=7 min_total_ns=636 median_total_ns=801 max_total_ns=1369 ns_per_operation=0.782 operations_per_second=1278401998",
+            "case=layout_soa_scan_one_field operations=1024 samples=7 min_total_ns=587 median_total_ns=588 max_total_ns=736 ns_per_operation=0.574 operations_per_second=1741496599",
+            "case=layout_aos_scan_both_fields operations=1024 samples=7 min_total_ns=841 median_total_ns=959 max_total_ns=1066 ns_per_operation=0.937 operations_per_second=1067778936",
+            "case=layout_soa_scan_both_fields operations=1024 samples=7 min_total_ns=958 median_total_ns=985 max_total_ns=1090 ns_per_operation=0.962 operations_per_second=1039593909",
+            "case=buffer_push_preallocated operations=16384 samples=7 min_total_ns=22398 median_total_ns=33472 max_total_ns=93230 ns_per_operation=2.043 operations_per_second=489483748",
+            "case=buffer_bulk_extend operations=16384 samples=7 min_total_ns=3883 median_total_ns=3979 max_total_ns=63443 ns_per_operation=0.243 operations_per_second=4117617492",
+            "case=soa_push_rows operations=16384 samples=7 min_total_ns=46130 median_total_ns=53685 max_total_ns=169221 ns_per_operation=3.277 operations_per_second=305187669",
+            "case=soa_bulk_extend operations=16384 samples=7 min_total_ns=10387 median_total_ns=11774 max_total_ns=12078 ns_per_operation=0.719 operations_per_second=1391540683",
+            "case=soa_scan_two_columns operations=16384 samples=7 min_total_ns=4587 median_total_ns=6354 max_total_ns=8630 ns_per_operation=0.388 operations_per_second=2578533207",
+            "case=layout_aos_scan_one_field operations=16384 samples=7 min_total_ns=8470 median_total_ns=9042 max_total_ns=13108 ns_per_operation=0.552 operations_per_second=1811988498",
+            "case=layout_soa_scan_one_field operations=16384 samples=7 min_total_ns=8594 median_total_ns=9085 max_total_ns=12135 ns_per_operation=0.555 operations_per_second=1803412218",
+            "case=layout_aos_scan_both_fields operations=16384 samples=7 min_total_ns=14182 median_total_ns=14252 max_total_ns=15969 ns_per_operation=0.870 operations_per_second=1149593040",
+            "case=layout_soa_scan_both_fields operations=16384 samples=7 min_total_ns=13731 median_total_ns=14950 max_total_ns=16659 ns_per_operation=0.912 operations_per_second=1095919732",
+            "case=shared_mutex_lock_update operations=10000 samples=7 min_total_ns=263284 median_total_ns=294865 max_total_ns=326353 ns_per_operation=29.486 operations_per_second=33913825"
+          ],
+          "elapsed_seconds": 1.343,
+          "run": 1
+        }
+      ]
+    },
+    "network": {
+      "case_count": 2,
+      "cases": [
+        "case=latency_estimator_128_samples iterations=1000 samples=9 min_op_ns=1036 median_op_ns=1134 max_op_ns=1260",
+        "case=reliable_outbox_enqueue_ack_64 iterations=1000 samples=9 min_op_ns=360 median_op_ns=384 max_op_ns=471"
+      ],
+      "elapsed_seconds": 1.01,
+      "repetitions": [
+        {
+          "cases": [
+            "case=latency_estimator_128_samples iterations=1000 samples=9 min_op_ns=1036 median_op_ns=1134 max_op_ns=1260",
+            "case=reliable_outbox_enqueue_ack_64 iterations=1000 samples=9 min_op_ns=360 median_op_ns=384 max_op_ns=471"
+          ],
+          "elapsed_seconds": 1.01,
+          "run": 1
+        }
+      ]
+    },
+    "runtime": {
+      "case_count": 41,
+      "cases": [
+        "case=executor_noop tasks=100000 samples=7 min_total_ns=59140 median_total_ns=63402 max_total_ns=78102 ns_per_task=0.634 tasks_per_second=1577237311",
+        "case=scheduler_immediate_noop tasks=100000 samples=7 min_total_ns=73085 median_total_ns=73581 max_total_ns=105107 ns_per_task=0.736 tasks_per_second=1359046493",
+        "case=scheduler_queue_sequential tasks=1 samples=7 min_total_ns=227 median_total_ns=259 max_total_ns=462 ns_per_task=259.000 tasks_per_second=3861004",
+        "case=scheduler_queue_sequential tasks=16 samples=7 min_total_ns=354 median_total_ns=412 max_total_ns=9994 ns_per_task=25.750 tasks_per_second=38834951",
+        "case=scheduler_queue_sequential tasks=64 samples=7 min_total_ns=886 median_total_ns=997 max_total_ns=2492 ns_per_task=15.578 tasks_per_second=64192578",
+        "case=scheduler_queue_sequential tasks=256 samples=7 min_total_ns=2638 median_total_ns=2688 max_total_ns=8118 ns_per_task=10.500 tasks_per_second=95238095",
+        "case=persistent_pool_startup_shutdown_2_workers tasks=1 samples=7 min_total_ns=182579 median_total_ns=232639 max_total_ns=367664 ns_per_task=232639.000 tasks_per_second=4299",
+        "case=persistent_pool_startup_shutdown_4_workers tasks=1 samples=7 min_total_ns=342557 median_total_ns=447187 max_total_ns=527736 ns_per_task=447187.000 tasks_per_second=2236",
+        "case=scheduler_queue_sequential_cpu_1m tasks=16 samples=7 min_total_ns=2181002 median_total_ns=2300196 max_total_ns=2390069 ns_per_task=143762.250 tasks_per_second=6956",
+        "case=scheduler_queue_parallel_noop_2_workers tasks=16 samples=7 min_total_ns=754666 median_total_ns=845820 max_total_ns=1090317 ns_per_task=52863.750 tasks_per_second=18917",
+        "case=scheduler_queue_parallel_noop_4_workers tasks=16 samples=7 min_total_ns=769965 median_total_ns=864117 max_total_ns=955227 ns_per_task=54007.312 tasks_per_second=18516",
+        "case=persistent_pool_noop_lifecycle_2_workers tasks=16 samples=7 min_total_ns=852301 median_total_ns=905631 max_total_ns=981335 ns_per_task=56601.938 tasks_per_second=17667",
+        "case=persistent_pool_noop_2_workers tasks=16 samples=7 min_total_ns=504573 median_total_ns=602769 max_total_ns=668271 ns_per_task=37673.062 tasks_per_second=26544",
+        "case=persistent_pool_cpu_1m_2_workers tasks=16 samples=7 min_total_ns=1692354 median_total_ns=2398769 max_total_ns=3131528 ns_per_task=149923.062 tasks_per_second=6670",
+        "case=persistent_pool_noop_lifecycle_4_workers tasks=16 samples=7 min_total_ns=737456 median_total_ns=873801 max_total_ns=1057700 ns_per_task=54612.562 tasks_per_second=18311",
+        "case=persistent_pool_noop_4_workers tasks=16 samples=7 min_total_ns=396512 median_total_ns=405520 max_total_ns=480621 ns_per_task=25345.000 tasks_per_second=39456",
+        "case=persistent_pool_cpu_1m_4_workers tasks=16 samples=7 min_total_ns=1578212 median_total_ns=1796714 max_total_ns=2008559 ns_per_task=112294.625 tasks_per_second=8905",
+        "case=scheduler_queue_parallel_cpu_1m_2_workers tasks=16 samples=7 min_total_ns=1813794 median_total_ns=2125167 max_total_ns=2550632 ns_per_task=132822.938 tasks_per_second=7529",
+        "case=scheduler_queue_parallel_cpu_1m_4_workers tasks=16 samples=7 min_total_ns=2181092 median_total_ns=2834822 max_total_ns=5049924 ns_per_task=177176.375 tasks_per_second=5644",
+        "case=scheduler_queue_sequential_cpu_1m tasks=64 samples=7 min_total_ns=8764046 median_total_ns=9040726 max_total_ns=9412318 ns_per_task=141261.344 tasks_per_second=7079",
+        "case=scheduler_queue_parallel_noop_2_workers tasks=64 samples=7 min_total_ns=2575289 median_total_ns=2973587 max_total_ns=28815247 ns_per_task=46462.297 tasks_per_second=21523",
+        "case=scheduler_queue_parallel_noop_4_workers tasks=64 samples=7 min_total_ns=2219450 median_total_ns=3173893 max_total_ns=4040168 ns_per_task=49592.078 tasks_per_second=20165",
+        "case=persistent_pool_noop_lifecycle_2_workers tasks=64 samples=7 min_total_ns=2431510 median_total_ns=2925187 max_total_ns=3545996 ns_per_task=45706.047 tasks_per_second=21879",
+        "case=persistent_pool_noop_2_workers tasks=64 samples=7 min_total_ns=2251207 median_total_ns=2483651 max_total_ns=2990493 ns_per_task=38807.047 tasks_per_second=25769",
+        "case=persistent_pool_cpu_1m_2_workers tasks=64 samples=7 min_total_ns=6982595 median_total_ns=7937710 max_total_ns=8506406 ns_per_task=124026.719 tasks_per_second=8063",
+        "case=persistent_pool_noop_lifecycle_4_workers tasks=64 samples=7 min_total_ns=2534768 median_total_ns=2959379 max_total_ns=3736877 ns_per_task=46240.297 tasks_per_second=21626",
+        "case=persistent_pool_noop_4_workers tasks=64 samples=7 min_total_ns=1907215 median_total_ns=1979347 max_total_ns=2587133 ns_per_task=30927.297 tasks_per_second=32334",
+        "case=persistent_pool_cpu_1m_4_workers tasks=64 samples=7 min_total_ns=5332752 median_total_ns=5811604 max_total_ns=6573632 ns_per_task=90806.312 tasks_per_second=11012",
+        "case=scheduler_queue_parallel_cpu_1m_2_workers tasks=64 samples=7 min_total_ns=7013631 median_total_ns=7260532 max_total_ns=7788886 ns_per_task=113445.812 tasks_per_second=8815",
+        "case=scheduler_queue_parallel_cpu_1m_4_workers tasks=64 samples=7 min_total_ns=5452883 median_total_ns=6421975 max_total_ns=8984011 ns_per_task=100343.359 tasks_per_second=9966",
+        "case=scheduler_queue_sequential_cpu_1m tasks=256 samples=7 min_total_ns=33713140 median_total_ns=34292620 max_total_ns=43064013 ns_per_task=133955.547 tasks_per_second=7465",
+        "case=scheduler_queue_parallel_noop_2_workers tasks=256 samples=7 min_total_ns=8797111 median_total_ns=9490300 max_total_ns=11973088 ns_per_task=37071.484 tasks_per_second=26975",
+        "case=scheduler_queue_parallel_noop_4_workers tasks=256 samples=7 min_total_ns=7513486 median_total_ns=7942222 max_total_ns=9933239 ns_per_task=31024.305 tasks_per_second=32233",
+        "case=persistent_pool_noop_lifecycle_2_workers tasks=256 samples=7 min_total_ns=8538641 median_total_ns=9354686 max_total_ns=10257956 ns_per_task=36541.742 tasks_per_second=27366",
+        "case=persistent_pool_noop_2_workers tasks=256 samples=7 min_total_ns=8454473 median_total_ns=9247136 max_total_ns=9538139 ns_per_task=36121.625 tasks_per_second=27684",
+        "case=persistent_pool_cpu_1m_2_workers tasks=256 samples=7 min_total_ns=26124287 median_total_ns=30088685 max_total_ns=38803593 ns_per_task=117533.926 tasks_per_second=8508",
+        "case=persistent_pool_noop_lifecycle_4_workers tasks=256 samples=7 min_total_ns=6986756 median_total_ns=7105391 max_total_ns=7485207 ns_per_task=27755.434 tasks_per_second=36029",
+        "case=persistent_pool_noop_4_workers tasks=256 samples=7 min_total_ns=5916854 median_total_ns=6434722 max_total_ns=6917205 ns_per_task=25135.633 tasks_per_second=39784",
+        "case=persistent_pool_cpu_1m_4_workers tasks=256 samples=7 min_total_ns=16398967 median_total_ns=17877892 max_total_ns=20760172 ns_per_task=69835.516 tasks_per_second=14319",
+        "case=scheduler_queue_parallel_cpu_1m_2_workers tasks=256 samples=7 min_total_ns=26032281 median_total_ns=27225507 max_total_ns=27810290 ns_per_task=106349.637 tasks_per_second=9403",
+        "case=scheduler_queue_parallel_cpu_1m_4_workers tasks=256 samples=7 min_total_ns=15793722 median_total_ns=16268163 max_total_ns=19144357 ns_per_task=63547.512 tasks_per_second=15736"
+      ],
+      "elapsed_seconds": 32.815,
+      "repetitions": [
+        {
+          "cases": [
+            "case=executor_noop tasks=100000 samples=7 min_total_ns=59140 median_total_ns=63402 max_total_ns=78102 ns_per_task=0.634 tasks_per_second=1577237311",
+            "case=scheduler_immediate_noop tasks=100000 samples=7 min_total_ns=73085 median_total_ns=73581 max_total_ns=105107 ns_per_task=0.736 tasks_per_second=1359046493",
+            "case=scheduler_queue_sequential tasks=1 samples=7 min_total_ns=227 median_total_ns=259 max_total_ns=462 ns_per_task=259.000 tasks_per_second=3861004",
+            "case=scheduler_queue_sequential tasks=16 samples=7 min_total_ns=354 median_total_ns=412 max_total_ns=9994 ns_per_task=25.750 tasks_per_second=38834951",
+            "case=scheduler_queue_sequential tasks=64 samples=7 min_total_ns=886 median_total_ns=997 max_total_ns=2492 ns_per_task=15.578 tasks_per_second=64192578",
+            "case=scheduler_queue_sequential tasks=256 samples=7 min_total_ns=2638 median_total_ns=2688 max_total_ns=8118 ns_per_task=10.500 tasks_per_second=95238095",
+            "case=persistent_pool_startup_shutdown_2_workers tasks=1 samples=7 min_total_ns=182579 median_total_ns=232639 max_total_ns=367664 ns_per_task=232639.000 tasks_per_second=4299",
+            "case=persistent_pool_startup_shutdown_4_workers tasks=1 samples=7 min_total_ns=342557 median_total_ns=447187 max_total_ns=527736 ns_per_task=447187.000 tasks_per_second=2236",
+            "case=scheduler_queue_sequential_cpu_1m tasks=16 samples=7 min_total_ns=2181002 median_total_ns=2300196 max_total_ns=2390069 ns_per_task=143762.250 tasks_per_second=6956",
+            "case=scheduler_queue_parallel_noop_2_workers tasks=16 samples=7 min_total_ns=754666 median_total_ns=845820 max_total_ns=1090317 ns_per_task=52863.750 tasks_per_second=18917",
+            "case=scheduler_queue_parallel_noop_4_workers tasks=16 samples=7 min_total_ns=769965 median_total_ns=864117 max_total_ns=955227 ns_per_task=54007.312 tasks_per_second=18516",
+            "case=persistent_pool_noop_lifecycle_2_workers tasks=16 samples=7 min_total_ns=852301 median_total_ns=905631 max_total_ns=981335 ns_per_task=56601.938 tasks_per_second=17667",
+            "case=persistent_pool_noop_2_workers tasks=16 samples=7 min_total_ns=504573 median_total_ns=602769 max_total_ns=668271 ns_per_task=37673.062 tasks_per_second=26544",
+            "case=persistent_pool_cpu_1m_2_workers tasks=16 samples=7 min_total_ns=1692354 median_total_ns=2398769 max_total_ns=3131528 ns_per_task=149923.062 tasks_per_second=6670",
+            "case=persistent_pool_noop_lifecycle_4_workers tasks=16 samples=7 min_total_ns=737456 median_total_ns=873801 max_total_ns=1057700 ns_per_task=54612.562 tasks_per_second=18311",
+            "case=persistent_pool_noop_4_workers tasks=16 samples=7 min_total_ns=396512 median_total_ns=405520 max_total_ns=480621 ns_per_task=25345.000 tasks_per_second=39456",
+            "case=persistent_pool_cpu_1m_4_workers tasks=16 samples=7 min_total_ns=1578212 median_total_ns=1796714 max_total_ns=2008559 ns_per_task=112294.625 tasks_per_second=8905",
+            "case=scheduler_queue_parallel_cpu_1m_2_workers tasks=16 samples=7 min_total_ns=1813794 median_total_ns=2125167 max_total_ns=2550632 ns_per_task=132822.938 tasks_per_second=7529",
+            "case=scheduler_queue_parallel_cpu_1m_4_workers tasks=16 samples=7 min_total_ns=2181092 median_total_ns=2834822 max_total_ns=5049924 ns_per_task=177176.375 tasks_per_second=5644",
+            "case=scheduler_queue_sequential_cpu_1m tasks=64 samples=7 min_total_ns=8764046 median_total_ns=9040726 max_total_ns=9412318 ns_per_task=141261.344 tasks_per_second=7079",
+            "case=scheduler_queue_parallel_noop_2_workers tasks=64 samples=7 min_total_ns=2575289 median_total_ns=2973587 max_total_ns=28815247 ns_per_task=46462.297 tasks_per_second=21523",
+            "case=scheduler_queue_parallel_noop_4_workers tasks=64 samples=7 min_total_ns=2219450 median_total_ns=3173893 max_total_ns=4040168 ns_per_task=49592.078 tasks_per_second=20165",
+            "case=persistent_pool_noop_lifecycle_2_workers tasks=64 samples=7 min_total_ns=2431510 median_total_ns=2925187 max_total_ns=3545996 ns_per_task=45706.047 tasks_per_second=21879",
+            "case=persistent_pool_noop_2_workers tasks=64 samples=7 min_total_ns=2251207 median_total_ns=2483651 max_total_ns=2990493 ns_per_task=38807.047 tasks_per_second=25769",
+            "case=persistent_pool_cpu_1m_2_workers tasks=64 samples=7 min_total_ns=6982595 median_total_ns=7937710 max_total_ns=8506406 ns_per_task=124026.719 tasks_per_second=8063",
+            "case=persistent_pool_noop_lifecycle_4_workers tasks=64 samples=7 min_total_ns=2534768 median_total_ns=2959379 max_total_ns=3736877 ns_per_task=46240.297 tasks_per_second=21626",
+            "case=persistent_pool_noop_4_workers tasks=64 samples=7 min_total_ns=1907215 median_total_ns=1979347 max_total_ns=2587133 ns_per_task=30927.297 tasks_per_second=32334",
+            "case=persistent_pool_cpu_1m_4_workers tasks=64 samples=7 min_total_ns=5332752 median_total_ns=5811604 max_total_ns=6573632 ns_per_task=90806.312 tasks_per_second=11012",
+            "case=scheduler_queue_parallel_cpu_1m_2_workers tasks=64 samples=7 min_total_ns=7013631 median_total_ns=7260532 max_total_ns=7788886 ns_per_task=113445.812 tasks_per_second=8815",
+            "case=scheduler_queue_parallel_cpu_1m_4_workers tasks=64 samples=7 min_total_ns=5452883 median_total_ns=6421975 max_total_ns=8984011 ns_per_task=100343.359 tasks_per_second=9966",
+            "case=scheduler_queue_sequential_cpu_1m tasks=256 samples=7 min_total_ns=33713140 median_total_ns=34292620 max_total_ns=43064013 ns_per_task=133955.547 tasks_per_second=7465",
+            "case=scheduler_queue_parallel_noop_2_workers tasks=256 samples=7 min_total_ns=8797111 median_total_ns=9490300 max_total_ns=11973088 ns_per_task=37071.484 tasks_per_second=26975",
+            "case=scheduler_queue_parallel_noop_4_workers tasks=256 samples=7 min_total_ns=7513486 median_total_ns=7942222 max_total_ns=9933239 ns_per_task=31024.305 tasks_per_second=32233",
+            "case=persistent_pool_noop_lifecycle_2_workers tasks=256 samples=7 min_total_ns=8538641 median_total_ns=9354686 max_total_ns=10257956 ns_per_task=36541.742 tasks_per_second=27366",
+            "case=persistent_pool_noop_2_workers tasks=256 samples=7 min_total_ns=8454473 median_total_ns=9247136 max_total_ns=9538139 ns_per_task=36121.625 tasks_per_second=27684",
+            "case=persistent_pool_cpu_1m_2_workers tasks=256 samples=7 min_total_ns=26124287 median_total_ns=30088685 max_total_ns=38803593 ns_per_task=117533.926 tasks_per_second=8508",
+            "case=persistent_pool_noop_lifecycle_4_workers tasks=256 samples=7 min_total_ns=6986756 median_total_ns=7105391 max_total_ns=7485207 ns_per_task=27755.434 tasks_per_second=36029",
+            "case=persistent_pool_noop_4_workers tasks=256 samples=7 min_total_ns=5916854 median_total_ns=6434722 max_total_ns=6917205 ns_per_task=25135.633 tasks_per_second=39784",
+            "case=persistent_pool_cpu_1m_4_workers tasks=256 samples=7 min_total_ns=16398967 median_total_ns=17877892 max_total_ns=20760172 ns_per_task=69835.516 tasks_per_second=14319",
+            "case=scheduler_queue_parallel_cpu_1m_2_workers tasks=256 samples=7 min_total_ns=26032281 median_total_ns=27225507 max_total_ns=27810290 ns_per_task=106349.637 tasks_per_second=9403",
+            "case=scheduler_queue_parallel_cpu_1m_4_workers tasks=256 samples=7 min_total_ns=15793722 median_total_ns=16268163 max_total_ns=19144357 ns_per_task=63547.512 tasks_per_second=15736"
+          ],
+          "elapsed_seconds": 29.297,
+          "run": 1
+        },
+        {
+          "cases": [
+            "case=executor_noop tasks=100000 samples=7 min_total_ns=68976 median_total_ns=72452 max_total_ns=76316 ns_per_task=0.725 tasks_per_second=1380224148",
+            "case=scheduler_immediate_noop tasks=100000 samples=7 min_total_ns=69375 median_total_ns=71773 max_total_ns=73836 ns_per_task=0.718 tasks_per_second=1393281596",
+            "case=scheduler_queue_sequential tasks=1 samples=7 min_total_ns=187 median_total_ns=201 max_total_ns=434 ns_per_task=201.000 tasks_per_second=4975124",
+            "case=scheduler_queue_sequential tasks=16 samples=7 min_total_ns=282 median_total_ns=292 max_total_ns=11954 ns_per_task=18.250 tasks_per_second=54794521",
+            "case=scheduler_queue_sequential tasks=64 samples=7 min_total_ns=677 median_total_ns=694 max_total_ns=2448 ns_per_task=10.844 tasks_per_second=92219020",
+            "case=scheduler_queue_sequential tasks=256 samples=7 min_total_ns=1913 median_total_ns=2023 max_total_ns=8179 ns_per_task=7.902 tasks_per_second=126544736",
+            "case=persistent_pool_startup_shutdown_2_workers tasks=1 samples=7 min_total_ns=204821 median_total_ns=236949 max_total_ns=338575 ns_per_task=236949.000 tasks_per_second=4220",
+            "case=persistent_pool_startup_shutdown_4_workers tasks=1 samples=7 min_total_ns=423581 median_total_ns=509982 max_total_ns=558496 ns_per_task=509982.000 tasks_per_second=1961",
+            "case=scheduler_queue_sequential_cpu_1m tasks=16 samples=7 min_total_ns=2068112 median_total_ns=2190936 max_total_ns=2243004 ns_per_task=136933.500 tasks_per_second=7303",
+            "case=scheduler_queue_parallel_noop_2_workers tasks=16 samples=7 min_total_ns=657132 median_total_ns=734254 max_total_ns=833042 ns_per_task=45890.875 tasks_per_second=21791",
+            "case=scheduler_queue_parallel_noop_4_workers tasks=16 samples=7 min_total_ns=718710 median_total_ns=837956 max_total_ns=912805 ns_per_task=52372.250 tasks_per_second=19094",
+            "case=persistent_pool_noop_lifecycle_2_workers tasks=16 samples=7 min_total_ns=673077 median_total_ns=795006 max_total_ns=857210 ns_per_task=49687.875 tasks_per_second=20126",
+            "case=persistent_pool_noop_2_workers tasks=16 samples=7 min_total_ns=521355 median_total_ns=559008 max_total_ns=743140 ns_per_task=34938.000 tasks_per_second=28622",
+            "case=persistent_pool_cpu_1m_2_workers tasks=16 samples=7 min_total_ns=1587724 median_total_ns=1629851 max_total_ns=1849851 ns_per_task=101865.688 tasks_per_second=9817",
+            "case=persistent_pool_noop_lifecycle_4_workers tasks=16 samples=7 min_total_ns=755434 median_total_ns=837048 max_total_ns=1095873 ns_per_task=52315.500 tasks_per_second=19115",
+            "case=persistent_pool_noop_4_workers tasks=16 samples=7 min_total_ns=301472 median_total_ns=365494 max_total_ns=490375 ns_per_task=22843.375 tasks_per_second=43776",
+            "case=persistent_pool_cpu_1m_4_workers tasks=16 samples=7 min_total_ns=907547 median_total_ns=983201 max_total_ns=1143760 ns_per_task=61450.062 tasks_per_second=16273",
+            "case=scheduler_queue_parallel_cpu_1m_2_workers tasks=16 samples=7 min_total_ns=1852486 median_total_ns=1949239 max_total_ns=2246259 ns_per_task=121827.438 tasks_per_second=8208",
+            "case=scheduler_queue_parallel_cpu_1m_4_workers tasks=16 samples=7 min_total_ns=1250170 median_total_ns=1838154 max_total_ns=2064095 ns_per_task=114884.625 tasks_per_second=8704",
+            "case=scheduler_queue_sequential_cpu_1m tasks=64 samples=7 min_total_ns=8259283 median_total_ns=8750540 max_total_ns=8988049 ns_per_task=136727.188 tasks_per_second=7314",
+            "case=scheduler_queue_parallel_noop_2_workers tasks=64 samples=7 min_total_ns=2373703 median_total_ns=2552554 max_total_ns=4190726 ns_per_task=39883.656 tasks_per_second=25073",
+            "case=scheduler_queue_parallel_noop_4_workers tasks=64 samples=7 min_total_ns=2036534 median_total_ns=2697736 max_total_ns=5047582 ns_per_task=42152.125 tasks_per_second=23724",
+            "case=persistent_pool_noop_lifecycle_2_workers tasks=64 samples=7 min_total_ns=2418450 median_total_ns=2468535 max_total_ns=2884475 ns_per_task=38570.859 tasks_per_second=25926",
+            "case=persistent_pool_noop_2_workers tasks=64 samples=7 min_total_ns=1986029 median_total_ns=2075735 max_total_ns=2173919 ns_per_task=32433.359 tasks_per_second=30832",
+            "case=persistent_pool_cpu_1m_2_workers tasks=64 samples=7 min_total_ns=6159826 median_total_ns=6490822 max_total_ns=8258077 ns_per_task=101419.094 tasks_per_second=9860",
+            "case=persistent_pool_noop_lifecycle_4_workers tasks=64 samples=7 min_total_ns=1789858 median_total_ns=2068907 max_total_ns=2633441 ns_per_task=32326.672 tasks_per_second=30934",
+            "case=persistent_pool_noop_4_workers tasks=64 samples=7 min_total_ns=1367496 median_total_ns=1562044 max_total_ns=1722948 ns_per_task=24406.938 tasks_per_second=40972",
+            "case=persistent_pool_cpu_1m_4_workers tasks=64 samples=7 min_total_ns=3840801 median_total_ns=3909666 max_total_ns=4351454 ns_per_task=61088.531 tasks_per_second=16370",
+            "case=scheduler_queue_parallel_cpu_1m_2_workers tasks=64 samples=7 min_total_ns=6575116 median_total_ns=6816272 max_total_ns=7402624 ns_per_task=106504.250 tasks_per_second=9389",
+            "case=scheduler_queue_parallel_cpu_1m_4_workers tasks=64 samples=7 min_total_ns=4046697 median_total_ns=4207078 max_total_ns=4849644 ns_per_task=65735.594 tasks_per_second=15212",
+            "case=scheduler_queue_sequential_cpu_1m tasks=256 samples=7 min_total_ns=34121943 median_total_ns=34548734 max_total_ns=34986133 ns_per_task=134955.992 tasks_per_second=7410",
+            "case=scheduler_queue_parallel_noop_2_workers tasks=256 samples=7 min_total_ns=8931508 median_total_ns=9642681 max_total_ns=10603930 ns_per_task=37666.723 tasks_per_second=26549",
+            "case=scheduler_queue_parallel_noop_4_workers tasks=256 samples=7 min_total_ns=6717956 median_total_ns=7285856 max_total_ns=18353410 ns_per_task=28460.375 tasks_per_second=35137",
+            "case=persistent_pool_noop_lifecycle_2_workers tasks=256 samples=7 min_total_ns=8832594 median_total_ns=9466989 max_total_ns=9989656 ns_per_task=36980.426 tasks_per_second=27041",
+            "case=persistent_pool_noop_2_workers tasks=256 samples=7 min_total_ns=8171704 median_total_ns=8831088 max_total_ns=9131036 ns_per_task=34496.438 tasks_per_second=28989",
+            "case=persistent_pool_cpu_1m_2_workers tasks=256 samples=7 min_total_ns=26623399 median_total_ns=30184851 max_total_ns=37481788 ns_per_task=117909.574 tasks_per_second=8481",
+            "case=persistent_pool_noop_lifecycle_4_workers tasks=256 samples=7 min_total_ns=6538714 median_total_ns=6853097 max_total_ns=8014180 ns_per_task=26769.910 tasks_per_second=37355",
+            "case=persistent_pool_noop_4_workers tasks=256 samples=7 min_total_ns=5936286 median_total_ns=6094479 max_total_ns=6488375 ns_per_task=23806.559 tasks_per_second=42005",
+            "case=persistent_pool_cpu_1m_4_workers tasks=256 samples=7 min_total_ns=14531665 median_total_ns=15662041 max_total_ns=21475559 ns_per_task=61179.848 tasks_per_second=16345",
+            "case=scheduler_queue_parallel_cpu_1m_2_workers tasks=256 samples=7 min_total_ns=26353495 median_total_ns=26630908 max_total_ns=27560222 ns_per_task=104026.984 tasks_per_second=9613",
+            "case=scheduler_queue_parallel_cpu_1m_4_workers tasks=256 samples=7 min_total_ns=15656371 median_total_ns=16392005 max_total_ns=20680651 ns_per_task=64031.270 tasks_per_second=15617"
+          ],
+          "elapsed_seconds": 1.751,
+          "run": 2
+        },
+        {
+          "cases": [
+            "case=executor_noop tasks=100000 samples=7 min_total_ns=70139 median_total_ns=72140 max_total_ns=73266 ns_per_task=0.721 tasks_per_second=1386193513",
+            "case=scheduler_immediate_noop tasks=100000 samples=7 min_total_ns=51958 median_total_ns=61381 max_total_ns=73809 ns_per_task=0.614 tasks_per_second=1629168635",
+            "case=scheduler_queue_sequential tasks=1 samples=7 min_total_ns=206 median_total_ns=231 max_total_ns=634 ns_per_task=231.000 tasks_per_second=4329004",
+            "case=scheduler_queue_sequential tasks=16 samples=7 min_total_ns=229 median_total_ns=234 max_total_ns=9959 ns_per_task=14.625 tasks_per_second=68376068",
+            "case=scheduler_queue_sequential tasks=64 samples=7 min_total_ns=514 median_total_ns=526 max_total_ns=2152 ns_per_task=8.219 tasks_per_second=121673004",
+            "case=scheduler_queue_sequential tasks=256 samples=7 min_total_ns=1361 median_total_ns=1664 max_total_ns=7554 ns_per_task=6.500 tasks_per_second=153846154",
+            "case=persistent_pool_startup_shutdown_2_workers tasks=1 samples=7 min_total_ns=177127 median_total_ns=209036 max_total_ns=279478 ns_per_task=209036.000 tasks_per_second=4784",
+            "case=persistent_pool_startup_shutdown_4_workers tasks=1 samples=7 min_total_ns=401438 median_total_ns=446078 max_total_ns=559690 ns_per_task=446078.000 tasks_per_second=2242",
+            "case=scheduler_queue_sequential_cpu_1m tasks=16 samples=7 min_total_ns=2076761 median_total_ns=2079371 max_total_ns=2109757 ns_per_task=129960.688 tasks_per_second=7695",
+            "case=scheduler_queue_parallel_noop_2_workers tasks=16 samples=7 min_total_ns=664493 median_total_ns=774891 max_total_ns=941160 ns_per_task=48430.688 tasks_per_second=20648",
+            "case=scheduler_queue_parallel_noop_4_workers tasks=16 samples=7 min_total_ns=633564 median_total_ns=818761 max_total_ns=937902 ns_per_task=51172.562 tasks_per_second=19542",
+            "case=persistent_pool_noop_lifecycle_2_workers tasks=16 samples=7 min_total_ns=723246 median_total_ns=787663 max_total_ns=897572 ns_per_task=49228.938 tasks_per_second=20313",
+            "case=persistent_pool_noop_2_workers tasks=16 samples=7 min_total_ns=549608 median_total_ns=589500 max_total_ns=627378 ns_per_task=36843.750 tasks_per_second=27142",
+            "case=persistent_pool_cpu_1m_2_workers tasks=16 samples=7 min_total_ns=1544126 median_total_ns=1667520 max_total_ns=1757206 ns_per_task=104220.000 tasks_per_second=9595",
+            "case=persistent_pool_noop_lifecycle_4_workers tasks=16 samples=7 min_total_ns=714962 median_total_ns=866329 max_total_ns=950361 ns_per_task=54145.562 tasks_per_second=18469",
+            "case=persistent_pool_noop_4_workers tasks=16 samples=7 min_total_ns=396066 median_total_ns=409769 max_total_ns=433207 ns_per_task=25610.562 tasks_per_second=39046",
+            "case=persistent_pool_cpu_1m_4_workers tasks=16 samples=7 min_total_ns=941067 median_total_ns=1063042 max_total_ns=1265073 ns_per_task=66440.125 tasks_per_second=15051",
+            "case=scheduler_queue_parallel_cpu_1m_2_workers tasks=16 samples=7 min_total_ns=1712892 median_total_ns=1857998 max_total_ns=1983442 ns_per_task=116124.875 tasks_per_second=8611",
+            "case=scheduler_queue_parallel_cpu_1m_4_workers tasks=16 samples=7 min_total_ns=1297079 median_total_ns=1457013 max_total_ns=1581803 ns_per_task=91063.312 tasks_per_second=10981",
+            "case=scheduler_queue_sequential_cpu_1m tasks=64 samples=7 min_total_ns=8472880 median_total_ns=8709215 max_total_ns=8961171 ns_per_task=136081.484 tasks_per_second=7349",
+            "case=scheduler_queue_parallel_noop_2_workers tasks=64 samples=7 min_total_ns=2360294 median_total_ns=2550283 max_total_ns=2666010 ns_per_task=39848.172 tasks_per_second=25095",
+            "case=scheduler_queue_parallel_noop_4_workers tasks=64 samples=7 min_total_ns=1904766 median_total_ns=2268530 max_total_ns=2709466 ns_per_task=35445.781 tasks_per_second=28212",
+            "case=persistent_pool_noop_lifecycle_2_workers tasks=64 samples=7 min_total_ns=2182062 median_total_ns=2410355 max_total_ns=2953368 ns_per_task=37661.797 tasks_per_second=26552",
+            "case=persistent_pool_noop_2_workers tasks=64 samples=7 min_total_ns=2096018 median_total_ns=2132127 max_total_ns=2270231 ns_per_task=33314.484 tasks_per_second=30017",
+            "case=persistent_pool_cpu_1m_2_workers tasks=64 samples=7 min_total_ns=6335869 median_total_ns=6506964 max_total_ns=6896467 ns_per_task=101671.312 tasks_per_second=9836",
+            "case=persistent_pool_noop_lifecycle_4_workers tasks=64 samples=7 min_total_ns=1969836 median_total_ns=2271368 max_total_ns=2503145 ns_per_task=35490.125 tasks_per_second=28177",
+            "case=persistent_pool_noop_4_workers tasks=64 samples=7 min_total_ns=1490552 median_total_ns=1604705 max_total_ns=1936029 ns_per_task=25073.516 tasks_per_second=39883",
+            "case=persistent_pool_cpu_1m_4_workers tasks=64 samples=7 min_total_ns=3694625 median_total_ns=4051281 max_total_ns=6447072 ns_per_task=63301.266 tasks_per_second=15797",
+            "case=scheduler_queue_parallel_cpu_1m_2_workers tasks=64 samples=7 min_total_ns=6545964 median_total_ns=6700449 max_total_ns=7038611 ns_per_task=104694.516 tasks_per_second=9552",
+            "case=scheduler_queue_parallel_cpu_1m_4_workers tasks=64 samples=7 min_total_ns=4118720 median_total_ns=4347526 max_total_ns=5786919 ns_per_task=67930.094 tasks_per_second=14721",
+            "case=scheduler_queue_sequential_cpu_1m tasks=256 samples=7 min_total_ns=34272940 median_total_ns=35217649 max_total_ns=35993563 ns_per_task=137568.941 tasks_per_second=7269",
+            "case=scheduler_queue_parallel_noop_2_workers tasks=256 samples=7 min_total_ns=8480910 median_total_ns=9389403 max_total_ns=10240719 ns_per_task=36677.355 tasks_per_second=27265",
+            "case=scheduler_queue_parallel_noop_4_workers tasks=256 samples=7 min_total_ns=6379014 median_total_ns=6599822 max_total_ns=7156820 ns_per_task=25780.555 tasks_per_second=38789",
+            "case=persistent_pool_noop_lifecycle_2_workers tasks=256 samples=7 min_total_ns=8776145 median_total_ns=8970582 max_total_ns=9667967 ns_per_task=35041.336 tasks_per_second=28538",
+            "case=persistent_pool_noop_2_workers tasks=256 samples=7 min_total_ns=8196659 median_total_ns=8828137 max_total_ns=9401388 ns_per_task=34484.910 tasks_per_second=28998",
+            "case=persistent_pool_cpu_1m_2_workers tasks=256 samples=7 min_total_ns=25584771 median_total_ns=26842862 max_total_ns=27575270 ns_per_task=104854.930 tasks_per_second=9537",
+            "case=persistent_pool_noop_lifecycle_4_workers tasks=256 samples=7 min_total_ns=6507269 median_total_ns=7307346 max_total_ns=8842094 ns_per_task=28544.320 tasks_per_second=35033",
+            "case=persistent_pool_noop_4_workers tasks=256 samples=7 min_total_ns=6054588 median_total_ns=6308595 max_total_ns=7827520 ns_per_task=24642.949 tasks_per_second=40580",
+            "case=persistent_pool_cpu_1m_4_workers tasks=256 samples=7 min_total_ns=15966448 median_total_ns=29026309 max_total_ns=30540033 ns_per_task=113384.020 tasks_per_second=8820",
+            "case=scheduler_queue_parallel_cpu_1m_2_workers tasks=256 samples=7 min_total_ns=26237498 median_total_ns=27040062 max_total_ns=28438864 ns_per_task=105625.242 tasks_per_second=9467",
+            "case=scheduler_queue_parallel_cpu_1m_4_workers tasks=256 samples=7 min_total_ns=14856064 median_total_ns=15600026 max_total_ns=21733313 ns_per_task=60937.602 tasks_per_second=16410"
+          ],
+          "elapsed_seconds": 1.766,
+          "run": 3
+        }
+      ]
+    },
+    "simulation": {
+      "case_count": 8,
+      "cases": [
+        "case=simulation_clock_256_advances_including_setup operations=256 samples=9 iterations_per_sample=32 min_op_ns=1962 median_op_ns=2124 max_op_ns=2408 ns_per_operation=8.297",
+        "case=simulation_step_256_updates_including_setup operations=256 samples=9 iterations_per_sample=32 min_op_ns=2242 median_op_ns=2479 max_op_ns=3220 ns_per_operation=9.684",
+        "case=simulation_entities_for_each_mut operations=64 samples=9 iterations_per_sample=32 min_op_ns=31 median_op_ns=31 max_op_ns=35 ns_per_operation=0.484",
+        "case=simulation_entities_16_spread_get_lookups_linear_search operations=16 samples=9 iterations_per_sample=32 min_op_ns=185 median_op_ns=194 max_op_ns=442 ns_per_operation=12.125",
+        "case=simulation_entities_for_each_mut operations=1024 samples=9 iterations_per_sample=32 min_op_ns=271 median_op_ns=273 max_op_ns=784 ns_per_operation=0.267",
+        "case=simulation_entities_16_spread_get_lookups_linear_search operations=16 samples=9 iterations_per_sample=32 min_op_ns=2214 median_op_ns=3598 max_op_ns=4211 ns_per_operation=224.875",
+        "case=simulation_entities_for_each_mut operations=16384 samples=9 iterations_per_sample=32 min_op_ns=8829 median_op_ns=8925 max_op_ns=13896 ns_per_operation=0.545",
+        "case=simulation_entities_16_spread_get_lookups_linear_search operations=16 samples=9 iterations_per_sample=32 min_op_ns=37561 median_op_ns=46448 max_op_ns=71296 ns_per_operation=2903.000"
+      ],
+      "elapsed_seconds": 1.299,
+      "repetitions": [
+        {
+          "cases": [
+            "case=simulation_clock_256_advances_including_setup operations=256 samples=9 iterations_per_sample=32 min_op_ns=1962 median_op_ns=2124 max_op_ns=2408 ns_per_operation=8.297",
+            "case=simulation_step_256_updates_including_setup operations=256 samples=9 iterations_per_sample=32 min_op_ns=2242 median_op_ns=2479 max_op_ns=3220 ns_per_operation=9.684",
+            "case=simulation_entities_for_each_mut operations=64 samples=9 iterations_per_sample=32 min_op_ns=31 median_op_ns=31 max_op_ns=35 ns_per_operation=0.484",
+            "case=simulation_entities_16_spread_get_lookups_linear_search operations=16 samples=9 iterations_per_sample=32 min_op_ns=185 median_op_ns=194 max_op_ns=442 ns_per_operation=12.125",
+            "case=simulation_entities_for_each_mut operations=1024 samples=9 iterations_per_sample=32 min_op_ns=271 median_op_ns=273 max_op_ns=784 ns_per_operation=0.267",
+            "case=simulation_entities_16_spread_get_lookups_linear_search operations=16 samples=9 iterations_per_sample=32 min_op_ns=2214 median_op_ns=3598 max_op_ns=4211 ns_per_operation=224.875",
+            "case=simulation_entities_for_each_mut operations=16384 samples=9 iterations_per_sample=32 min_op_ns=8829 median_op_ns=8925 max_op_ns=13896 ns_per_operation=0.545",
+            "case=simulation_entities_16_spread_get_lookups_linear_search operations=16 samples=9 iterations_per_sample=32 min_op_ns=37561 median_op_ns=46448 max_op_ns=71296 ns_per_operation=2903.000"
+          ],
+          "elapsed_seconds": 1.299,
+          "run": 1
+        }
+      ]
+    },
+    "storage": {
+      "case_count": 2,
+      "cases": [
+        "case=memory_put_get_256_keys iterations=1000 samples=9 min_op_ns=170422 median_op_ns=197410 max_op_ns=224125",
+        "case=memory_ordered_scan_256_keys iterations=1000 samples=9 min_op_ns=462 median_op_ns=782 max_op_ns=1017"
+      ],
+      "elapsed_seconds": 3.068,
+      "repetitions": [
+        {
+          "cases": [
+            "case=memory_put_get_256_keys iterations=1000 samples=9 min_op_ns=170422 median_op_ns=197410 max_op_ns=224125",
+            "case=memory_ordered_scan_256_keys iterations=1000 samples=9 min_op_ns=462 median_op_ns=782 max_op_ns=1017"
+          ],
+          "elapsed_seconds": 3.068,
+          "run": 1
+        }
+      ]
+    }
+  },
+  "timestamp_utc": "2026-10-18T22:12:27.370701+00:00"
+}

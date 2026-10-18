@@ -1,0 +1,38 @@
+DINAH benchmark baseline summary
+commit=735ee2cdc221fcf3c6f3a6036d33c1033264f986
+timestamp_utc=2026-10-18T22:11:32.461996+00:00
+runner=Linux x86_64
+Note: suite wall time is not a per-operation performance metric.
+runtime_independent_repetitions=3
+suite=runtime elapsed_seconds=9.02 case_count=41 repetitions=3
+suite=memory elapsed_seconds=0.345 case_count=28 repetitions=1
+suite=compute elapsed_seconds=0.897 case_count=40 repetitions=1
+suite=ecs elapsed_seconds=0.327 case_count=24 repetitions=1
+suite=simulation elapsed_seconds=0.28 case_count=8 repetitions=1
+suite=network elapsed_seconds=0.212 case_count=2 repetitions=1
+suite=storage elapsed_seconds=0.606 case_count=2 repetitions=1
+Runtime repeated case medians (median of process medians; descriptive only):
+case=executor_noop runs=3 median_of_run_medians_ns=54180 min_run_median_ns=54170 max_run_median_ns=54250
+case=persistent_pool_cpu_1m_2_workers runs=3 median_of_run_medians_ns=20207519 min_run_median_ns=20023179 max_run_median_ns=20271934
+case=persistent_pool_cpu_1m_4_workers runs=3 median_of_run_medians_ns=18104152 min_run_median_ns=17735479 max_run_median_ns=18274373
+case=persistent_pool_noop_2_workers runs=3 median_of_run_medians_ns=2152180 min_run_median_ns=2056057 max_run_median_ns=2272146
+case=persistent_pool_noop_4_workers runs=3 median_of_run_medians_ns=1464256 min_run_median_ns=1458728 max_run_median_ns=1552386
+case=persistent_pool_noop_lifecycle_2_workers runs=3 median_of_run_medians_ns=2262502 min_run_median_ns=2261300 max_run_median_ns=2266228
+case=persistent_pool_noop_lifecycle_4_workers runs=3 median_of_run_medians_ns=1587758 min_run_median_ns=1584303 max_run_median_ns=1616270
+case=persistent_pool_startup_shutdown_2_workers runs=3 median_of_run_medians_ns=67380 min_run_median_ns=64605 max_run_median_ns=67540
+case=persistent_pool_startup_shutdown_4_workers runs=3 median_of_run_medians_ns=131364 min_run_median_ns=116121 max_run_median_ns=145094
+case=scheduler_immediate_noop runs=3 median_of_run_medians_ns=54170 min_run_median_ns=54170 max_run_median_ns=54170
+case=scheduler_queue_parallel_cpu_1m_2_workers runs=3 median_of_run_medians_ns=19982138 min_run_median_ns=19928750 max_run_median_ns=20122254
+case=scheduler_queue_parallel_cpu_1m_4_workers runs=3 median_of_run_medians_ns=16256171 min_run_median_ns=16255098 max_run_median_ns=17076177
+case=scheduler_queue_parallel_noop_2_workers runs=3 median_of_run_medians_ns=2305416 min_run_median_ns=2292386 max_run_median_ns=2392894
+case=scheduler_queue_parallel_noop_4_workers runs=3 median_of_run_medians_ns=1634788 min_run_median_ns=1596992 max_run_median_ns=1661166
+case=scheduler_queue_sequential runs=3 median_of_run_medians_ns=2013 min_run_median_ns=2013 max_run_median_ns=2263
+case=scheduler_queue_sequential_cpu_1m runs=3 median_of_run_medians_ns=34885567 min_run_median_ns=34873267 max_run_median_ns=34909510
+Runtime scheduler vs benchmark-only persistent pool (steady-state; workload-specific):
+comparison=noop_2_workers scheduler_ns=2305416 pool_ns=2152180 ratio=1.071x
+comparison=noop_4_workers scheduler_ns=1634788 pool_ns=1464256 ratio=1.116x
+comparison=cpu_1m_2_workers scheduler_ns=19982138 pool_ns=20207519 ratio=0.989x
+comparison=cpu_1m_4_workers scheduler_ns=16256171 pool_ns=18104152 ratio=0.898x
+Runtime scheduler vs pool with per-sample startup/shutdown (workload-specific):
+comparison=noop_2_workers scheduler_ns=2305416 pool_lifecycle_ns=2262502 ratio=1.019x
+comparison=noop_4_workers scheduler_ns=1634788 pool_lifecycle_ns=1587758 ratio=1.03x
