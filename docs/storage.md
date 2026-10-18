@@ -38,6 +38,10 @@ La decisión actual es un único índice primario `BTreeMap<Vec<u8>, Vec<u8>>` p
 
 Al abrir, el store recorre los registros desde el principio y aplica PUT/DELETE en secuencia. Rechaza magic incorrecto, versión desconocida, opcode inválido, campos fuera de límite y DELETE con payload. Si el último registro está incompleto, recupera hasta el último límite válido y trunca el sufijo. Esta recuperación inicial no sustituye checksums, copias de seguridad, migraciones ni pruebas exhaustivas de corrupción.
 
+## Ejemplo ejecutable
+
+`examples/storage_basics.rs` demuestra el contrato común con `MemoryStore` y `DiskStore`: inserción y recorrido ordenado, reapertura del journal para recuperar valores y eliminación de una clave. Ejecútalo desde la raíz del repositorio con `cargo run --example storage_basics`. El ejemplo crea un nombre temporal único y elimina el journal al terminar. Este ejemplo es demostrativo; no cambia las garantías de durabilidad descritas arriba ni convierte el journal en una base de datos transaccional.
+
 ## Pruebas
 
 `tests/storage.rs` cubre operaciones en memoria, persistencia/replay, recuperación de sufijos truncados, rechazo de cabecera malformada, corrupción detectada por checksum, truncado del checksum y lectura de registros v1. `tests/storage_runtime.rs` comprueba despacho FIFO y rechazo por capacidad; `tests/storage_concurrency.rs` verifica operaciones paralelas sobre journals independientes. No se prueba ni se promete acceso concurrente a un mismo archivo desde varias instancias.

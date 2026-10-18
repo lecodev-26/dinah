@@ -20,7 +20,7 @@
 <div align="center">
 
 **Repository snapshot (2026-10-18):** 287 master checklist points · 241 complete · 25 in progress · 21 pending
-**Code snapshot:** single Rust crate · 7 benchmark suites (Runtime, Memory, Compute, ECS, Simulation, Networking, Storage) · 1 runnable example · five-platform benchmark history
+**Code snapshot:** single Rust crate · 7 benchmark suites (Runtime, Memory, Compute, ECS, Simulation, Networking, Storage) · 4 runnable examples · five-platform benchmark history
 **Current milestone:** Native foundations now include safe host/POSIX capability traits and a minimal scalar C ABI. The ABI still needs a real C compiler/linker smoke test; no direct hardware access or handwritten assembly is claimed. Networking has initial blocking TCP wrappers and prediction/reconciliation/replay primitives, but its wire encoder/decoder and full protocol integration remain pending.
 
 </div>
@@ -151,7 +151,7 @@ These are medians of nine samples; construction is included in the clock and ste
 
 </div>
 
-**Current work — Phases 15–16: Total integration and v0.1 release readiness.** The 287-point checklist currently records 241 complete, 25 in progress and 21 pending. The v0.1 scope ends at point 277; points 278–287 belong to v0.2+. Remaining v0.1 work includes architecture/API review and freeze, strict definition of supported CLI behavior, broader integration/coverage, coverage-guided fuzzing, performance evidence, documentation/examples, license review and release packaging. Networking remains a pre-alpha foundation with wire encoder/decoder and full protocol integration pending.
+**Current work — Phases 15–16: Total integration and v0.1 release readiness.** The 287-point checklist currently records 242 complete, 26 in progress and 19 pending. The v0.1 scope ends at point 277; points 278–287 belong to v0.2+. Remaining v0.1 work includes architecture/API review and freeze, strict definition of supported CLI behavior, broader integration/coverage, coverage-guided fuzzing, performance evidence, documentation/examples, license review and release packaging. Networking remains a pre-alpha foundation with wire encoder/decoder and full protocol integration pending.
 
 **Areas still in progress (see `puntos.md` for the authoritative status):**
 
