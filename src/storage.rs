@@ -345,7 +345,7 @@ mod tests {
     fn replay_handles_bounded_arbitrary_byte_corpus_without_panicking() {
         // Deterministic seed corpus for fast CI smoke coverage. This is not a
         // substitute for coverage-guided libFuzzer runs.
-        let mut state = 0xD1_A4_2026_u64;
+        let mut state = 0xD1A4_2026_u64;
         for len in 0..=512usize {
             let mut bytes = Vec::with_capacity(len);
             for _ in 0..len {
