@@ -393,6 +393,24 @@ fn parse_quoted(value: &str) -> Option<String> {
                 't' => '\t',
                 'b' => '\u{0008}',
                 'f' => '\u{000c}',
+                'u' => {
+                    let mut codepoint = 0u32;
+                    for _ in 0..4 {
+                        codepoint = codepoint
+                            .checked_mul(16)?
+                            .checked_add(characters.next()?.to_digit(16)?)?;
+                    }
+                    char::from_u32(codepoint)?
+                }
+                'U' => {
+                    let mut codepoint = 0u32;
+                    for _ in 0..8 {
+                        codepoint = codepoint
+                            .checked_mul(16)?
+                            .checked_add(characters.next()?.to_digit(16)?)?;
+                    }
+                    char::from_u32(codepoint)?
+                }
                 _ => return None,
             });
         } else if character == '"' || character.is_control() {
@@ -890,6 +908,22 @@ mod tests {
             Some("printf \"hello\"\n")
         );
         assert!(super::parse_quoted(r#""bad \q escape""#).is_none());
+        assert_eq!(
+            super::parse_quoted(r#""unicode \u263A \U0001F680""#).as_deref(),
+            Some("unicode ☺ 🚀")
+        );
+        assert_eq!(
+            super::parse_quoted(r#""  keep whitespace  ""#).as_deref(),
+            Some("  keep whitespace  ")
+        );
+        for invalid in [
+            r#""\uD800""#,
+            r#""\U00110000""#,
+            r#""\u12XZ""#,
+            r#""\U1234567""#,
+        ] {
+            assert!(super::parse_quoted(invalid).is_none(), "{invalid}");
+        }
     }
 
     #[test]

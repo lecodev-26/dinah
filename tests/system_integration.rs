@@ -180,7 +180,7 @@ fn cli_binary_initializes_and_inspects_project_as_json_without_overwrite() {
     );
     assert!(benchmark_json.contains("\"runtime\""), "{benchmark_json}");
 
-    let task_manifest = "[project]\nname = \"integration-task\"\n[tasks]\npass = \"printf task-ok\"\nfail = \"exit 7\"\n";
+    let task_manifest = "[project]\nname = \"integration-task\"\n[tasks]\npass = \"printf task-ok\"\nunicode = \"printf \\u263A\"\nfail = \"exit 7\"\n";
     std::fs::write(&manifest, task_manifest).unwrap();
     let executed = Command::new(env!("CARGO_BIN_EXE_dinah"))
         .args(["--format", "json", "--task", "pass", "run"])
@@ -197,6 +197,18 @@ fn cli_binary_initializes_and_inspects_project_as_json_without_overwrite() {
         executed_json.contains("\"stdout\":\"task-ok\""),
         "{executed_json}"
     );
+    let unicode = Command::new(env!("CARGO_BIN_EXE_dinah"))
+        .args(["--format", "json", "--task", "unicode", "run"])
+        .arg(&root)
+        .output()
+        .expect("Unicode-escaped task starts");
+    assert!(
+        unicode.status.success(),
+        "{}",
+        String::from_utf8_lossy(&unicode.stderr)
+    );
+    let unicode_json = String::from_utf8(unicode.stdout).unwrap();
+    assert!(unicode_json.contains("\"stdout\":\"☺\""), "{unicode_json}");
     let failed = Command::new(env!("CARGO_BIN_EXE_dinah"))
         .args(["--task", "fail", "run"])
         .arg(&root)
