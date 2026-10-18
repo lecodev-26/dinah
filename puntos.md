@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 239
+- Completados: 240
 - En progreso: 22
-- Pendientes: 26
+- Pendientes: 25
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -292,15 +292,15 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 235 — Perfilar Simulation (suite release registra los kernels y tamaños definidos en `benches/simulation.rs`)
 - [x] 236 — Perfilar Network (suite release registra estimación de latencia y operaciones de outbox/reliability)
 - [x] 237 — Perfilar Storage (suite release registra operaciones de MemoryStore y escaneo ordenado)
-- [>] 238 — Identificar hotspots (revisados los cinco artefactos del baseline `3a36b73`; el workload sintético de no-op muestra overhead de dispatch/creación de workers frente al pool persistente en todos los runners; falta validar con medición posterior y cargas representativas)
-- [>] 239 — Reducir allocations innecesarias (reutilización de capacidad del vector batch en `Scheduler::run_parallel`; pendiente confirmar efecto en benchmark CI posterior)
-- [>] 240 — Reducir copias (revisión de costes intermedios del resultado y lotes de `run_parallel`; evitar cambios que alteren orden/FIFO o comportamiento de panic)
-- [>] 241 — Optimizar cache locality (la reutilización de batch evita churn de asignación; no se han medido cache misses, pendiente perfilador específico)
-- [>] 242 — Optimizar paralelismo (baseline muestra costes altos para tareas no-op con workers por llamada; no añadir pool persistente sin API/lifecycle y benchmark representativo)
-- [>] 243 — Optimizar scheduling (se elimina la asignación de un Vec por batch en `run_parallel`; falta benchmark posterior y análisis del canal/mutex de workers)
-- [>] 244 — Optimizar SIMD (suite Compute ya ofrece casos comparables; no se afirma ventaja SIMD sin comparar resultados por runner y semántica numérica)
-- [>] 245 — Benchmark antes/después (baseline `3a36b73` archivado y optimización de batch implementada; medición posterior pendiente de CI)
-- [ ] 246 — Documentar resultados
+- [>] 238 — Identificar hotspots (revisados los cinco artefactos del baseline `3a36b73` y el post-cambio `2aeee49`; el workload sintético muestra overhead de dispatch/creación de workers frente al pool persistente, pero la reutilización del batch no produjo una mejora consistente; faltan cargas representativas)
+- [>] 239 — Reducir allocations innecesarias (se reutiliza capacidad del vector batch en `Scheduler::run_parallel`; los resultados de `2aeee49` son mixtos y no demuestran una mejora consistente)
+- [>] 240 — Reducir copias (revisados costes intermedios del resultado y lotes; se conserva el lote completo antes de despachar y se mantiene el orden FIFO; faltan mediciones de copias/allocation específicas)
+- [>] 241 — Optimizar cache locality (la reutilización de batch reduce asignaciones repetidas en el código, pero no hay evidencia de mejora de locality; no se han medido cache misses)
+- [>] 242 — Optimizar paralelismo (el baseline confirma costes altos para no-op con workers por llamada; no añadir pool persistente sin diseño de lifecycle y cargas representativas)
+- [>] 243 — Optimizar scheduling (el batch reutiliza capacidad; nuevo cambio elimina el receiver compartido protegido por `Mutex` y asigna un canal por worker; benchmark de este cambio pendiente)
+- [>] 244 — Optimizar SIMD (suite Compute contiene casos comparables; la investigación sigue abierta y no se afirma ventaja SIMD sin comparar resultados por runner y semántica numérica)
+- [>] 245 — Benchmark antes/después (baseline `3a36b73` comparado con `2aeee49` en cinco runners; resultados mixtos sin mejora consistente; el cambio de canales por worker necesita su propia medición CI)
+- [x] 246 — Documentar resultados (`docs/performance-baseline.md` registra comparación antes/después de `2aeee49`, ejemplos de medianas por runner y límites de inferencia; no afirma una mejora general)
 
 ## FASE 15 — Integración total
 
@@ -523,3 +523,10 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 - Añadido `tests/system_pipeline.rs`: valida configuración Core, buffer acotado, transformación Compute programada por Runtime, persistencia del resultado como componente ECS, avance de Simulation con tiempo lógico fijo, despacho de StorageWorkQueue a MemoryStore y métricas opt-in exportadas a JSON.
 - Cerrados los puntos 247–251, 253, 256 y 259 con evidencia en el test. El punto 220 permanece en progreso porque un smoke test no demuestra integración completa ni cubre Networking, Native o CLI.
 - Validaciones locales permitidas: `cargo fmt --all -- --check` y `git diff --check`; la compilación y ejecución de tests queda a cargo de CI.
+
+
+### Scheduler: medición antes/después y siguiente experimento — 2026-10-18
+
+- CI del commit `2aeee49` verificada: CI principal, benchmarks, calidad/seguridad, auditoría documental y archivo de artefactos terminaron correctamente. Se descargaron los cinco artefactos de benchmarks y se compararon los casos no-op con el baseline `3a36b73`.
+- La reutilización de la capacidad del batch no muestra una mejora consistente en los cinco runners. Se documentaron valores concretos y límites en `docs/performance-baseline.md`; se completa el punto 246, mientras 238–245 siguen abiertos por falta de evidencia representativa y de mediciones específicas.
+- Nuevo experimento en `src/runtime/scheduler.rs`: sustituir el receptor de tareas compartido (`Arc<Mutex<Receiver<_>>>`) por un canal dedicado por worker scoped. Cada lote sigue retirándose por completo de la cola antes del envío, no asigna más de una tarea a cada worker por lote, recoge resultados por índice para conservar orden FIFO y envía shutdown a todos los workers. Se reutilizan los tests existentes de concurrencia, errores y pánicos; CI y benchmarks de este nuevo cambio quedan pendientes.

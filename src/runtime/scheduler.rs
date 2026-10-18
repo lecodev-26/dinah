@@ -107,7 +107,7 @@ impl Scheduler {
     {
         use std::any::Any;
         use std::panic::{catch_unwind, AssertUnwindSafe};
-        use std::sync::{mpsc, Arc, Mutex};
+        use std::sync::mpsc;
 
         if queue.is_empty() {
             return Vec::new();
@@ -119,20 +119,16 @@ impl Scheduler {
             std::iter::repeat_with(|| None).take(total_tasks).collect();
 
         std::thread::scope(|scope| {
-            let (task_sender, task_receiver) = mpsc::channel::<Option<(usize, F)>>();
-            let task_receiver = Arc::new(Mutex::new(task_receiver));
             let (result_sender, result_receiver) =
                 mpsc::channel::<(usize, Result<Result<T, E>, Box<dyn Any + Send>>)>();
+            let mut task_senders = Vec::with_capacity(worker_count);
 
             for _ in 0..worker_count {
-                let task_receiver = Arc::clone(&task_receiver);
+                let (task_sender, task_receiver) = mpsc::channel::<Option<(usize, F)>>();
                 let result_sender = result_sender.clone();
+                task_senders.push(task_sender);
                 scope.spawn(move || loop {
-                    let message = task_receiver
-                        .lock()
-                        .expect("scoped worker receiver mutex is not poisoned")
-                        .recv();
-                    match message {
+                    match task_receiver.recv() {
                         Ok(Some((index, task))) => {
                             let outcome = catch_unwind(AssertUnwindSafe(task));
                             if result_sender.send((index, outcome)).is_err() {
@@ -158,10 +154,12 @@ impl Scheduler {
                     }
                 }
 
-                for task in batch.drain(..) {
-                    task_sender
+                // Each batch has at most one task per worker, so dedicated
+                // channels avoid serializing worker receive operations on a mutex.
+                for (worker_index, task) in batch.drain(..).enumerate() {
+                    task_senders[worker_index]
                         .send(Some((next_index, task)))
-                        .expect("scoped workers accept the current batch");
+                        .expect("scoped worker accepts its assigned task");
                     next_index += 1;
                 }
 
@@ -177,7 +175,7 @@ impl Scheduler {
                 }
 
                 if !panics.is_empty() {
-                    for _ in 0..worker_count {
+                    for task_sender in &task_senders {
                         let _ = task_sender.send(None);
                     }
                     panics.sort_unstable_by_key(|(index, _)| *index);
@@ -185,10 +183,10 @@ impl Scheduler {
                 }
             }
 
-            for _ in 0..worker_count {
+            for task_sender in &task_senders {
                 task_sender
                     .send(None)
-                    .expect("scoped workers accept shutdown messages");
+                    .expect("scoped worker accepts its shutdown message");
             }
         });
 
