@@ -1,0 +1,12 @@
+DINAH benchmark baseline summary
+commit=b6d7bfb7349643e0787e145b386090fa7bdcad5f
+timestamp_utc=2026-10-18T16:05:30.921156+00:00
+runner=Linux x86_64
+Note: suite wall time is not a per-operation performance metric.
+suite=runtime elapsed_seconds=6.822 case_count=35
+suite=memory elapsed_seconds=0.315 case_count=28
+suite=compute elapsed_seconds=1.162 case_count=40
+suite=ecs elapsed_seconds=0.343 case_count=24
+suite=simulation elapsed_seconds=0.251 case_count=8
+suite=network elapsed_seconds=0.192 case_count=2
+suite=storage elapsed_seconds=0.482 case_count=2

@@ -1,0 +1,18 @@
+[1m[93mwarning[0m: output filename collision at D:\a\dinah\dinah\target\release\deps\dinah.pdb
+  [1m[96m|[0m
+  [1m[96m= [0m[1m[97mnote[0m: the bin target `dinah` in package `dinah v0.1.0 (D:\a\dinah\dinah)` has the same output filename as the lib target `dinah` in package `dinah v0.1.0 (D:\a\dinah\dinah)`
+  [1m[96m= [0m[1m[97mnote[0m: this may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>
+  [1m[96m= [0m[1m[97mhelp[0m: consider changing their names to be unique or compiling them separately
+[1m[92m   Compiling[0m dinah v0.1.0 (D:\a\dinah\dinah)
+[1m[92m    Finished[0m `bench` profile [optimized] target(s) in 0.72s
+[1m[92m     Running[0m benches\simulation.rs (target\release\deps\simulation-b1e6a241c3d8f1ad.exe)
+dinah Simulation benchmark; build=release; statistic=median; samples=9; iterations_per_sample=32
+target=x86_64; results are machine-specific observations, not guarantees
+case=simulation_clock_256_advances_including_setup operations=256 samples=9 iterations_per_sample=32 min_op_ns=2000 median_op_ns=2003 max_op_ns=2621 ns_per_operation=7.824
+case=simulation_step_256_updates_including_setup operations=256 samples=9 iterations_per_sample=32 min_op_ns=3134 median_op_ns=3137 max_op_ns=3284 ns_per_operation=12.254
+case=simulation_entities_for_each_mut operations=64 samples=9 iterations_per_sample=32 min_op_ns=21 median_op_ns=25 max_op_ns=28 ns_per_operation=0.391
+case=simulation_entities_16_spread_get_lookups_linear_search operations=16 samples=9 iterations_per_sample=32 min_op_ns=206 median_op_ns=206 max_op_ns=428 ns_per_operation=12.875
+case=simulation_entities_for_each_mut operations=1024 samples=9 iterations_per_sample=32 min_op_ns=243 median_op_ns=243 max_op_ns=390 ns_per_operation=0.237
+case=simulation_entities_16_spread_get_lookups_linear_search operations=16 samples=9 iterations_per_sample=32 min_op_ns=2490 median_op_ns=2490 max_op_ns=2868 ns_per_operation=155.625
+case=simulation_entities_for_each_mut operations=16384 samples=9 iterations_per_sample=32 min_op_ns=5665 median_op_ns=5696 max_op_ns=6400 ns_per_operation=0.348
+case=simulation_entities_16_spread_get_lookups_linear_search operations=16 samples=9 iterations_per_sample=32 min_op_ns=38121 median_op_ns=39234 max_op_ns=90493 ns_per_operation=2452.125
