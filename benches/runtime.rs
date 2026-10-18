@@ -41,25 +41,37 @@ impl PersistentPool {
         Self { sender, workers }
     }
 
-    fn run_tasks(&self, task_count: usize, task: fn() -> Result<u64, &'static str>) {
+    fn run_tasks(
+        &self,
+        task_count: usize,
+        worker_count: usize,
+        task: fn() -> Result<u64, &'static str>,
+    ) {
         let (done_sender, done_receiver) = mpsc::channel();
-        for _ in 0..task_count {
-            let done_sender = done_sender.clone();
-            self.sender
-                .send(PoolMessage::Run(Box::new(move || {
-                    black_box(task().expect("benchmark pool task succeeds"));
-                    done_sender
-                        .send(())
-                        .expect("benchmark completion receiver exists");
-                })))
-                .expect("benchmark pool is accepting work");
+        let mut completed = 0;
+        while completed < task_count {
+            // Match the scheduler's batch barrier: dispatch no more than one
+            // task per worker, then wait for the entire batch before continuing.
+            let batch_size = worker_count.min(task_count - completed);
+            for _ in 0..batch_size {
+                let done_sender = done_sender.clone();
+                self.sender
+                    .send(PoolMessage::Run(Box::new(move || {
+                        black_box(task().expect("benchmark pool task succeeds"));
+                        done_sender
+                            .send(())
+                            .expect("benchmark completion receiver exists");
+                    })))
+                    .expect("benchmark pool is accepting work");
+            }
+            for _ in 0..batch_size {
+                done_receiver
+                    .recv()
+                    .expect("every benchmark pool task completes");
+            }
+            completed += batch_size;
         }
         drop(done_sender);
-        for _ in 0..task_count {
-            done_receiver
-                .recv()
-                .expect("every benchmark pool task completes");
-        }
     }
 }
 
@@ -240,12 +252,12 @@ fn main() {
 
         for &worker_count in &[2usize, 4] {
             // Lifecycle-inclusive comparison: create the pool, execute the same
-            // no-op batch, then shut the pool down inside each measured sample.
-            // This is closer to the scheduler's per-call lifecycle than the
-            // steady-state pool case below, but still has different semantics.
+            // no-op tasks in scheduler-sized batches with a completion barrier,
+            // then shut the pool down inside each measured sample. Worker dispatch
+            // and result/error handling still differ from Scheduler::run_parallel.
             let lifecycle_samples = measure(|| {
                 let pool = PersistentPool::new(worker_count);
-                pool.run_tasks(task_count, noop_task);
+                pool.run_tasks(task_count, worker_count, noop_task);
                 drop(pool);
             });
             report(
@@ -259,7 +271,7 @@ fn main() {
             );
 
             let pool = PersistentPool::new(worker_count);
-            let noop_pool_samples = measure(|| pool.run_tasks(task_count, noop_task));
+            let noop_pool_samples = measure(|| pool.run_tasks(task_count, worker_count, noop_task));
             report(
                 if worker_count == 2 {
                     "persistent_pool_noop_2_workers"
@@ -269,7 +281,7 @@ fn main() {
                 task_count,
                 &noop_pool_samples,
             );
-            let cpu_pool_samples = measure(|| pool.run_tasks(task_count, cpu_task));
+            let cpu_pool_samples = measure(|| pool.run_tasks(task_count, worker_count, cpu_task));
             report(
                 if worker_count == 2 {
                     "persistent_pool_cpu_1m_2_workers"
