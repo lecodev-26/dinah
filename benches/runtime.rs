@@ -1,6 +1,6 @@
 use std::hint::black_box;
 use std::num::NonZeroUsize;
-use std::sync::{mpsc, Arc, Mutex};
+use std::sync::mpsc;
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 
@@ -16,29 +16,25 @@ enum PoolMessage {
 
 /// Benchmark-only persistent pool prototype; not part of DINAH's public API.
 struct PersistentPool {
-    sender: mpsc::Sender<PoolMessage>,
+    senders: Vec<mpsc::Sender<PoolMessage>>,
     workers: Vec<JoinHandle<()>>,
 }
 
 impl PersistentPool {
     fn new(worker_count: usize) -> Self {
-        let (sender, receiver) = mpsc::channel::<PoolMessage>();
-        let receiver = Arc::new(Mutex::new(receiver));
+        let mut senders = Vec::with_capacity(worker_count);
         let mut workers = Vec::with_capacity(worker_count);
         for _ in 0..worker_count {
-            let receiver = Arc::clone(&receiver);
+            let (sender, receiver) = mpsc::channel::<PoolMessage>();
+            senders.push(sender);
             workers.push(thread::spawn(move || loop {
-                let message = receiver
-                    .lock()
-                    .expect("benchmark pool receiver mutex is not poisoned")
-                    .recv();
-                match message {
+                match receiver.recv() {
                     Ok(PoolMessage::Run(job)) => job(),
                     Ok(PoolMessage::Shutdown) | Err(_) => break,
                 }
             }));
         }
-        Self { sender, workers }
+        Self { senders, workers }
     }
 
     fn run_tasks(
@@ -50,12 +46,13 @@ impl PersistentPool {
         let (done_sender, done_receiver) = mpsc::channel();
         let mut completed = 0;
         while completed < task_count {
-            // Match the scheduler's batch barrier: dispatch no more than one
-            // task per worker, then wait for the entire batch before continuing.
+            // Match the scheduler's batch assignment and barrier: each worker has
+            // a dedicated channel, receives at most one task in this batch, and
+            // the next batch is not sent until every task in this batch completes.
             let batch_size = worker_count.min(task_count - completed);
-            for _ in 0..batch_size {
+            for worker_index in 0..batch_size {
                 let done_sender = done_sender.clone();
-                self.sender
+                self.senders[worker_index]
                     .send(PoolMessage::Run(Box::new(move || {
                         black_box(task().expect("benchmark pool task succeeds"));
                         done_sender
@@ -77,8 +74,8 @@ impl PersistentPool {
 
 impl Drop for PersistentPool {
     fn drop(&mut self) {
-        for _ in &self.workers {
-            let _ = self.sender.send(PoolMessage::Shutdown);
+        for sender in &self.senders {
+            let _ = sender.send(PoolMessage::Shutdown);
         }
         for worker in self.workers.drain(..) {
             worker.join().expect("benchmark pool worker exits cleanly");
@@ -253,8 +250,10 @@ fn main() {
         for &worker_count in &[2usize, 4] {
             // Lifecycle-inclusive comparison: create the pool, execute the same
             // no-op tasks in scheduler-sized batches with a completion barrier,
-            // then shut the pool down inside each measured sample. Worker dispatch
-            // and result/error handling still differ from Scheduler::run_parallel.
+            // then shut the pool down inside each measured sample. Dedicated worker
+            // channels prevent a fast worker from stealing multiple tasks in one
+            // batch. Result/error handling and dispatch internals still differ from
+            // Scheduler::run_parallel.
             let lifecycle_samples = measure(|| {
                 let pool = PersistentPool::new(worker_count);
                 pool.run_tasks(task_count, worker_count, noop_task);
