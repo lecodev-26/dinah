@@ -25,3 +25,9 @@ The benchmark workflow runs seven release-mode suites: Runtime, Memory, Compute,
 ## Hotspot decision gate
 
 Roadmap item 238 remains open until comparable runner artifacts have been inspected together and candidate workloads are justified by repeatable results. Items such as allocation counts, cache locality, and sampled CPU hotspots require dedicated profiler evidence; the baseline format deliberately does not invent those measurements.
+
+## Initial hotspot review (commit `3a36b73`)
+
+The archived baseline contains five runner-specific result sets. In the `scheduler_queue_parallel_noop_*` cases, the per-call scheduler took longer than the benchmark-only persistent-pool comparison for all tested task counts on each runner. For example, on the Linux x86-64 runner, 256 no-op tasks measured 2,539,685 ns with two scheduler workers and 1,475,588 ns with four, versus 50,516 ns and 54,683 ns for the already-running comparison pool. This is evidence of substantial dispatch/worker-lifecycle overhead for tiny tasks in this synthetic workload, not proof that persistent workers should be added to DINAH's public API. CPU-heavy cases behave differently, and runner values must not be compared across platforms as absolute performance rankings.
+
+A small allocation improvement is being evaluated in `Scheduler::run_parallel`: the temporary batch vector now retains its capacity between batches instead of allocating a new vector each time. This preserves the important behavior that a whole batch is removed from the queue before any of its tasks are sent to workers. The follow-up CI benchmark run must provide the after measurements; until then, no speedup is claimed. The larger worker lifecycle gap remains a candidate for architectural work, not a change justified by one microbenchmark alone.

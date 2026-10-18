@@ -6,8 +6,8 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 
 - Total de puntos numerados: 287
 - Completados: 239
-- En progreso: 14
-- Pendientes: 34
+- En progreso: 22
+- Pendientes: 26
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -292,14 +292,14 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 235 — Perfilar Simulation (suite release registra los kernels y tamaños definidos en `benches/simulation.rs`)
 - [x] 236 — Perfilar Network (suite release registra estimación de latencia y operaciones de outbox/reliability)
 - [x] 237 — Perfilar Storage (suite release registra operaciones de MemoryStore y escaneo ordenado)
-- [ ] 238 — Identificar hotspots (pendiente comparar artefactos equivalentes de varios runners y justificar candidatos repetibles; no inferir hotspots de CPU, allocations o cache sin perfiladores específicos)
-- [ ] 239 — Reducir allocations innecesarias
-- [ ] 240 — Reducir copias
-- [ ] 241 — Optimizar cache locality
-- [ ] 242 — Optimizar paralelismo
-- [ ] 243 — Optimizar scheduling
-- [ ] 244 — Optimizar SIMD
-- [ ] 245 — Benchmark antes/después
+- [>] 238 — Identificar hotspots (revisados los cinco artefactos del baseline `3a36b73`; el workload sintético de no-op muestra overhead de dispatch/creación de workers frente al pool persistente en todos los runners; falta validar con medición posterior y cargas representativas)
+- [>] 239 — Reducir allocations innecesarias (reutilización de capacidad del vector batch en `Scheduler::run_parallel`; pendiente confirmar efecto en benchmark CI posterior)
+- [>] 240 — Reducir copias (revisión de costes intermedios del resultado y lotes de `run_parallel`; evitar cambios que alteren orden/FIFO o comportamiento de panic)
+- [>] 241 — Optimizar cache locality (la reutilización de batch evita churn de asignación; no se han medido cache misses, pendiente perfilador específico)
+- [>] 242 — Optimizar paralelismo (baseline muestra costes altos para tareas no-op con workers por llamada; no añadir pool persistente sin API/lifecycle y benchmark representativo)
+- [>] 243 — Optimizar scheduling (se elimina la asignación de un Vec por batch en `run_parallel`; falta benchmark posterior y análisis del canal/mutex de workers)
+- [>] 244 — Optimizar SIMD (suite Compute ya ofrece casos comparables; no se afirma ventaja SIMD sin comparar resultados por runner y semántica numérica)
+- [>] 245 — Benchmark antes/después (baseline `3a36b73` archivado y optimización de batch implementada; medición posterior pendiente de CI)
 - [ ] 246 — Documentar resultados
 
 ## FASE 15 — Integración total

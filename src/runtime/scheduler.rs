@@ -146,16 +146,19 @@ impl Scheduler {
             drop(result_sender);
 
             let mut next_index = 0;
+            // Reuse the batch allocation across iterations. Each batch must be
+            // fully removed from the queue before any task is sent to a worker.
+            let mut batch = Vec::with_capacity(worker_count);
             while !queue.is_empty() {
                 let batch_size = queue.len().min(worker_count);
-                let mut batch = Vec::with_capacity(batch_size);
+                batch.clear();
                 for _ in 0..batch_size {
                     if let Some(task) = queue.pop() {
                         batch.push(task);
                     }
                 }
 
-                for task in batch {
+                for task in batch.drain(..) {
                     task_sender
                         .send(Some((next_index, task)))
                         .expect("scoped workers accept the current batch");
