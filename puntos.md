@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 181
+- Completados: 189
 - En progreso: 8
-- Pendientes: 98
+- Pendientes: 90
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -228,14 +228,14 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 
 ## FASE 11 — Observabilidad
 
-- [ ] 183 — Diseñar sistema de tracing
-- [ ] 184 — Añadir métricas Runtime
-- [ ] 185 — Añadir métricas Memory
-- [ ] 186 — Añadir métricas Compute
-- [ ] 187 — Añadir métricas Network
-- [ ] 188 — Añadir métricas Storage
-- [ ] 189 — Crear profiler hooks
-- [ ] 190 — Crear diagnóstico
+- [x] 183 — Diseñar sistema de tracing (API opt-in documentada; reutiliza el buffer acotado de eventos del Runtime)
+- [x] 184 — Añadir métricas Runtime (registro nombrado y explícito de contadores)
+- [x] 185 — Añadir métricas Memory (registro nombrado y explícito de contadores/gauges)
+- [x] 186 — Añadir métricas Compute (registro nombrado y explícito de contadores/gauges)
+- [x] 187 — Añadir métricas Network (registro nombrado y explícito de contadores/gauges)
+- [x] 188 — Añadir métricas Storage (registro nombrado y explícito de contadores/gauges)
+- [x] 189 — Crear profiler hooks (medición explícita de operaciones y hook consumidor de muestras)
+- [x] 190 — Crear diagnóstico (resumen de métricas, muestras de profiling y capacidades de buffers)
 - [ ] 191 — Crear modo debug
 - [ ] 192 — Crear modo release
 - [ ] 193 — Crear exportación de métricas

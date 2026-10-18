@@ -98,7 +98,7 @@ Definir APIs de almacenamiento en memoria y disco, formato, persistencia, journa
 Estado actual (puntos 170–182): existe el binario dinah con init, validación run, listado de declaraciones task, inspect, catálogo benchmark y doctor básico. Hay opciones de salida text/json, logging verbose, mensajes de error y pruebas unitarias. Las tareas y benchmarks solo se enumeran: no se ejecutan desde el CLI. El parser de DINAH.toml es deliberadamente parcial, no un parser TOML completo.
 
 ### Fase 11 — Observabilidad
-Unificar métricas, tracing, profiler hooks, diagnósticos y exportación de resultados reproducibles.
+**Base inicial implementada (puntos 183–190):** módulo público `dinah::observability` con tracing opt-in acotado, registro explícito de contadores y gauges para Runtime/Memory/Compute/Network/Storage, muestras de profiling bajo demanda y un informe de diagnóstico de volumen/capacidad. No instrumenta subsistemas automáticamente, no exporta métricas todavía y no constituye una auditoría de seguridad ni una herramienta de profiling de sistema. Próximos puntos: modos debug/release, exportación y benchmarks reproducibles.
 
 ### Fase 12 — Seguridad y robustez
 Revisar entradas, serialización, FFI, memoria, concurrencia, permisos, filesystem y red. Incorporar fuzzing, pruebas de estrés y auditorías de dependencias.

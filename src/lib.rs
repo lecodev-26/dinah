@@ -11,6 +11,7 @@ pub mod ecs;
 pub mod memory;
 pub mod native;
 pub mod network;
+pub mod observability;
 pub mod runtime;
 pub mod simulation;
 pub mod storage;

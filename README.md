@@ -16,7 +16,7 @@
 
 <div align="center">
 
-**Repository snapshot:** 287 master checklist points · 181 complete · 8 in progress · 98 pending
+**Repository snapshot:** 287 master checklist points · 189 complete · 8 in progress · 90 pending
 **Code snapshot:** single Rust crate · 7 benchmark suites (Runtime, Memory, Compute, ECS, Simulation, Networking, Storage) · 1 runnable example · five-platform benchmark history
 **Current milestone:** Native foundations now include safe host/POSIX capability traits and a minimal scalar C ABI. The ABI still needs a real C compiler/linker smoke test; no direct hardware access or handwritten assembly is claimed. Networking has initial blocking TCP wrappers and prediction/reconciliation/replay primitives, but its wire encoder/decoder and full protocol integration remain pending.
 
@@ -162,7 +162,7 @@ These are medians of nine samples; construction is included in the clock and ste
 | 220 | Testing | Integration tests |
 | 225 | Testing | Benchmark suite |
 
-After Networking, the roadmap continues through Storage, Native / Hardware, CLI, Observability and Security, then integration and the first `dinah` v0.1. These are targets, not completed capabilities. See [`roadmap.md`](roadmap.md) and the [`287-point master checklist`](puntos.md).
+The CLI baseline and initial opt-in observability primitives are implemented; tracing, metrics and profiling still require explicit caller reporting and are not automatic. After Networking, the roadmap continues through Storage, Native / Hardware, CLI, Observability and Security, then integration and the first `dinah` v0.1. These are targets, not completed capabilities. See [`roadmap.md`](roadmap.md) and the [`287-point master checklist`](puntos.md).
 
 <div align="center">
 
