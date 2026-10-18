@@ -28,6 +28,10 @@ retries, automatic cancellation propagation, automatic metrics/tracing, or a
 scheduler-wide close/shutdown lifecycle. These omissions are deliberate API limits,
 not implicit guarantees.
 
+## Runnable example
+
+`examples/runtime_basics.rs` demonstrates a bounded FIFO `TaskQueue`, explicit sequential draining with `Scheduler::run_until_empty`, and opt-in bounded parallel batches with `Scheduler::run_parallel`. Results remain in dispatch order; the example sorts only the separately collected side effects before printing, because worker completion order is not guaranteed. Run it with `cargo run --example runtime_basics`. The scheduler does not create persistent background workers.
+
 ## Responsibilities
 
 - **Task** represents one submitted unit of work and its observable lifecycle. It

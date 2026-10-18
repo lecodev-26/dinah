@@ -326,7 +326,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [ ] 263 — Congelar arquitectura v0.1
 - [ ] 264 — Congelar API v0.1
 - [>] 265 — Completar documentación (`docs/cli.md` documenta escapes Unicode, whitespace, límites del parser y ejecución shell; `docs/release-checklist.md` registra los requisitos de publicación; falta completar y revisar toda la documentación pública)
-- [>] 266 — Completar ejemplos (añadidos ejemplos ejecutables de Compute, buffers, ECS, Storage y Networking; la CI verde valida la compilación del ejemplo de Storage, el de Networking queda pendiente de CI; falta ampliar cobertura de APIs/subsistemas)
+- [>] 266 — Completar ejemplos (añadidos ejemplos ejecutables de Compute, Runtime, buffers, ECS, Simulation, Storage, Networking e integración; los ejemplos de Runtime y Networking quedan pendientes de validación por CI para este bloque; falta ampliar cobertura de APIs/subsistemas)
 - [>] 267 — Completar CLI (parser del subconjunto starter con escapes Unicode `\u`/`\U` validados y whitespace preservado; ejecución opt-in de tareas con salida/código propagados; regresiones para Unicode inválido y selección de tarea verificadas por CI verde en `02e30b0`, más test añadido para comandos vacíos/al solo whitespace; parser TOML completo y compatibilidad siguen pendientes)
 - [>] 268 — Completar testing (tests para sintaxis malformada, duplicados, escapes Unicode válidos/inválidos, whitespace, selección de tarea, salida capturada, comandos vacíos y exit codes; regresiones end-to-end existentes verificadas por CI verde en `02e30b0` y nuevo test de comandos vacíos añadido en el commit actual; falta establecer un umbral de cobertura y cubrir rutas restantes)
 - [ ] 269 — Completar benchmarks
