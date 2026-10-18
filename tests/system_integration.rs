@@ -1,0 +1,107 @@
+//! Public integration checks for Runtime/Network, Native and the CLI surface.
+use dinah::native::{Hal, HostPlatform, Platform};
+use dinah::network::runtime::NetworkWorkQueue;
+use dinah::observability::{MetricsRegistry, Subsystem};
+use dinah::runtime::Scheduler;
+use std::num::NonZeroUsize;
+use std::process::Command;
+use std::time::{Duration, Instant};
+
+#[test]
+fn runtime_dispatches_network_work_and_reports_result_explicitly() {
+    let scheduler = Scheduler::new();
+    let mut queue = NetworkWorkQueue::<&'static str>::new(NonZeroUsize::new(2).unwrap());
+    let delivered = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
+    let task_output = std::sync::Arc::clone(&delivered);
+    queue
+        .enqueue(Box::new(move || {
+            task_output.lock().unwrap().push(b"packet-1".to_vec());
+            Ok(())
+        }))
+        .unwrap();
+
+    assert_eq!(queue.len(), 1, "enqueue must not execute network work");
+    assert_eq!(queue.dispatch_next(&scheduler), Some(Ok(Ok(()))));
+    assert!(queue.is_empty());
+    assert_eq!(*delivered.lock().unwrap(), vec![b"packet-1".to_vec()]);
+
+    let metrics = MetricsRegistry::new();
+    metrics
+        .increment(Subsystem::Network, "work.dispatched", 1)
+        .unwrap();
+    assert!(metrics.export_json().unwrap().contains("work.dispatched"));
+}
+
+#[test]
+fn native_platform_metadata_can_be_consumed_by_scheduler() {
+    let platform = HostPlatform::new();
+    let scheduler = Scheduler::new();
+    let result = scheduler
+        .schedule(|| {
+            Ok::<_, &'static str>((
+                platform.operating_system(),
+                platform.architecture(),
+                platform.process_id(),
+                platform.is_unix(),
+            ))
+        })
+        .unwrap()
+        .unwrap();
+    assert!(!result.0.is_empty());
+    assert!(!result.1.is_empty());
+    assert!(result.2 > 0);
+    assert_eq!(result.3, cfg!(unix));
+    assert!(
+        platform.elapsed_since(Instant::now() - Duration::from_millis(1))
+            >= Duration::from_millis(1)
+    );
+}
+
+#[test]
+fn cli_binary_initializes_and_inspects_project_as_json_without_overwrite() {
+    let unique = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let root =
+        std::env::temp_dir().join(format!("dinah-system-cli-{}-{unique}", std::process::id()));
+    std::fs::create_dir_all(&root).unwrap();
+
+    let init = Command::new(env!("CARGO_BIN_EXE_dinah"))
+        .arg("init")
+        .arg(&root)
+        .output()
+        .expect("CLI starts");
+    assert!(
+        init.status.success(),
+        "{}",
+        String::from_utf8_lossy(&init.stderr)
+    );
+    assert!(root.join("DINAH.toml").is_file());
+
+    let inspect = Command::new(env!("CARGO_BIN_EXE_dinah"))
+        .args(["--format", "json", "inspect"])
+        .arg(&root)
+        .output()
+        .expect("CLI starts");
+    assert!(
+        inspect.status.success(),
+        "{}",
+        String::from_utf8_lossy(&inspect.stderr)
+    );
+    let stdout = String::from_utf8(inspect.stdout).unwrap();
+    assert!(stdout.contains("my-dinah-project"), "{stdout}");
+
+    let original = std::fs::read(root.join("DINAH.toml")).unwrap();
+    let second_init = Command::new(env!("CARGO_BIN_EXE_dinah"))
+        .arg("init")
+        .arg(&root)
+        .output()
+        .expect("CLI starts");
+    assert!(
+        !second_init.status.success(),
+        "init must refuse to overwrite"
+    );
+    assert_eq!(std::fs::read(root.join("DINAH.toml")).unwrap(), original);
+    std::fs::remove_dir_all(root).unwrap();
+}

@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 226
-- En progreso: 12
-- Pendientes: 49
+- Completados: 231
+- En progreso: 14
+- Pendientes: 42
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -271,12 +271,12 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 217 — Unit tests Network (`src/network.rs`: transiciones half-close y consistencia de direcciones cerradas)
 - [x] 218 — Unit tests Storage (`src/storage.rs`: replay determinista y rechazo de DELETE con payload)
 - [x] 219 — Unit tests Native (`src/native.rs`: metadatos host, tiempo monotónico, proveedor Unix y contrato ABI escalar)
-- [>] 220 — Integration tests (añadido `tests/system_pipeline.rs` para un flujo público Core/Runtime/Memory/Compute/ECS/Simulation/Storage/observabilidad; siguen faltando rutas alternativas, networking/native/CLI y cobertura de arquitectura completa)
+- [>] 220 — Integration tests (`tests/system_pipeline.rs` cubre Core/Runtime/Memory/Compute/ECS/Simulation/Storage/observabilidad y `tests/system_integration.rs` añade Network, Native y CLI real; siguen faltando rutas alternativas y cobertura de arquitectura completa)
 - [x] 221 — Concurrency tests (`tests/robustness_regression.rs`: seis workers aislados actualizan y reabren journals independientes; no comparte una instancia mutable)
 - [x] 222 — Stress tests (6 workers × 128 actualizaciones, comprobación de 8 claves y replay al reabrir; stress acotado, no benchmark prolongado)
 - [x] 223 — Determinism tests (contratos repetidos públicos de Core, Runtime, Memory y Compute, más replay de Simulation; no implica determinismo temporal ni equivalencia bit a bit entre arquitecturas)
 - [x] 224 — Regression tests (`tests/robustness_regression.rs`: ABI escalar y orden/overwrite repetibles de MemoryStore)
-- [>] 225 — Benchmark suite (suite release reproducible de Runtime, Memory, Compute, ECS y Simulation en cinco runners; faltan suites de Networking, Storage y Native cuando esos módulos existan)
+- [x] 225 — Benchmark suite (siete suites release —Runtime, Memory, Compute, ECS, Simulation, Network y Storage— ejecutadas por `scripts/run_benchmarks.py` y archivadas por CI en cinco runners; Native no tiene suite independiente porque no hay hotspot medido que la justifique)
 - [x] 226 — CI completa (CI principal, auditoría documental, archivo de artefactos y workflow de calidad/seguridad —auditoría de dependencias, smoke test C/link y LCOV— completados correctamente en `fcde532`; la matriz Linux queda separada en 228–229)
 - [>] 227 — Coverage (generación y subida del artefacto LCOV confirmadas en CI de `fcde532`; falta establecer y justificar un umbral de cobertura)
 - [x] 228 — Test matrix Linux (matriz de formato, tests, Clippy y rustdoc validada correctamente en Linux x86-64 y ARM64 por CI del commit `7a5e076`)
@@ -309,17 +309,17 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 249 — Integrar Runtime + Compute (Scheduler ejecuta una transformación mediante Compute; `tests/system_pipeline.rs`)
 - [x] 250 — Integrar Compute + ECS (resultado transformado almacenado como componente ECS; `tests/system_pipeline.rs`)
 - [x] 251 — Integrar ECS + Simulation (Simulation avanza el World con timestep fijo y actualiza el componente; `tests/system_pipeline.rs`)
-- [ ] 252 — Integrar Runtime + Network
+- [x] 252 — Integrar Runtime + Network (`tests/system_integration.rs` valida cola acotada, despacho síncrono por Scheduler, ejecución diferida hasta dispatch y métrica explícita; no crea sockets ni hilos de fondo)
 - [x] 253 — Integrar Runtime + Storage (cola de trabajo despachada por Scheduler aplica snapshot a MemoryStore; `tests/system_pipeline.rs`)
-- [ ] 254 — Integrar Native
-- [ ] 255 — Integrar CLI
+- [x] 254 — Integrar Native (`tests/system_integration.rs` consume metadatos de `HostPlatform` dentro de una operación del Scheduler; integración de capacidades host, no acceso directo al hardware)
+- [x] 255 — Integrar CLI (`tests/system_integration.rs` invoca el binario real para `init` e `inspect --format json` y comprueba que `init` no sobrescribe el manifiesto)
 - [x] 256 — Integrar observabilidad (el test reporta métricas explícitas de Runtime y Compute y verifica exportación JSON; `tests/system_pipeline.rs`)
-- [ ] 257 — Ejecutar sistema completo
-- [ ] 258 — Crear ejemplos completos
+- [>] 257 — Ejecutar sistema completo (smoke tests públicos integran Runtime/Network, Native, CLI, Storage, Simulation y observabilidad por rutas explícitas; todavía no constituye una aplicación completa ni integra framing/auth de red o ejecución de tareas CLI)
+- [x] 258 — Crear ejemplos completos (`examples/system_integration.rs` demuestra NetworkWorkQueue + Scheduler + Native + métricas; ejemplo intencionalmente acotado, sin prometer socket real ni ejecución de tareas CLI)
 - [x] 259 — Crear tests end-to-end (smoke test público cubre un pipeline Core/Runtime/Memory/Compute/ECS/Simulation/Storage/observabilidad; no representa todavía la arquitectura completa ni subsistemas sin implementar)
 - [ ] 260 — Resolver dependencias circulares
-- [ ] 261 — Revisar API pública
-- [ ] 262 — Revisar arquitectura completa
+- [>] 261 — Revisar API pública (revisión inicial de superficies de integración registrada en `docs/integration-matrix.md`; falta revisión completa de compatibilidad y congelación v0.1)
+- [>] 262 — Revisar arquitectura completa (matriz inicial de dependencias/garantías y límites en `docs/integration-matrix.md`; faltan revisar dependencias circulares, gaps de framing de red y ejecución CLI antes de congelar arquitectura)
 
 ## FASE 16 — dinah v0.1
 
