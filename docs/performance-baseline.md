@@ -88,3 +88,22 @@ CI passed for the harness correction and its five runner artifacts were inspecte
 | macOS ARM64 | 4 | 977,667 | 975,833 | 1.002× |
 
 Here ratio is Scheduler divided by the pool prototype including its per-sample startup/shutdown; values below 1 mean the Scheduler sample was faster. The ratios cluster near parity on most runner/worker combinations, unlike the prior invalid batch-assignment comparison. However, this is still a synthetic no-op workload, only three process repetitions, and a benchmark-only prototype: dispatch details, result/error/panic handling and result ordering are not fully equivalent. The Windows four-worker and macOS ARM64 four-worker lifecycle ranges are especially wide, so their medians need cautious interpretation. This is evidence that the corrected harness no longer reproduces the prior large lifecycle gap for this workload, not evidence of a production scheduler optimization. No production code or public API was changed; items 238–245 remain open pending representative workloads, profiling where relevant, and a controlled before/after change to production code.
+
+### CPU-heavy comparison on the same harness
+
+The same five artifacts also report the existing `cpu_1m` workload (256 tasks, each performing one million deterministic wrapping-multiply/add iterations) against the persistent pool in steady state. Ratios below are Scheduler median divided by persistent-pool median across three independent process runs; below 1 favors the Scheduler sample, above 1 favors the pool sample.
+
+| Runner | Workers | Scheduler (ns) | Persistent pool (ns) | Ratio |
+|---|---:|---:|---:|---:|
+| Linux ARM64 | 2 | 77,692,694 | 77,559,786 | 1.002× |
+| Linux ARM64 | 4 | 63,290,142 | 70,138,769 | 0.902× |
+| Linux x86-64 | 2 | 19,982,138 | 20,207,519 | 0.989× |
+| Linux x86-64 | 4 | 16,256,171 | 18,104,152 | 0.898× |
+| Windows x86-64 | 2 | 22,550,700 | 24,527,000 | 0.919× |
+| Windows x86-64 | 4 | 13,087,900 | 11,765,100 | 1.112× |
+| macOS x86-64 | 2 | 27,040,062 | 30,088,685 | 0.899× |
+| macOS x86-64 | 4 | 16,268,163 | 17,877,892 | 0.910× |
+| macOS ARM64 | 2 | 132,547,958 | 133,972,542 | 0.989× |
+| macOS ARM64 | 4 | 132,358,125 | 130,994,250 | 1.010× |
+
+These medians are close enough to show no consistent cross-platform winner: most cases favor the scheduler modestly, while Windows at four workers and macOS ARM64 at four workers favor the pool slightly. The workload is synthetic, the pool remains semantically different (including result/error/panic handling), and the measurements are only three process-level repetitions. This is not a controlled before/after production-code comparison and does not justify changing scheduler architecture. It does provide a CPU-heavy complement to the no-op comparison; items 238–245 remain open until representative application workloads, direct profiling/allocations/cache evidence, and a controlled production change are available.
