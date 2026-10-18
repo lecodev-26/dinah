@@ -583,3 +583,9 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 
 - CI de `4f223d7` verificada: `dinah CI`, benchmarks multiplataforma, auditoría documental y archivo de artefactos terminaron correctamente. Se revisaron los cinco artefactos Runtime (tres procesos por runner). Los ratios lifecycle para 256 tareas no-op oscilaron entre 0,597× y 5,347× según runner y workers, pero la inspección del código encontró que el pool compartía un receptor bajo `Mutex`: una tarea rápida podía permitir al mismo worker consumir varias tareas del lote nominal, por lo que no se garantizaba la misma asignación por batch que `Scheduler::run_parallel`.
 - Se conserva el resultado como observación histórica, sin claim de rendimiento. `benches/runtime.rs` cambia el prototipo a un canal dedicado por worker y envía como máximo una tarea a cada worker seleccionado antes de esperar la barrera del lote. Aún difieren los detalles de dispatch y la semántica de resultado/error/pánico; no se modifica el scheduler de producción ni la API pública. Checks locales permitidos ejecutados; CI del nuevo harness pendiente.
+
+
+### Corrección Clippy del harness Runtime — 2026-10-19
+
+- CI de bf9eda2 revisada: los tests y la validación de checklist pasaron, pero dinah CI falló en Clippy para x86-64 y ARM64 por clippy::while-let-loop en benches/runtime.rs. La causa es el patrón loop/match de receiver.recv(), que Clippy estable exige simplificar bajo -D warnings; no es un fallo de tests ni de la lógica del scheduler de producción.
+- Se cambia el bucle del worker a while let Ok(PoolMessage::Run(job)) = receiver.recv(), que procesa tareas y termina tanto al recibir Shutdown como al cerrarse el canal. CI de la corrección pendiente.

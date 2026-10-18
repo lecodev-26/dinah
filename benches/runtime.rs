@@ -27,10 +27,9 @@ impl PersistentPool {
         for _ in 0..worker_count {
             let (sender, receiver) = mpsc::channel::<PoolMessage>();
             senders.push(sender);
-            workers.push(thread::spawn(move || loop {
-                match receiver.recv() {
-                    Ok(PoolMessage::Run(job)) => job(),
-                    Ok(PoolMessage::Shutdown) | Err(_) => break,
+            workers.push(thread::spawn(move || {
+                while let Ok(PoolMessage::Run(job)) = receiver.recv() {
+                    job();
                 }
             }));
         }
