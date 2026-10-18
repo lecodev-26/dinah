@@ -21,3 +21,18 @@ The integration work provides executable evidence for the currently implemented 
 ## Module dependency-cycle guard
 
 `python3 scripts/check_module_cycles.py` scans crate-root `crate::module` references and fails CI if their directed graph contains a cycle. Unit tests exercise acyclic and cyclic graphs. This is a source-reference guardrail; it does not parse Rust syntax fully and does not prove that conceptual or runtime dependencies are acyclic. The broader architecture review remains open.
+
+
+## Architecture review pass (2026-10-19)
+
+A source-level cross-check of the root module exports and the public integration APIs confirms that orchestration is mostly explicit and caller-driven: `Scheduler` is synchronous for immediate tasks and scopes workers to a `run_parallel` call; `NetworkWorkQueue` and `StorageWorkQueue` require explicit dispatch; `Simulation::step` owns logical-time commit but cannot roll back arbitrary user state; `DiskStore` replays a local journal; observability records only what the caller reports. These boundaries match the current integration tests and must not be described as a persistent background runtime or fully integrated application.
+
+The remaining architecture decisions are not solved by the current module-cycle guard:
+
+- **ECS execution model:** `World::run_system` accepts an exclusive mutable World callback, while access metadata can plan conflict-free batches but does not itself enforce component-level borrow isolation or execute systems in parallel. Freeze must explicitly include or exclude public query/parallel-system APIs.
+- **Network protocol boundary:** `Connection`/`Endpoint` expose a blocking TCP byte stream; the documented wire format does not mean encoder/decoder, framing, authentication or protocol negotiation exist. A general protocol layer is outside current executable evidence.
+- **Storage durability boundary:** journal replay and CRC checks detect some malformed/corrupted records, but there is no transaction, compaction, multi-process coordination or guarantee against power-loss/torn writes beyond the tested suffix-recovery behavior.
+- **Cross-subsystem ownership:** the integration tests deliberately call dispatch and transfer values between modules. There is no hidden lifecycle manager, automatic background dispatch or global cancellation/transaction boundary spanning modules.
+- **Native and observability scope:** host metadata and a scalar C ABI smoke test do not establish direct hardware support; caller-reported metrics do not imply automatic instrumentation.
+
+This pass records the concrete boundaries to carry into the architecture decision, but it does not approve them as a frozen v0.1 design. Before point 263 can close, the owner must decide the supported subsystem scope and document exclusions; point 264 remains separate and requires a supported public API inventory.

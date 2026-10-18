@@ -27,6 +27,25 @@ Review date: 2026-10-18. This is an initial contract inventory for roadmap point
 5. **Security-sensitive CLI/network/storage boundaries are limited.** The CLI has no sandbox; networking has no authenticated framed protocol; storage has no transactional durability contract. These limitations block any broad production-safety claim.
 6. **Evidence status.** CI validates formatting, tests, Clippy, rustdoc, the configured Linux architecture matrix, dependency audit, C ABI smoke check and an initial line-coverage floor. Passing these checks does not establish API stability, complete branch coverage, formal verification or performance guarantees.
 
+## Implementation spot-check (2026-10-19)
+
+This pass compared the root exports and representative public signatures in `src/lib.rs`, `src/runtime/scheduler.rs`, `src/compute.rs`, `src/ecs/world.rs`, `src/simulation.rs`, `src/network.rs`, `src/storage.rs` and `src/observability.rs`. It is a source-level review, not a replacement for reviewing every public item or generated rustdoc.
+
+| Contract area | Evidence in the current implementation | Decision still required before freeze |
+|---|---|---|
+| Module boundary | `src/lib.rs` exports ten public modules directly and `crate_name()`; there is no separate stable facade/prelude. | Decide whether all currently reachable public items are supported, or identify experimental modules/items explicitly. |
+| Nested result/error shape | `Scheduler::schedule` returns `Result<Result<T, E>, ScheduleError>` although the initial immediate scheduler currently always returns the outer `Ok`; `World::insert` and network/storage APIs expose subsystem-specific errors. | Decide whether to retain reserved outer error layers in v0.1 and document which variants are currently reachable. Avoid flattening errors without a deliberate compatibility decision. |
+| Panic and partial mutation | `Scheduler::run_parallel` waits for the current batch and propagates a worker panic; `Compute` parallel callbacks propagate panics after joining active work; `Simulation::step` leaves the clock unchanged on update error but does not roll back state mutations. | Review panic guarantees and non-transactional mutation semantics for every callback-based API; do not imply rollback. |
+| Ownership and borrowed data | `ComputePipeline` borrows its mutable slice; Memory and Storage expose borrowed slice iteration; ECS returns references tied to `World` borrows; `Connection` owns its `TcpStream`. | Verify lifetime/ownership documentation and example patterns for each exported API, including behavior during mutation and I/O failure. |
+| Public data fields | Several public records expose fields directly, including `MetricsSnapshot`, `SimulationTime`, `InputFrame`, `AuthoritativeSnapshot`, `PendingMessage`, simulation model values and diagnostic reports. | Decide which records are intentionally open data-transfer structs versus invariant-bearing types that should hide fields before freezing. Field visibility changes are compatibility-sensitive. |
+| Scope and security | TCP APIs are blocking byte streams without framing/authentication; the CLI explicitly runs shell tasks unsandboxed; Storage has no transaction or strong power-loss durability contract; observability is opt-in. | Keep these exclusions visible in docs and package metadata; no general production-safety claim follows from the smoke tests. |
+
+### Source-level findings
+
+- No immediate reason was found to change production behavior merely to simplify the API inventory. The review instead identifies compatibility decisions that need owner approval before the freeze.
+- The `expect` in `World::insert` is guarded by a `TypeId`-to-concrete-storage invariant. Decide whether that invariant and panic boundary are acceptable for the supported contract; it is not currently surfaced as a typed error.
+- A source grep and representative-file review cannot prove every public method has adequate rustdoc or exhaustively classify every panic path. The checklist below therefore remains open.
+
 ## Before freezing v0.1
 
 - [ ] Agree the supported public surface module by module and identify experimental exports.
