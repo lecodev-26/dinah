@@ -1,4 +1,4 @@
-# DINAH Storage — integridad, acceso y Runtime (puntos 140–155)
+# DINAH Storage — guía de implementación (puntos 140–156)
 
 Storage empieza con una API de clave/valor para bytes opacos, sin serializar structs Rust ni acoplar el contrato a un dominio. El módulo público `dinah::storage` contiene `Storage`, `MemoryStore`, `DiskStore` y `StorageError`. Es una base incremental, no una base de datos de producción.
 
@@ -44,4 +44,4 @@ Al abrir, el store recorre los registros desde el principio y aplica PUT/DELETE 
 
 ## Siguiente trabajo
 
-Queda pendiente el punto 156, documentación final de Storage tras la validación CI. La suite `benches/storage.rs` mide operaciones agrupadas de MemoryStore y escaneo ordenado; CI ejecuta la suite en su matriz de cinco plataformas y archiva las mediciones por commit. Los resultados son específicos de cada máquina y no deben compararse entre plataformas como si fueran equivalentes. La implementación no se presenta como base de datos transaccional ni como garantía de persistencia fuerte.
+La suite `benches/storage.rs` mide operaciones agrupadas de MemoryStore y escaneo ordenado; CI ejecuta la suite en su matriz de cinco plataformas y archiva las mediciones por commit. Los resultados son específicos de cada máquina y no deben compararse entre plataformas como si fueran equivalentes. La implementación no se presenta como base de datos transaccional ni como garantía de persistencia fuerte. Antes de usar DiskStore para datos importantes, conserva copias de seguridad y asume que una pérdida de energía puede perder escrituras recientes. El formato del journal es interno; la lectura de v1 se conserva, pero no existe una herramienta de migración o compactación. Las garantías de concurrencia se limitan a la exclusión mutua que impone el ownership de Rust dentro de una instancia; abrir el mismo path varias veces no coordina escritores.

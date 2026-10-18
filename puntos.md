@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 155
+- Completados: 163
 - En progreso: 8
-- Pendientes: 124
+- Pendientes: 116
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -192,17 +192,17 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 153 — Testear recuperación (sufijo truncado incluido checksum parcial, truncado previo a nuevos appends y compatibilidad de replay v1)
 - [x] 154 — Testear concurrencia (prueba paralela con journals independientes; no implica ni promete coordinación concurrente sobre un mismo archivo)
 - [x] 155 — Crear benchmarks (`benches/storage.rs` mide operaciones agrupadas de MemoryStore y escaneo ordenado; añadido a CI benchmark multiplataforma y archivado)
-- [ ] 156 — Documentar Storage
+- [x] 156 — Documentar Storage (guía final de API, formato v1/v2, CRC-32, recuperación, Runtime, benchmarks, límites de durabilidad y concurrencia)
 
 ## FASE 9 — Native / Hardware
 
-- [ ] 157 — Definir HAL
-- [ ] 158 — Definir abstracciones de plataforma
-- [ ] 159 — Crear capa POSIX/Linux
-- [ ] 160 — Diseñar FFI
-- [ ] 161 — Crear C ABI
-- [ ] 162 — Investigar integración C++
-- [ ] 163 — Investigar Assembly
+- [x] 157 — Definir HAL (trait `native::Hal` para metadatos del host y tiempo monotónico; sin prometer acceso directo al hardware)
+- [x] 158 — Definir abstracciones de plataforma (trait `Platform` y proveedor estándar `HostPlatform`, con límites documentados)
+- [x] 159 — Crear capa POSIX/Linux (adaptador `native::posix` bajo `cfg(unix)` mediante APIs seguras de std; no declara soporte de syscalls Linux directas)
+- [x] 160 — Diseñar FFI (contrato escalar versionado, ownership explícito y criterios para futuras APIs de punteros documentados)
+- [x] 161 — Crear C ABI (consultas escalares versionadas, símbolos exportados, `include/dinah.h` y crate-type rlib/cdylib/staticlib; smoke test C/link aún pendiente)
+- [x] 162 — Investigar integración C++ (recomendado consumir el header C desde C++; sin exponer clases, excepciones ni ownership Rust)
+- [x] 163 — Investigar Assembly (criterios de evidencia, fallback, revisión ABI y CI por arquitectura; no se añadió assembly sin hotspots medidos)
 - [ ] 164 — Identificar hotspots reales
 - [ ] 165 — Optimizar hotspots
 - [ ] 166 — Añadir SIMD nativo donde corresponda

@@ -92,7 +92,7 @@ Definir transporte, mensajes, serialización, conexiones y endpoints. Investigar
 Definir APIs de almacenamiento en memoria y disco, formato, persistencia, journal, recuperación, integridad e índices; probar corrupción y concurrencia.
 
 ### Fase 9 — Native / Hardware
-Crear abstracciones de plataforma, capa POSIX/Linux y FFI cuando sea necesario. Identificar hotspots reales antes de incorporar C/C++ o Assembly.
+**Estado parcial (puntos 157–163):** HAL y abstracciones de plataforma documentadas; proveedor host y adaptador Unix seguro; ABI C escalar versionada y header público; investigación de C++ y Assembly. La ABI aún necesita una prueba real de compilación/enlace en CI. No existe acceso directo al hardware ni assembly optimizado. Los puntos 164–169 siguen pendientes: identificar hotspots reales antes de optimizar y documentar Native.
 
 ### Fase 10 — CLI
 Crear los comandos dinah init, run, task, inspect, benchmark y doctor, con configuración, salida estructurada, logs y errores útiles.

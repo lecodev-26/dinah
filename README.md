@@ -16,9 +16,9 @@
 
 <div align="center">
 
-**Repository snapshot:** 287 master checklist points · 147 complete · 8 in progress · 132 pending
+**Repository snapshot:** 287 master checklist points · 163 complete · 8 in progress · 116 pending
 **Code snapshot:** single Rust crate · 7 benchmark suites (Runtime, Memory, Compute, ECS, Simulation, Networking, Storage) · 1 runnable example · five-platform benchmark history
-**Current milestone:** Networking contracts and v1 wire format documented; initial blocking TCP connection and endpoint wrappers implemented; local connection lifecycle tracking and generic prediction/reconciliation/replay primitives implemented; wire encoder/decoder and full protocol/domain integration remain pending; retry and liveness policies are explicit primitives, not automatic transport behavior.
+**Current milestone:** Native foundations now include safe host/POSIX capability traits and a minimal scalar C ABI. The ABI still needs a real C compiler/linker smoke test; no direct hardware access or handwritten assembly is claimed. Networking has initial blocking TCP wrappers and prediction/reconciliation/replay primitives, but its wire encoder/decoder and full protocol integration remain pending.
 
 </div>
 
@@ -109,7 +109,7 @@ The design separates shared contracts from runtime execution, storage and comput
 
 **Implemented foundations include:** runtime scheduling and task execution; memory buffers; sequential and parallel compute operations; generational ECS entities and sparse-set component storage; fixed-step simulation and five focused simulation models; CI, benchmark and documentation workflows.
 
-**Not yet complete:** stable public APIs, a production SIMD kernel, full parallel ECS system execution, wire framing/serialization for networking, advanced storage integrity and transactions, native/hardware integrations, CLI, observability and security roadmap phases, and the first v0.1 integration milestone. See the master checklist for exact status rather than treating planned work as shipped.
+**Not yet complete:** stable public APIs, a production SIMD kernel, full parallel ECS system execution, full wire framing/serialization for networking, transactional storage and compaction, direct hardware integration, C ABI linker smoke tests across targets, CLI, observability and security roadmap phases, and the first v0.1 integration milestone. See the master checklist for exact status rather than treating planned work as shipped.
 
 <div align="center">
 
@@ -147,7 +147,7 @@ These are medians of nine samples; construction is included in the clock and ste
 
 </div>
 
-**Current phase — Phase 7: Networking.** Points 120–139 are complete: API boundaries, blocking byte-stream transport contract, logical message envelope, versioned binary wire format, and initial TCP connection/listening-endpoint wrappers. The next milestone is **140 — document Networking**. Phase 7 spans points 120–140 and will be implemented incrementally.
+**Current work — Phase 9: Native / Hardware.** Points 156–163 are implemented and documented: Storage final guide, HAL/platform contracts, safe Unix-family adapter, scalar C ABI and C++/Assembly research. The C ABI still needs a real C compiler/linker smoke test, and no direct hardware access or handwritten assembly is claimed. Networking remains a pre-alpha foundation with wire encoder/decoder and full protocol integration pending.
 
 **Eight points remain in progress:**
 

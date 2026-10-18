@@ -3,12 +3,13 @@
 //! The Core module provides small, dependency-free primitives shared by future
 //! subsystems. It intentionally avoids runtime, I/O, and platform assumptions.
 
-#![forbid(unsafe_code)]
+#![deny(unsafe_code)]
 
 pub mod compute;
 pub mod core;
 pub mod ecs;
 pub mod memory;
+pub mod native;
 pub mod network;
 pub mod runtime;
 pub mod simulation;
