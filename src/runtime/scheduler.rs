@@ -127,15 +127,12 @@ impl Scheduler {
                 let (task_sender, task_receiver) = mpsc::channel::<Option<(usize, F)>>();
                 let result_sender = result_sender.clone();
                 task_senders.push(task_sender);
-                scope.spawn(move || loop {
-                    match task_receiver.recv() {
-                        Ok(Some((index, task))) => {
-                            let outcome = catch_unwind(AssertUnwindSafe(task));
-                            if result_sender.send((index, outcome)).is_err() {
-                                break;
-                            }
+                scope.spawn(move || {
+                    while let Ok(Some((index, task))) = task_receiver.recv() {
+                        let outcome = catch_unwind(AssertUnwindSafe(task));
+                        if result_sender.send((index, outcome)).is_err() {
+                            break;
                         }
-                        Ok(None) | Err(_) => break,
                     }
                 });
             }
