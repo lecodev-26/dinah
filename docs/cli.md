@@ -36,3 +36,8 @@ El lector de `DINAH.toml` acepta únicamente el subconjunto documentado y rechaz
 ## Seguridad de ejecución de tareas
 
 Las cadenas declaradas en `[tasks]` son comandos de shell y pueden ejecutar programas, modificar archivos o acceder a la red con los permisos del usuario. `dinah run` no los ejecuta de forma implícita: hay que seleccionar explícitamente una tarea con `--task NAME`. Revisa el manifiesto antes de ejecutar tareas de un proyecto ajeno; DINAH no proporciona sandbox, aislamiento de procesos ni confirmación interactiva. En modo JSON, la salida de la tarea se captura y se codifica como campos JSON; en modo texto se imprime tras finalizar el proceso.
+
+
+## Release status
+
+The CLI is pre-alpha. The manifest parser is a deliberately limited starter subset, not a complete TOML implementation. Task commands are shell strings and run with the caller's permissions after explicit selection; there is no sandbox. Review the [v0.1.0 release checklist](release-checklist.md) before publishing or relying on this CLI for untrusted projects.

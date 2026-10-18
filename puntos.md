@@ -271,7 +271,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 217 — Unit tests Network (`src/network.rs`: transiciones half-close y consistencia de direcciones cerradas)
 - [x] 218 — Unit tests Storage (`src/storage.rs`: replay determinista y rechazo de DELETE con payload)
 - [x] 219 — Unit tests Native (`src/native.rs`: metadatos host, tiempo monotónico, proveedor Unix y contrato ABI escalar)
-- [>] 220 — Integration tests (`tests/system_pipeline.rs` cubre Core/Runtime/Memory/Compute/ECS/Simulation/Storage/observabilidad y `tests/system_integration.rs` añade Network, Native y CLI real; ahora incluye ejecución explícita de tarea, captura JSON, propagación del exit code y ejecución end-to-end de tarea con escape Unicode; el CI de `2374187` pasó; siguen faltando rutas alternativas y cobertura de arquitectura completa)
+- [>] 220 — Integration tests (`tests/system_pipeline.rs` cubre Core/Runtime/Memory/Compute/ECS/Simulation/Storage/observabilidad y `tests/system_integration.rs` añade Network, Native y CLI real; añadidas regresiones para Unicode inválido, tarea inexistente y exit code no cero en JSON; CI de estos casos aún pendiente)
 - [x] 221 — Concurrency tests (`tests/robustness_regression.rs`: seis workers aislados actualizan y reabren journals independientes; no comparte una instancia mutable)
 - [x] 222 — Stress tests (6 workers × 128 actualizaciones, comprobación de 8 claves y replay al reabrir; stress acotado, no benchmark prolongado)
 - [x] 223 — Determinism tests (contratos repetidos públicos de Core, Runtime, Memory y Compute, más replay de Simulation; no implica determinismo temporal ni equivalencia bit a bit entre arquitecturas)
@@ -318,24 +318,24 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 258 — Crear ejemplos completos (`examples/system_integration.rs` demuestra NetworkWorkQueue + Scheduler + Native + métricas; ejemplo intencionalmente acotado, sin prometer socket real ni integración de todos los subsistemas)
 - [x] 259 — Crear tests end-to-end (smoke test público cubre un pipeline Core/Runtime/Memory/Compute/ECS/Simulation/Storage/observabilidad; no representa todavía la arquitectura completa ni subsistemas sin implementar)
 - [ ] 260 — Resolver dependencias circulares
-- [>] 261 — Revisar API pública (salida JSON escapa controles, comentarios no truncan hashes y el parser conserva whitespace y valida escapes Unicode escalares; falta revisión completa de compatibilidad y congelación v0.1)
-- [>] 262 — Revisar arquitectura completa (matriz inicial en `docs/integration-matrix.md`; el parser CLI cubre ahora escapes Unicode válidos/inválidos y prueba end-to-end, pero faltan dependencias circulares, framing de red y revisión global antes de congelar arquitectura)
+- [>] 261 — Revisar API pública (salida JSON escapa controles, comentarios no truncan hashes y el parser conserva whitespace y valida escapes Unicode escalares; release checklist explicita revisión de compatibilidad pendiente; congelación v0.1 sigue abierta)
+- [>] 262 — Revisar arquitectura completa (matriz inicial en `docs/integration-matrix.md`; release checklist registra pendientes de dependencias circulares, framing de red y revisión global antes de congelar arquitectura)
 
 ## FASE 16 — dinah v0.1
 
 - [ ] 263 — Congelar arquitectura v0.1
 - [ ] 264 — Congelar API v0.1
-- [>] 265 — Completar documentación (docs/cli.md documenta ahora escapes Unicode soportados y preservación de whitespace, además de límites del parser y ejecución shell; falta completar toda la documentación pública)
+- [>] 265 — Completar documentación (`docs/cli.md` documenta escapes Unicode, whitespace, límites del parser y ejecución shell; `docs/release-checklist.md` registra los requisitos de publicación; falta completar y revisar toda la documentación pública)
 - [ ] 266 — Completar ejemplos
-- [>] 267 — Completar CLI (parser del subconjunto starter con escapes Unicode `\u`/`\U` validados y whitespace preservado; ejecución opt-in de tareas con salida/código propagados; parser TOML completo y cierre de compatibilidad siguen pendientes)
-- [>] 268 — Completar testing (tests para sintaxis malformada, duplicados, escapes Unicode válidos/inválidos, whitespace, selección de tarea, salida capturada y exit codes; integración end-to-end Unicode añadida para el siguiente CI; falta umbral de cobertura y rutas restantes)
+- [>] 267 — Completar CLI (parser del subconjunto starter con escapes Unicode `\u`/`\U` validados y whitespace preservado; ejecución opt-in de tareas con salida/código propagados; nuevas regresiones para Unicode inválido y selección de tarea añadidas, pendientes de CI; parser TOML completo y compatibilidad siguen pendientes)
+- [>] 268 — Completar testing (tests para sintaxis malformada, duplicados, escapes Unicode válidos/inválidos, whitespace, selección de tarea, salida capturada y exit codes; añadidas regresiones end-to-end de Unicode inválido, tarea inexistente y código no cero en JSON; falta CI, umbral de cobertura y rutas restantes)
 - [ ] 269 — Completar benchmarks
-- [>] 270 — Auditoría de seguridad (pruebas de escapes JSON, comentarios, sintaxis inválida, duplicados, validación de codepoints Unicode y corpus adversario acotado; no equivale a fuzzing coverage-guided ni auditoría externa)
+- [>] 270 — Auditoría de seguridad (pruebas de escapes JSON, comentarios, sintaxis inválida, duplicados, validación de codepoints Unicode, corpus adversario y nuevas regresiones CLI; no equivale a fuzzing coverage-guided ni auditoría externa; cambios recientes pendientes de CI)
 - [x] 271 — Auditoría de dependencias (auditoría automatizada del lockfile ejecutada correctamente en CI del commit `fcde532`; no equivale a auditoría manual de licencias ni garantiza ausencia futura de vulnerabilidades)
 - [>] 272 — Revisar licencia (licencia dual y smoke test ABI en revisión; falta completar comprobación legal formal)
-- [ ] 273 — Preparar release
-- [ ] 274 — Crear changelog
-- [ ] 275 — Crear documentación pública
+- [ ] 273 — Preparar release (`docs/release-checklist.md` define bloqueos, comandos de inspección de paquete y verificación posterior; sigue sin autorizar ni ejecutar una publicación)
+- [ ] 274 — Crear changelog (`CHANGELOG.md` iniciado como Unreleased; debe actualizarse con los cambios finales de la versión y la fecha real de publicación)
+- [ ] 275 — Crear documentación pública (README enlaza el changelog y checklist; la guía de CLI enlaza los límites de release; falta revisión final de la documentación pública)
 - [ ] 276 — Crear paquetes/binarios
 - [ ] 277 — Crear release v0.1.0
 

@@ -218,3 +218,64 @@ fn cli_binary_initializes_and_inspects_project_as_json_without_overwrite() {
 
     std::fs::remove_dir_all(root).unwrap();
 }
+
+#[test]
+fn cli_rejects_invalid_unicode_and_unknown_tasks_without_running_commands() {
+    let unique = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let root = std::env::temp_dir().join(format!(
+        "dinah-cli-negative-{}-{unique}",
+        std::process::id()
+    ));
+    std::fs::create_dir_all(&root).unwrap();
+    let manifest = root.join("DINAH.toml");
+
+    std::fs::write(
+        &manifest,
+        r#"[project]
+name = "invalid-unicode"
+[tasks]
+invalid = "printf \uD800"
+"#,
+    )
+    .unwrap();
+    let invalid = Command::new(env!("CARGO_BIN_EXE_dinah"))
+        .args(["--format", "json", "run"])
+        .arg(&root)
+        .output()
+        .expect("invalid manifest check starts");
+    assert!(!invalid.status.success());
+    assert!(String::from_utf8_lossy(&invalid.stderr)
+        .contains("task descriptions must be quoted strings"));
+
+    std::fs::write(
+        &manifest,
+        r#"[project]
+name = "negative-test"
+[tasks]
+fail = "exit 7"
+"#,
+    )
+    .unwrap();
+    let unknown = Command::new(env!("CARGO_BIN_EXE_dinah"))
+        .args(["--task", "missing", "run"])
+        .arg(&root)
+        .output()
+        .expect("unknown task check starts");
+    assert!(!unknown.status.success());
+    assert!(String::from_utf8_lossy(&unknown.stderr).contains("task 'missing' is not declared"));
+
+    let failed_json = Command::new(env!("CARGO_BIN_EXE_dinah"))
+        .args(["--format", "json", "--task", "fail", "run"])
+        .arg(&root)
+        .output()
+        .expect("JSON task execution starts");
+    assert_eq!(failed_json.status.code(), Some(7));
+    let body = String::from_utf8(failed_json.stdout).unwrap();
+    assert!(body.contains(r#""status":"failure""#), "{body}");
+    assert!(body.contains(r#""exit_code":7"#), "{body}");
+
+    std::fs::remove_dir_all(root).unwrap();
+}

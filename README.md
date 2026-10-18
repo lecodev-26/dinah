@@ -202,6 +202,7 @@ The library API is pre-alpha and can change between commits. Start with [`docs/c
 | [Observability](docs/observability.md) | Opt-in tracing, caller-reported metrics, profiling samples and JSON export |
 | [Security review](docs/security-review.md) | Threat model, trust boundaries, filesystem, concurrency and remaining controls |
 | [Roadmap](roadmap.md) · [Master checklist](puntos.md) | Phases, milestones and status |
+| [Changelog](CHANGELOG.md) · [Release checklist](docs/release-checklist.md) | Unreleased changes and evidence required before publishing v0.1.0 |
 | [Artifacts](artifacts/README.md) | Benchmark artifact archive |
 
 <div align="center">
