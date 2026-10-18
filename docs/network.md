@@ -1,6 +1,6 @@
 # dinah Networking — diseño de API y límites de v0.1
 
-Estado: implementación incremental (puntos 120–126). Los contratos de transporte, mensaje y wire format están documentados; existen una conexión TCP bloqueante y un endpoint TCP de escucha/aceptación. El encoder/decoder de wire y la gestión de estado no están implementados todavía.
+Estado: implementación incremental (puntos 120–127). Los contratos de transporte, mensaje y wire format están documentados; existen una conexión TCP bloqueante, un endpoint TCP de escucha/aceptación y seguimiento local del ciclo de vida de conexión. El encoder/decoder de wire sigue sin implementarse. La investigación de predicción cliente está en `docs/client-side-prediction.md`; no hay prediction/reconciliation implementadas.
 
 ## Objetivo
 
@@ -42,7 +42,7 @@ Capas previstas:
 1. **Mensaje lógico:** tipo/versión de mensaje y payload, sin acoplarlo a TCP, UDP ni a una estructura Rust en memoria.
 2. **Serialización:** codifica/decodifica bytes con límites explícitos, validación de longitud y errores tipados. Nunca confiar en tamaños proporcionados por el peer.
 3. **Transporte:** entrega bytes y declara semántica de stream/datagrama, bloqueo, orden, errores y cierre.
-4. **Conexión y endpoint:** identidad local/remota y estado de conexión, sin confundir dirección, sesión autenticada y autorización.
+4. **Conexión y endpoint:** identidad local/remota y estado de conexión observado localmente, sin confundir dirección, sesión autenticada y autorización.
 5. **Integración:** adaptadores explícitos hacia Runtime y Simulation; ninguna mutación oculta ni callback de fondo implícito.
 
 ## Decisión de transporte — punto 121
@@ -163,8 +163,8 @@ Los métodos requieren acceso mutable para leer/escribir. El wrapper no implemen
 - **121 Transporte (decisión tomada):** stream de bytes bloqueante; lecturas parciales permitidas, EOF definido, escritura completa con errores de progreso parcial, timeout explícito del proveedor y sin reintento automático. No se mezcla stream con datagramas ni se afirma que existan sockets implementados.
 - **122 Mensajes (decisión tomada):** envelope conceptual con versión de protocolo, identificador estable de tipo, versión de mensaje y payload opaco; codificación binaria y framing quedan para 123.
 - **123 Serialización (decisión tomada):** framing por longitud prefijada de 32 bits big-endian; cabecera de 6 bytes con versión de protocolo, tipo y versión de mensaje como enteros de 16 bits big-endian; frame máximo de 1 MiB incluido el encabezado; rechazos explícitos de longitud inválida, truncamiento y versiones/tipos inválidos. Formato propio mínimo, sin dependencia externa ni serialización de structs Rust.
-- **124 Conexiones (implementado inicialmente):** `dinah::network::Connection` envuelve `TcpStream` con lectura/escritura bloqueante, timeout explícito, direcciones y shutdown; sin framing integrado ni reconexión automática. **125 Endpoints (implementado inicialmente):** `dinah::network::Endpoint` envuelve `TcpListener` con bind, dirección local, accept y modo no bloqueante explícito. **126 Gestión de estado** sigue pendiente.
-- **127–131 Prediction/reconciliation/history/resimulation:** documentar primero el modelo temporal, snapshots, autoridad, orden de inputs y límites de memoria; no declarar determinismo de red como garantía de transporte.
+- **124 Conexiones (implementado inicialmente):** `dinah::network::Connection` envuelve `TcpStream` con lectura/escritura bloqueante, timeout explícito, direcciones y shutdown; sin framing integrado ni reconexión automática. **125 Endpoints (implementado inicialmente):** `dinah::network::Endpoint` envuelve `TcpListener` con bind, dirección local, accept y modo no bloqueante explícito. **126 Gestión de estado (implementado inicialmente):** `ConnectionState` registra el estado local observable (`Open`, `ReadClosed`, `WriteClosed`, `Closed`); no detecta inmediatamente un cierre remoto ni gestiona reconexión. **127 Prediction (investigación completada):** el modelo recomendado está en `docs/client-side-prediction.md`; no existe aún implementación.
+- **128–131 Prediction/reconciliation/history/resimulation:** implementar incrementalmente con ticks explícitos, snapshots autoritativos, inputs numerados e historial acotado; validar replay antes de afirmar determinismo.
 - **132–134 Pérdida/latencia/desconexión:** construir un simulador controlado y tests deterministas antes de implementar políticas de producción.
 - **135–136 Integración Runtime/Simulation:** solo mediante adaptadores explícitos, sin acoplamiento circular ni efectos secundarios ocultos.
 - **137–139 Tests/latencia/benchmarks:** tests unitarios con transportes falsos, escenarios de integración locales y benchmarks reproducibles con entorno archivado.

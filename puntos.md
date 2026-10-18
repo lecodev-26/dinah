@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 126
+- Completados: 127
 - En progreso: 8
-- Pendientes: 153
+- Pendientes: 152
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -160,7 +160,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 124 — Crear conexiones (`dinah::network::Connection` implementa TCP bloqueante sobre `TcpStream`, conexión con timeout, lectura/escritura, direcciones y shutdown; pruebas loopback en `tests/network_connection.rs`; sin framing integrado ni reconexión automática)
 - [x] 125 — Crear endpoints (`dinah::network::Endpoint` implementa bind TCP, consulta de dirección local, accept que devuelve `Connection` y modo no bloqueante explícito; pruebas loopback para aceptación/intercambio y `WouldBlock`; sin gestión de estado ni tareas de fondo)
 - [x] 126 — Crear gestión de estado (ConnectionState local para estados Open, ReadClosed, WriteClosed y Closed)
-- [ ] 127 — Investigar client-side prediction
+- [x] 127 — Investigar client-side prediction (modelo autoritativo, inputs numerados, reconciliación conceptual, límites y plan 128–131 documentados en `docs/client-side-prediction.md`; sin implementación de prediction)
 - [ ] 128 — Implementar prediction
 - [ ] 129 — Implementar reconciliation
 - [ ] 130 — Implementar history/state buffers
@@ -496,3 +496,8 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 
 - Se define el envelope lógico de mensaje: versión de protocolo, identificador de tipo estable, versión del mensaje y payload opaco. Se documentan rechazo de versiones/tipos desconocidos por defecto, compatibilidad explícita, límites y errores, separando el contrato semántico del formato binario/framing. El ejemplo Rust es conceptual; no se han implementado tipos, serialización ni sockets.
 - El punto 122 queda documentado; el punto 123 (serialización) es el siguiente.
+
+
+### Networking — investigación de client-side prediction (punto 127)
+
+- 2026-10-18 — Investigación documentada en `docs/client-side-prediction.md`: servidor autoritativo, inputs con secuencia/tick, snapshot con última secuencia procesada, historial acotado, replay de inputs pendientes, separación entre estado simulado y suavizado visual, límites de determinismo, seguridad y memoria. Se documentan referencias técnicas y criterios incrementales para 128–131. No se afirma que prediction, reconciliation, history buffers ni resimulation estén implementadas. CI de este cambio pendiente.
