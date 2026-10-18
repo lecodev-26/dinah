@@ -1,0 +1,12 @@
+DINAH benchmark baseline summary
+commit=3a36b732b8aedfc38c6218dcafcd5389bf019d04
+timestamp_utc=2026-10-18T10:58:45.303673+00:00
+runner=Windows AMD64
+Note: suite wall time is not a per-operation performance metric.
+suite=runtime elapsed_seconds=24.32 case_count=35
+suite=memory elapsed_seconds=1.162 case_count=28
+suite=compute elapsed_seconds=4.026 case_count=40
+suite=ecs elapsed_seconds=1.201 case_count=24
+suite=simulation elapsed_seconds=1.071 case_count=8
+suite=network elapsed_seconds=0.752 case_count=2
+suite=storage elapsed_seconds=1.591 case_count=2

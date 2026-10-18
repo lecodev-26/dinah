@@ -1,0 +1,46 @@
+[1m[92m   Compiling[0m dinah v0.1.0 (/home/runner/work/dinah/dinah)
+[1m[92m    Finished[0m `bench` profile [optimized] target(s) in 1.08s
+[1m[92m     Running[0m benches/compute.rs (target/release/deps/compute-be3f8f88a145773a)
+dinah compute SIMD investigation; build=release; statistic=median; samples=11; iterations_per_sample=10
+Compares scalar loops with a safe wide::f32x4 candidate; SIMD speedup is not assumed.
+target=aarch64
+case=direct_scalar_transform elements=64 samples=11 iterations_per_sample=10 median_op_ns=11 ns_per_element=0.172 elements_per_second=5818181818
+case=compute_for_each_transform elements=64 samples=11 iterations_per_sample=10 median_op_ns=13 ns_per_element=0.203 elements_per_second=4923076923
+case=compute_for_each_parallel_2_workers elements=64 samples=11 iterations_per_sample=10 median_op_ns=81130 ns_per_element=1267.656 elements_per_second=788857
+case=compute_for_each_parallel_4_workers elements=64 samples=11 iterations_per_sample=10 median_op_ns=129274 ns_per_element=2019.906 elements_per_second=495072
+case=wide_f32x4_candidate_transform elements=64 samples=11 iterations_per_sample=10 median_op_ns=12 ns_per_element=0.188 elements_per_second=5333333333
+case=direct_scalar_transform elements=65 samples=11 iterations_per_sample=10 median_op_ns=12 ns_per_element=0.185 elements_per_second=5416666667
+case=compute_for_each_transform elements=65 samples=11 iterations_per_sample=10 median_op_ns=12 ns_per_element=0.185 elements_per_second=5416666667
+case=compute_for_each_parallel_2_workers elements=65 samples=11 iterations_per_sample=10 median_op_ns=78855 ns_per_element=1213.154 elements_per_second=824298
+case=compute_for_each_parallel_4_workers elements=65 samples=11 iterations_per_sample=10 median_op_ns=122851 ns_per_element=1890.015 elements_per_second=529096
+case=wide_f32x4_candidate_transform elements=65 samples=11 iterations_per_sample=10 median_op_ns=12 ns_per_element=0.185 elements_per_second=5416666667
+case=direct_scalar_transform elements=1024 samples=11 iterations_per_sample=10 median_op_ns=105 ns_per_element=0.103 elements_per_second=9752380952
+case=compute_for_each_transform elements=1024 samples=11 iterations_per_sample=10 median_op_ns=106 ns_per_element=0.104 elements_per_second=9660377358
+case=compute_for_each_parallel_2_workers elements=1024 samples=11 iterations_per_sample=10 median_op_ns=78370 ns_per_element=76.533 elements_per_second=13066224
+case=compute_for_each_parallel_4_workers elements=1024 samples=11 iterations_per_sample=10 median_op_ns=122425 ns_per_element=119.556 elements_per_second=8364305
+case=wide_f32x4_candidate_transform elements=1024 samples=11 iterations_per_sample=10 median_op_ns=121 ns_per_element=0.118 elements_per_second=8462809917
+case=direct_scalar_transform elements=1027 samples=11 iterations_per_sample=10 median_op_ns=108 ns_per_element=0.105 elements_per_second=9509259259
+case=compute_for_each_transform elements=1027 samples=11 iterations_per_sample=10 median_op_ns=108 ns_per_element=0.105 elements_per_second=9509259259
+case=compute_for_each_parallel_2_workers elements=1027 samples=11 iterations_per_sample=10 median_op_ns=78546 ns_per_element=76.481 elements_per_second=13075141
+case=compute_for_each_parallel_4_workers elements=1027 samples=11 iterations_per_sample=10 median_op_ns=141360 ns_per_element=137.644 elements_per_second=7265139
+case=wide_f32x4_candidate_transform elements=1027 samples=11 iterations_per_sample=10 median_op_ns=126 ns_per_element=0.123 elements_per_second=8150793651
+case=direct_scalar_transform elements=16384 samples=11 iterations_per_sample=10 median_op_ns=1608 ns_per_element=0.098 elements_per_second=10189054726
+case=compute_for_each_transform elements=16384 samples=11 iterations_per_sample=10 median_op_ns=1613 ns_per_element=0.098 elements_per_second=10157470552
+case=compute_for_each_parallel_2_workers elements=16384 samples=11 iterations_per_sample=10 median_op_ns=101188 ns_per_element=6.176 elements_per_second=161916433
+case=compute_for_each_parallel_4_workers elements=16384 samples=11 iterations_per_sample=10 median_op_ns=156907 ns_per_element=9.577 elements_per_second=104418541
+case=wide_f32x4_candidate_transform elements=16384 samples=11 iterations_per_sample=10 median_op_ns=1880 ns_per_element=0.115 elements_per_second=8714893617
+case=direct_scalar_transform elements=16387 samples=11 iterations_per_sample=10 median_op_ns=1618 ns_per_element=0.099 elements_per_second=10127935723
+case=compute_for_each_transform elements=16387 samples=11 iterations_per_sample=10 median_op_ns=1624 ns_per_element=0.099 elements_per_second=10090517241
+case=compute_for_each_parallel_2_workers elements=16387 samples=11 iterations_per_sample=10 median_op_ns=103866 ns_per_element=6.338 elements_per_second=157770589
+case=compute_for_each_parallel_4_workers elements=16387 samples=11 iterations_per_sample=10 median_op_ns=152234 ns_per_element=9.290 elements_per_second=107643496
+case=wide_f32x4_candidate_transform elements=16387 samples=11 iterations_per_sample=10 median_op_ns=1883 ns_per_element=0.115 elements_per_second=8702602230
+case=direct_scalar_transform elements=262144 samples=11 iterations_per_sample=10 median_op_ns=32534 ns_per_element=0.124 elements_per_second=8057539805
+case=compute_for_each_transform elements=262144 samples=11 iterations_per_sample=10 median_op_ns=32770 ns_per_element=0.125 elements_per_second=7999511749
+case=compute_for_each_parallel_2_workers elements=262144 samples=11 iterations_per_sample=10 median_op_ns=159202 ns_per_element=0.607 elements_per_second=1646612480
+case=compute_for_each_parallel_4_workers elements=262144 samples=11 iterations_per_sample=10 median_op_ns=205252 ns_per_element=0.783 elements_per_second=1277181221
+case=wide_f32x4_candidate_transform elements=262144 samples=11 iterations_per_sample=10 median_op_ns=32484 ns_per_element=0.124 elements_per_second=8069942125
+case=direct_scalar_transform elements=262147 samples=11 iterations_per_sample=10 median_op_ns=32484 ns_per_element=0.124 elements_per_second=8070034479
+case=compute_for_each_transform elements=262147 samples=11 iterations_per_sample=10 median_op_ns=32324 ns_per_element=0.123 elements_per_second=8109980200
+case=compute_for_each_parallel_2_workers elements=262147 samples=11 iterations_per_sample=10 median_op_ns=127106 ns_per_element=0.485 elements_per_second=2062428210
+case=compute_for_each_parallel_4_workers elements=262147 samples=11 iterations_per_sample=10 median_op_ns=172074 ns_per_element=0.656 elements_per_second=1523455025
+case=wide_f32x4_candidate_transform elements=262147 samples=11 iterations_per_sample=10 median_op_ns=35777 ns_per_element=0.136 elements_per_second=7327249350
