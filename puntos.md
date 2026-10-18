@@ -6,8 +6,8 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 
 - Total de puntos numerados: 287
 - Completados: 242
-- En progreso: 25
-- Pendientes: 20
+- En progreso: 26
+- Pendientes: 19
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -326,7 +326,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [ ] 263 — Congelar arquitectura v0.1
 - [ ] 264 — Congelar API v0.1
 - [>] 265 — Completar documentación (`docs/cli.md` documenta escapes Unicode, whitespace, límites del parser y ejecución shell; `docs/release-checklist.md` registra los requisitos de publicación; falta completar y revisar toda la documentación pública)
-- [ ] 266 — Completar ejemplos
+- [>] 266 — Completar ejemplos (añadidos `examples/compute_basics.rs`, `examples/memory_basics.rs` y `examples/ecs_basics.rs` para Compute, buffers acotados y ciclo de vida ECS; falta validar en CI y ampliar cobertura de APIs/subsistemas)
 - [>] 267 — Completar CLI (parser del subconjunto starter con escapes Unicode `\u`/`\U` validados y whitespace preservado; ejecución opt-in de tareas con salida/código propagados; regresiones para Unicode inválido y selección de tarea verificadas por CI verde en `02e30b0`, más test añadido para comandos vacíos/al solo whitespace; parser TOML completo y compatibilidad siguen pendientes)
 - [>] 268 — Completar testing (tests para sintaxis malformada, duplicados, escapes Unicode válidos/inválidos, whitespace, selección de tarea, salida capturada, comandos vacíos y exit codes; regresiones end-to-end existentes verificadas por CI verde en `02e30b0` y nuevo test de comandos vacíos añadido en el commit actual; falta establecer un umbral de cobertura y cubrir rutas restantes)
 - [ ] 269 — Completar benchmarks
@@ -537,3 +537,8 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 - Puntos 204, 261, 262, 265, 267, 268 y 270 avanzados: el parser de `DINAH.toml` sigue siendo deliberadamente un subconjunto, pero ahora rechaza errores sintácticos comunes, tablas conocidas/claves duplicadas y cadenas básicas con escapes no admitidos, e informa la línea del error. Se añaden cuatro grupos de pruebas de regresión y se alinean `docs/cli.md`, `docs/security-review.md` y el resumen de estado de `README.md`. No se marca como parser TOML completo; la ejecución de tareas se habilita después con selección explícita en el bloque CLI siguiente, y no se cierra fuzzing coverage-guided, umbral de cobertura, congelación API/arquitectura ni revisión legal. Checks locales de formato, diff y checklist correctos; CI del commit nuevo pendiente.
 
 - 2026-10-18 — Bloque CLI: `dinah run` conserva la validación por defecto y añade ejecución explícita con `--task NAME`; el comando declarado se ejecuta en el directorio del proyecto, JSON captura stdout/stderr, y el código de salida se propaga. Se amplían pruebas unitarias e integración, `docs/cli.md` y revisión de seguridad; se documenta claramente que no hay sandbox. CI de este bloque pendiente; los puntos 220, 257, 267 y 268 siguen en progreso.
+
+
+### Ejemplos públicos — 2026-10-18
+
+- Avanzado el punto 266 con tres ejemplos ejecutables nuevos: Compute secuencial/por lotes/paralelo y reducción; Buffer con capacidad fija y rechazo de inserción; y ECS con componentes, sistema síncrono mediante Runtime y destrucción de entidad. Se mantiene en progreso hasta que CI confirme la compilación y se revise la cobertura restante. `cargo fmt --all -- --check`, `git diff --check`, `python3 scripts/check_points.py` y `python3 scripts/documentation_audit.py` se ejecutaron correctamente; no se ha ejecutado `cargo test` localmente.
