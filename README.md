@@ -174,7 +174,7 @@ The next milestone is to close the remaining security and validation gaps before
 3. **Dependency and ABI assurance:** audit the lockfile/toolchain and add a real C compiler/linker smoke test for the scalar ABI on supported runners.
 4. **Integration (phases 15–16):** connect only APIs that are implemented, add end-to-end examples and tests, review public API boundaries, and then decide whether the scoped `dinah` v0.1 milestone is genuinely met.
 
-**Current security status:** initial reviews and targeted corruption/concurrency tests are in place, but DINAH is still pre-alpha. It does not claim a production network stack, strong crash durability, stable public APIs or an independently audited security posture. The canonical task status is [`puntos.md`](puntos.md); phase definitions and release criteria are in [`roadmap.md`](roadmap.md).
+**Current security status:** initial reviews and targeted corruption/concurrency tests are in place, but DINAH is still pre-alpha. It does not claim a production network stack, strong crash durability, stable public APIs or an independently audited security posture. The canonical task status is [`puntos.md`](puntos.md) (**213 complete, 8 in progress, 66 pending**); phase definitions and release criteria are in [`roadmap.md`](roadmap.md).
 
 <div align="center">
 

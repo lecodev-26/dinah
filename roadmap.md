@@ -102,7 +102,7 @@ Estado actual (puntos 170–182): existe el binario dinah con init, validación 
 
 ### Fase 12 — Seguridad y robustez
 
-**Revisión de seguridad actualizada (puntos 195–203, 205–206 y 210):** el documento `docs/security-review.md` cubre memoria, concurrencia, permisos, filesystem, networking, entradas, serialización, FFI, integridad del journal y el modelo de confianza. Hay pruebas adicionales para longitudes/campos corruptos y concurrencia del registro de métricas. Sigue pendiente el punto 204 (infraestructura de fuzzing), 207–209 (concurrencia/determinismo y auditoría formal de dependencias), y las pruebas de estrés prolongadas y el smoke test C/link. La revisión es estática y no certifica ausencia de vulnerabilidades.
+**Revisión de seguridad actualizada (puntos 195–203, 205–208, 210, 217–219, 221–224):** el documento `docs/security-review.md` cubre memoria, concurrencia, permisos, filesystem, networking, entradas, serialización, FFI, integridad del journal y el modelo de confianza. Hay pruebas adicionales para longitudes/campos corruptos, transiciones de conexión, replay determinista, ABI escalar y concurrencia/estrés acotados sobre journals independientes. Sigue pendiente el punto 204 (infraestructura de fuzzing), 207–209 (concurrencia/determinismo y auditoría formal de dependencias), y las pruebas de estrés prolongadas y el smoke test C/link. La revisión es estática y no certifica ausencia de vulnerabilidades.
 
 ### Fase 13 — Testing
 Asegurar tests unitarios por módulo, integración, concurrencia, estrés, determinismo, regresión, cobertura y matriz de plataformas soportadas.

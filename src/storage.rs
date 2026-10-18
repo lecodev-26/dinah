@@ -301,3 +301,54 @@ fn crc32(bytes: &[u8]) -> u32 {
 
 /// Explicit Runtime bridge for queued storage mutations.
 pub mod runtime;
+
+#[cfg(test)]
+mod tests {
+    use super::{replay, StorageError};
+
+    #[test]
+    fn replay_is_deterministic_for_identical_journal_bytes() {
+        let mut journal = Vec::new();
+        append_v2_put(&mut journal, b"z", b"last");
+        append_v2_put(&mut journal, b"a", b"first");
+        append_v2_put(&mut journal, b"z", b"updated");
+        let first = replay(&journal).expect("first replay");
+        let second = replay(&journal).expect("second replay");
+        assert_eq!(first, second);
+        let rows: Vec<_> = first
+            .0
+            .iter()
+            .map(|(key, value)| (key.as_slice(), value.as_slice()))
+            .collect();
+        assert_eq!(
+            rows,
+            vec![(b"a".as_slice(), b"first".as_slice()), (b"z", b"updated")]
+        );
+        assert_eq!(first.1, journal.len());
+    }
+
+    #[test]
+    fn replay_rejects_delete_records_with_values() {
+        let mut journal = b"DNST".to_vec();
+        journal.extend_from_slice(&[2, 2]);
+        journal.extend_from_slice(&1_u32.to_le_bytes());
+        journal.extend_from_slice(&1_u32.to_le_bytes());
+        journal.extend_from_slice(b"kv");
+        let error = replay(&journal).expect_err("delete payload must be rejected");
+        assert!(matches!(
+            error,
+            StorageError::InvalidFormat("delete record contains a value")
+        ));
+    }
+
+    fn append_v2_put(journal: &mut Vec<u8>, key: &[u8], value: &[u8]) {
+        journal.extend_from_slice(b"DNST");
+        journal.extend_from_slice(&[2, 1]);
+        journal.extend_from_slice(&(key.len() as u32).to_le_bytes());
+        journal.extend_from_slice(&(value.len() as u32).to_le_bytes());
+        journal.extend_from_slice(key);
+        journal.extend_from_slice(value);
+        let checksum = super::crc32(&journal[journal.len() - key.len() - value.len() - 10..]);
+        journal.extend_from_slice(&checksum.to_le_bytes());
+    }
+}

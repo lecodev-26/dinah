@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 205
+- Completados: 213
 - En progreso: 8
-- Pendientes: 74
+- Pendientes: 66
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -255,8 +255,8 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [ ] 204 — Añadir fuzzing
 - [x] 205 — Añadir tests de corrupción (longitudes excesivas, versión desconocida y opcode inválido; checksum y truncado ya cubiertos)
 - [x] 206 — Añadir tests de estrés (8 hilos × 2000 incrementos sobre el registro compartido; estrés acotado, no benchmark)
-- [ ] 207 — Añadir tests de concurrencia
-- [ ] 208 — Añadir tests de determinismo
+- [x] 207 — Añadir tests de concurrencia (seis hilos operan sobre journals independientes y verifican actualizaciones/reapertura; no prueba multiwriter sobre un mismo archivo)
+- [x] 208 — Añadir tests de determinismo (replay de bytes idénticos y orden/overwrite estable de MemoryStore; no garantiza determinismo temporal entre plataformas)
 - [ ] 209 — Auditoría de dependencias
 - [x] 210 — Documentar modelo de seguridad (activos, límites de confianza, garantías, no-garantías y controles pendientes)
 
@@ -268,14 +268,14 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 214 — Unit tests Compute (`src/compute.rs`: 22 tests unitarios; complementados por `tests/compute_determinism.rs`; CI verde en `320c5d7`)
 - [x] 215 — Unit tests ECS (tests unitarios de access, component, entity, storage y world; complementados por `tests/ecs_contract.rs`; CI verde en `320c5d7`)
 - [x] 216 — Unit tests Simulation (`src/simulation.rs`: 14 tests unitarios, incluidos timestep, errores, entidades, bindings y replay determinista; CI verde en `320c5d7`)
-- [ ] 217 — Unit tests Network
-- [ ] 218 — Unit tests Storage
-- [ ] 219 — Unit tests Native
+- [x] 217 — Unit tests Network (`src/network.rs`: transiciones half-close y consistencia de direcciones cerradas)
+- [x] 218 — Unit tests Storage (`src/storage.rs`: replay determinista y rechazo de DELETE con payload)
+- [x] 219 — Unit tests Native (`src/native.rs`: metadatos host, tiempo monotónico, proveedor Unix y contrato ABI escalar)
 - [>] 220 — Integration tests (existen contratos públicos de Core, Runtime y ECS, más suites de determinismo de Core/Runtime/Memory/Compute; faltan pruebas end-to-end de la arquitectura completa y de módulos aún no implementados)
-- [ ] 221 — Concurrency tests
-- [ ] 222 — Stress tests
+- [x] 221 — Concurrency tests (`tests/robustness_regression.rs`: seis workers aislados actualizan y reabren journals independientes; no comparte una instancia mutable)
+- [x] 222 — Stress tests (6 workers × 128 actualizaciones, comprobación de 8 claves y replay al reabrir; stress acotado, no benchmark prolongado)
 - [x] 223 — Determinism tests (contratos repetidos públicos de Core, Runtime, Memory y Compute, más replay de Simulation; no implica determinismo temporal ni equivalencia bit a bit entre arquitecturas)
-- [ ] 224 — Regression tests
+- [x] 224 — Regression tests (`tests/robustness_regression.rs`: ABI escalar y orden/overwrite repetibles de MemoryStore)
 - [>] 225 — Benchmark suite (suite release reproducible de Runtime, Memory, Compute, ECS y Simulation en cinco runners; faltan suites de Networking, Storage y Native cuando esos módulos existan)
 - [ ] 226 — CI completa
 - [ ] 227 — Coverage

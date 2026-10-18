@@ -251,3 +251,48 @@ pub mod reliability;
 pub mod runtime;
 /// Deterministic tick-based network simulation for tests and experiments.
 pub mod simulator;
+
+#[cfg(test)]
+mod tests {
+    use super::ConnectionState;
+
+    #[test]
+    fn connection_state_transitions_preserve_half_close_semantics() {
+        assert_eq!(
+            ConnectionState::Open.with_read_closed(),
+            ConnectionState::ReadClosed
+        );
+        assert_eq!(
+            ConnectionState::Open.with_write_closed(),
+            ConnectionState::WriteClosed
+        );
+        assert_eq!(
+            ConnectionState::ReadClosed.with_write_closed(),
+            ConnectionState::Closed
+        );
+        assert_eq!(
+            ConnectionState::WriteClosed.with_read_closed(),
+            ConnectionState::Closed
+        );
+        assert_eq!(
+            ConnectionState::Closed.with_read_closed(),
+            ConnectionState::Closed
+        );
+        assert_eq!(
+            ConnectionState::Closed.with_write_closed(),
+            ConnectionState::Closed
+        );
+    }
+
+    #[test]
+    fn closed_directions_are_reported_consistently() {
+        assert!(!ConnectionState::Open.read_closed());
+        assert!(!ConnectionState::Open.write_closed());
+        assert!(ConnectionState::ReadClosed.read_closed());
+        assert!(!ConnectionState::ReadClosed.write_closed());
+        assert!(!ConnectionState::WriteClosed.read_closed());
+        assert!(ConnectionState::WriteClosed.write_closed());
+        assert!(ConnectionState::Closed.read_closed());
+        assert!(ConnectionState::Closed.write_closed());
+    }
+}

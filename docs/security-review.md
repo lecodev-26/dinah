@@ -1,6 +1,6 @@
 # DINAH — Modelo y revisión de seguridad (puntos 195–203, 205–206, 210)
 
-Fecha de revisión: 2026-10-18. Alcance: superficie actual del crate, memoria, concurrencia, permisos, filesystem, networking, entrada del CLI, journal de Storage, salida JSON y ABI C escalar. Esta revisión estática no es una auditoría externa ni demuestra ausencia de vulnerabilidades.
+Fecha de revisión: 2026-10-18. Alcance: superficie actual del crate, memoria, concurrencia, permisos, filesystem, networking, entrada del CLI, journal de Storage, salida JSON y ABI C escalar. Se añadieron pruebas unitarias de transiciones de Connection, replay de Storage, regresión del ABI y una carga paralela acotada sobre journals independientes. Esta revisión estática no es una auditoría externa ni demuestra ausencia de vulnerabilidades.
 
 ## 195 — Superficie de ataque
 
@@ -32,7 +32,7 @@ Fecha de revisión: 2026-10-18. Alcance: superficie actual del crate, memoria, c
 ## Acciones pendientes
 
 - Añadir fuzzing para parser de manifiesto, futuros codecs de networking y formatos persistidos.
-- Añadir pruebas de corrupción, estrés y concurrencia, y ejecutar una auditoría formal de dependencias.
+- Fuzzing y auditoría formal de dependencias siguen pendientes. Las pruebas de estrés/concurrencia actuales son acotadas; no incluyen model checking, escritores concurrentes sobre el mismo journal ni cargas prolongadas.
 - Ejecutar el smoke test C/link en CI antes de declarar estable el ABI.
 - Repetir esta revisión cuando se introduzcan ejecución de tareas, deserialización de red, acceso a archivos externos o APIs FFI basadas en punteros.
 
@@ -103,3 +103,12 @@ Se priorizan APIs Rust seguras, límites de campo, escape JSON, detección de co
 - Auditoría de dependencias/toolchain y revisión periódica de avisos de seguridad.
 - Pruebas de estrés de larga duración, permisos y symlinks en las plataformas soportadas.
 - Smoke test real de compilación y enlace C en CI antes de declarar estable la ABI.
+
+
+## Cobertura adicional de pruebas (puntos 207–208, 217–219, 221–222 y 224)
+
+- `src/network.rs` comprueba transiciones de estado Open/ReadClosed/WriteClosed/Closed sin crear sockets.
+- `src/storage.rs` repite replay del mismo journal y valida el rechazo de un DELETE con payload.
+- `src/native.rs` conserva tests unitarios para HostPlatform, PosixPlatform (en Unix) y los símbolos ABI escalares.
+- `tests/robustness_regression.rs` comprueba invariantes ABI, orden y overwrite repetibles, y seis workers sobre archivos de journal separados con 128 actualizaciones cada uno y reapertura posterior.
+- Estas pruebas mejoran regresión y concurrencia acotada; no sustituyen fuzzing, model checking, pruebas de múltiples escritores sobre el mismo archivo ni un smoke test de compilador/linker C.
