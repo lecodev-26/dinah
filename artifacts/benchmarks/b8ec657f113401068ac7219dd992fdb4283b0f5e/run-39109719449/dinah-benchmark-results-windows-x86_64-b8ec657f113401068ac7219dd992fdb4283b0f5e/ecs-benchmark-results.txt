@@ -1,0 +1,35 @@
+[1m[93mwarning[0m: output filename collision at D:\a\dinah\dinah\target\release\deps\dinah.pdb
+  [1m[96m|[0m
+  [1m[96m= [0m[1m[97mnote[0m: the bin target `dinah` in package `dinah v0.1.0 (D:\a\dinah\dinah)` has the same output filename as the lib target `dinah` in package `dinah v0.1.0 (D:\a\dinah\dinah)`
+  [1m[96m= [0m[1m[97mnote[0m: this may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>
+  [1m[96m= [0m[1m[97mhelp[0m: consider changing their names to be unique or compiling them separately
+[1m[92m   Compiling[0m dinah v0.1.0 (D:\a\dinah\dinah)
+[1m[92m    Finished[0m `bench` profile [optimized] target(s) in 0.78s
+[1m[92m     Running[0m benches\ecs.rs (target\release\deps\ecs-5dfca90d71f83bd4.exe)
+dinah ECS benchmark; build=release; statistic=median; samples=7
+Scope: public World entity lifecycle and individual component access; queries and public component iteration are not implemented.
+Results are machine-specific observations, not performance guarantees.
+case=world_spawn_fresh operations=64 samples=7 median_total_ns=1400 ns_per_operation=21.875 operations_per_second=45714286
+case=world_despawn_after_spawn operations=64 samples=7 median_total_ns=3000 ns_per_operation=46.875 operations_per_second=21333333
+case=world_spawn_despawn_reuse operations=192 samples=7 median_total_ns=2300 ns_per_operation=11.979 operations_per_second=83478261
+case=world_contains_scan operations=64 samples=7 median_total_ns=100 ns_per_operation=1.562 operations_per_second=640000000
+case=world_component_get_dense operations=64 samples=7 median_total_ns=800 ns_per_operation=12.500 operations_per_second=80000000
+case=world_component_get_sparse operations=4 samples=7 median_total_ns=100 ns_per_operation=25.000 operations_per_second=40000000
+case=world_component_get_stale_generation operations=64 samples=7 median_total_ns=200 ns_per_operation=3.125 operations_per_second=320000000
+case=world_component_insert_replace_remove operations=65 samples=7 median_total_ns=2000 ns_per_operation=30.769 operations_per_second=32500000
+case=world_spawn_fresh operations=1024 samples=7 median_total_ns=7200 ns_per_operation=7.031 operations_per_second=142222222
+case=world_despawn_after_spawn operations=1024 samples=7 median_total_ns=16800 ns_per_operation=16.406 operations_per_second=60952381
+case=world_spawn_despawn_reuse operations=3072 samples=7 median_total_ns=17800 ns_per_operation=5.794 operations_per_second=172584270
+case=world_contains_scan operations=1024 samples=7 median_total_ns=1100 ns_per_operation=1.074 operations_per_second=930909091
+case=world_component_get_dense operations=1024 samples=7 median_total_ns=13200 ns_per_operation=12.891 operations_per_second=77575758
+case=world_component_get_sparse operations=64 samples=7 median_total_ns=800 ns_per_operation=12.500 operations_per_second=80000000
+case=world_component_get_stale_generation operations=1024 samples=7 median_total_ns=2800 ns_per_operation=2.734 operations_per_second=365714286
+case=world_component_insert_replace_remove operations=1025 samples=7 median_total_ns=14700 ns_per_operation=14.341 operations_per_second=69727891
+case=world_spawn_fresh operations=16384 samples=7 median_total_ns=110700 ns_per_operation=6.757 operations_per_second=148003613
+case=world_despawn_after_spawn operations=16384 samples=7 median_total_ns=318700 ns_per_operation=19.452 operations_per_second=51408848
+case=world_spawn_despawn_reuse operations=49152 samples=7 median_total_ns=420200 ns_per_operation=8.549 operations_per_second=116972870
+case=world_contains_scan operations=16384 samples=7 median_total_ns=13800 ns_per_operation=0.842 operations_per_second=1187246377
+case=world_component_get_dense operations=16384 samples=7 median_total_ns=204300 ns_per_operation=12.469 operations_per_second=80195791
+case=world_component_get_sparse operations=1024 samples=7 median_total_ns=12700 ns_per_operation=12.402 operations_per_second=80629921
+case=world_component_get_stale_generation operations=16384 samples=7 median_total_ns=24500 ns_per_operation=1.495 operations_per_second=668734694
+case=world_component_insert_replace_remove operations=16385 samples=7 median_total_ns=236500 ns_per_operation=14.434 operations_per_second=69281184
