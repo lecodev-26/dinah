@@ -113,7 +113,7 @@ The design separates shared contracts from runtime execution, storage and comput
 
 **Implemented foundations include:** runtime scheduling and task execution; memory buffers; sequential and parallel compute operations; generational ECS entities and sparse-set component storage; fixed-step simulation and five focused simulation models; CI, benchmark and documentation workflows.
 
-**Not yet complete:** stable public APIs, a production SIMD kernel, full parallel ECS system execution, full wire framing/serialization and authenticated transport, transactional storage and compaction, direct hardware integration, C ABI linker smoke tests across targets, CLI task execution, automatic observability, fuzzing and formal dependency audits, end-to-end integration and the first v0.1 milestone. See the master checklist for exact status rather than treating planned work as shipped.
+**Not yet complete:** stable public APIs, a production SIMD kernel, full parallel ECS system execution, full wire framing/serialization and authenticated transport, transactional storage and compaction, direct hardware integration, C ABI linker smoke tests across targets, full CLI manifest/TOML compatibility, automatic observability, fuzzing and formal dependency audits, end-to-end integration and the first v0.1 milestone. See the master checklist for exact status rather than treating planned work as shipped.
 
 <div align="center">
 

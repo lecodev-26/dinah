@@ -125,7 +125,7 @@ fn cli_binary_initializes_and_inspects_project_as_json_without_overwrite() {
         task_json.contains("\"tasks\":[\"build\",\"test\"]"),
         "{task_json}"
     );
-    assert!(task_json.contains("not_implemented"), "{task_json}");
+    assert!(task_json.contains("explicit_task_selection"), "{task_json}");
 
     let run = Command::new(env!("CARGO_BIN_EXE_dinah"))
         .args(["--format", "json", "run"])
@@ -140,7 +140,7 @@ fn cli_binary_initializes_and_inspects_project_as_json_without_overwrite() {
     let run_json = String::from_utf8(run.stdout).unwrap();
     assert!(run_json.contains("integration#project"), "{run_json}");
     assert!(
-        run_json.contains("\"task_execution\":\"not_implemented\""),
+        run_json.contains("\"task_execution\":\"explicit_opt_in\""),
         "{run_json}"
     );
 
@@ -179,6 +179,30 @@ fn cli_binary_initializes_and_inspects_project_as_json_without_overwrite() {
         "{benchmark_json}"
     );
     assert!(benchmark_json.contains("\"runtime\""), "{benchmark_json}");
+
+    let task_manifest = "[project]\nname = \"integration-task\"\n[tasks]\npass = \"printf task-ok\"\nfail = \"exit 7\"\n";
+    std::fs::write(&manifest, task_manifest).unwrap();
+    let executed = Command::new(env!("CARGO_BIN_EXE_dinah"))
+        .args(["--format", "json", "--task", "pass", "run"])
+        .arg(&root)
+        .output()
+        .expect("task execution starts");
+    assert!(
+        executed.status.success(),
+        "{}",
+        String::from_utf8_lossy(&executed.stderr)
+    );
+    let executed_json = String::from_utf8(executed.stdout).unwrap();
+    assert!(
+        executed_json.contains("\"stdout\":\"task-ok\""),
+        "{executed_json}"
+    );
+    let failed = Command::new(env!("CARGO_BIN_EXE_dinah"))
+        .args(["--task", "fail", "run"])
+        .arg(&root)
+        .status()
+        .expect("failing task starts");
+    assert_eq!(failed.code(), Some(7));
 
     std::fs::remove_dir_all(root).unwrap();
 }

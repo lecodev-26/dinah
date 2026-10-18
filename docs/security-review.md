@@ -5,8 +5,8 @@ Fecha de revisión: 2026-10-18. Alcance: superficie actual del crate, memoria, c
 ## 195 — Superficie de ataque
 
 - El crate no declara dependencias de runtime en `[dependencies]`; la dependencia `wide` se usa solo como dependencia de desarrollo. Esto reduce la superficie de dependencias, pero no sustituye la auditoría periódica de lockfile/toolchain.
-- `dinah init` usa `create_new(true)` y no reemplaza un manifiesto existente. Las operaciones de archivos se limitan al path que el usuario proporciona o al directorio actual; no se ejecutan comandos definidos en el manifiesto.
-- `dinah run` solo valida el manifiesto. `dinah task` enumera claves; ninguna de las dos ejecuta las tareas declaradas.
+- `dinah init` usa `create_new(true)` y no reemplaza un manifiesto existente.
+- `dinah run` valida el manifiesto si no se indica `--task`. Con `--task NAME`, ejecuta explícitamente la cadena de shell declarada para esa tarea, en el directorio del proyecto y con los permisos efectivos del usuario. No hay sandbox ni aislamiento de procesos; revisa los manifiestos antes de ejecutar proyectos no confiables. `dinah task` solo enumera claves y no ejecuta nada.
 - La entrada del manifiesto queda limitada a 1 MiB. No se afirma protección general frente a enlaces simbólicos, carreras del filesystem o paths maliciosos en todos los sistemas operativos.
 
 ## 196 — Entradas externas
@@ -34,7 +34,7 @@ Fecha de revisión: 2026-10-18. Alcance: superficie actual del crate, memoria, c
 - Ejecutar fuzzing coverage-guided (libFuzzer) para parser de manifiesto y replay del journal; el corpus determinista actual solo es una primera barrera de regresión.
 - Fuzzing y auditoría formal de dependencias siguen pendientes. Las pruebas de estrés/concurrencia actuales son acotadas; no incluyen model checking, escritores concurrentes sobre el mismo journal ni cargas prolongadas.
 - Ejecutar el smoke test C/link en CI antes de declarar estable el ABI.
-- Repetir esta revisión cuando se introduzcan ejecución de tareas, deserialización de red, acceso a archivos externos o APIs FFI basadas en punteros.
+- La ejecución de tareas se ha añadido con selección explícita; evaluar aislamiento de procesos y controles de recursos antes de considerar proyectos no confiables. Repetir esta revisión al introducir deserialización de red, acceso a archivos externos o APIs FFI basadas en punteros.
 
 
 ## 199 — Revisión de memoria
@@ -117,7 +117,7 @@ Se priorizan APIs Rust seguras, límites de campo, escape JSON, detección de co
 ## Trabajo de robustez del corpus (punto 204, en progreso)
 
 - Storage ahora comprueba entradas binarias pseudoaleatorias deterministas de hasta 512 bytes, todas las truncaciones de un registro válido, mutaciones de cada byte y sufijos truncados tras registros concatenados. Los tests comprueban ausencia de panic, no que cada entrada deba ser aceptada.
-- El CLI cubre nombre vacío/no entrecomillado, campos y tablas duplicados, cabeceras malformadas, asignaciones inválidas, descripciones de tarea no entrecomilladas, escapes de cadena no admitidos, asignaciones fuera de secciones conocidas, comentarios junto a valores entrecomillados, límite de tamaño, escapes JSON y corpus determinista de entradas adversarias. Las pruebas de integración invocan task, run, doctor y benchmark en JSON. La semántica sigue siendo el subconjunto documentado, no TOML completo.
+- El CLI cubre nombre vacío/no entrecomillado, campos y tablas duplicados, cabeceras malformadas, asignaciones inválidas, descripciones de tarea no entrecomilladas, escapes de cadena no admitidos, asignaciones fuera de secciones conocidas, comentarios junto a valores entrecomillados, límite de tamaño, escapes JSON y corpus determinista de entradas adversarias. Las pruebas de integración invocan task, run, doctor y benchmark en JSON, incluida la ejecución seleccionada de comandos, captura de salida y propagación del código de salida. La semántica sigue siendo el subconjunto documentado, no TOML completo. La ejecución de comandos es opt-in, pero no está aislada.
 - Limitación explícita: estas pruebas son corpus determinista y no reemplazan libFuzzer, cobertura guiada, sanitizadores ni sesiones de larga duración.
 
 ## Controles automatizados de CI (2026-10-18)

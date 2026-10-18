@@ -214,17 +214,17 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 
 - [x] 170 — Crear comando dinah (binario Rust con ayuda, versión, errores y códigos de salida)
 - [x] 171 — Crear dinah init (crea `DINAH.toml` y no sobrescribe un manifiesto existente)
-- [x] 172 — Crear dinah run (valida manifiesto; ejecutar tareas sigue pendiente)
-- [x] 173 — Crear dinah task (enumera declaraciones de [tasks]; no ejecuta comandos)
+- [x] 172 — Crear dinah run (valida manifiesto por defecto; `--task NAME` ejecuta explícitamente el comando declarado, captura stdout/stderr en JSON y propaga el código de salida; sin sandbox)
+- [x] 173 — Crear dinah task (enumera las claves de [tasks]; la ejecución requiere selección explícita mediante `--task NAME run`)
 - [x] 174 — Crear dinah inspect (muestra metadatos básicos y número de tareas)
 - [x] 175 — Crear dinah benchmark (enumera las siete suites; no ejecuta benchmarks)
 - [x] 176 — Crear dinah doctor (validación básica de directorio y manifiesto)
 - [x] 177 — Crear configuración CLI (--format text/json y --verbose)
 - [x] 178 — Crear output estructurado (JSON para resultados de comandos)
 - [x] 179 — Crear logs (diagnóstico verbose en stderr)
-- [x] 180 — Crear errores amigables (mensajes accionables y código de salida no cero)
+- [x] 180 — Crear errores amigables (mensajes accionables, errores de manifiesto/tarea y propagación del código de salida de la tarea)
 - [x] 181 — Crear documentación CLI (comandos, límites y ejemplos)
-- [x] 182 — Testear comandos (pruebas unitarias para parsing, init, metadatos y manifiestos inválidos)
+- [x] 182 — Testear comandos (parsing, init, metadatos, manifiestos inválidos, selección de tareas, salida JSON y códigos de salida; CI pendiente para la última ampliación)
 
 ## FASE 11 — Observabilidad
 
@@ -271,7 +271,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 217 — Unit tests Network (`src/network.rs`: transiciones half-close y consistencia de direcciones cerradas)
 - [x] 218 — Unit tests Storage (`src/storage.rs`: replay determinista y rechazo de DELETE con payload)
 - [x] 219 — Unit tests Native (`src/native.rs`: metadatos host, tiempo monotónico, proveedor Unix y contrato ABI escalar)
-- [>] 220 — Integration tests (`tests/system_pipeline.rs` cubre Core/Runtime/Memory/Compute/ECS/Simulation/Storage/observabilidad y `tests/system_integration.rs` añade Network, Native y CLI real en init/inspect/task/run/doctor/benchmark; siguen faltando rutas alternativas y cobertura de arquitectura completa)
+- [>] 220 — Integration tests (`tests/system_pipeline.rs` cubre Core/Runtime/Memory/Compute/ECS/Simulation/Storage/observabilidad y `tests/system_integration.rs` añade Network, Native y CLI real; ahora incluye ejecución explícita de tarea, captura JSON y propagación del exit code; siguen faltando rutas alternativas y cobertura de arquitectura completa; CI pendiente)
 - [x] 221 — Concurrency tests (`tests/robustness_regression.rs`: seis workers aislados actualizan y reabren journals independientes; no comparte una instancia mutable)
 - [x] 222 — Stress tests (6 workers × 128 actualizaciones, comprobación de 8 claves y replay al reabrir; stress acotado, no benchmark prolongado)
 - [x] 223 — Determinism tests (contratos repetidos públicos de Core, Runtime, Memory y Compute, más replay de Simulation; no implica determinismo temporal ni equivalencia bit a bit entre arquitecturas)
@@ -314,8 +314,8 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 254 — Integrar Native (`tests/system_integration.rs` consume metadatos de `HostPlatform` dentro de una operación del Scheduler; integración de capacidades host, no acceso directo al hardware)
 - [x] 255 — Integrar CLI (`tests/system_integration.rs` invoca el binario real para `init` e `inspect --format json` y comprueba que `init` no sobrescribe el manifiesto)
 - [x] 256 — Integrar observabilidad (el test reporta métricas explícitas de Runtime y Compute y verifica exportación JSON; `tests/system_pipeline.rs`)
-- [>] 257 — Ejecutar sistema completo (smoke tests públicos integran Runtime/Network, Native, CLI en seis comandos, Storage, Simulation y observabilidad por rutas explícitas; todavía no constituye una aplicación completa ni integra framing/auth de red o ejecución de tareas CLI)
-- [x] 258 — Crear ejemplos completos (`examples/system_integration.rs` demuestra NetworkWorkQueue + Scheduler + Native + métricas; ejemplo intencionalmente acotado, sin prometer socket real ni ejecución de tareas CLI)
+- [>] 257 — Ejecutar sistema completo (smoke tests públicos integran Runtime/Network, Native, CLI, Storage, Simulation y observabilidad; el CLI ya puede ejecutar una tarea seleccionada, pero esto no constituye una aplicación completa ni integra framing/auth de red; CI pendiente)
+- [x] 258 — Crear ejemplos completos (`examples/system_integration.rs` demuestra NetworkWorkQueue + Scheduler + Native + métricas; ejemplo intencionalmente acotado, sin prometer socket real ni integración de todos los subsistemas)
 - [x] 259 — Crear tests end-to-end (smoke test público cubre un pipeline Core/Runtime/Memory/Compute/ECS/Simulation/Storage/observabilidad; no representa todavía la arquitectura completa ni subsistemas sin implementar)
 - [ ] 260 — Resolver dependencias circulares
 - [>] 261 — Revisar API pública (salida JSON del CLI ahora escapa controles válidamente y comentarios no truncan hashes dentro de valores entrecomillados; falta revisión completa de compatibilidad y congelación v0.1)
@@ -327,8 +327,8 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [ ] 264 — Congelar API v0.1
 - [>] 265 — Completar documentación (actualizados docs/cli.md y docs/security-review.md con límites del parser, escapes JSON y comandos cubiertos; falta completar toda la documentación pública)
 - [ ] 266 — Completar ejemplos
-- [>] 267 — Completar CLI (parser del subconjunto starter endurecido con errores por línea, rechazo de tablas/claves duplicadas, cabeceras malformadas y strings/valores de tarea inválidos; ejecución de tareas y parser TOML completo siguen pendientes)
-- [>] 268 — Completar testing (añadidos tests para cabeceras y asignaciones malformadas, duplicados, escapes y descripciones de tareas; smoke CLI para task/run/doctor/benchmark; falta umbral de cobertura y rutas restantes)
+- [>] 267 — Completar CLI (parser del subconjunto starter endurecido y ejecución opt-in de tareas con salida/código propagados; parser TOML completo, controles adicionales y cierre de compatibilidad siguen pendientes)
+- [>] 268 — Completar testing (tests para sintaxis malformada, duplicados, escapes, selección de tarea, salida capturada y exit codes; smoke CLI ampliado; falta umbral de cobertura y rutas restantes, CI del bloque pendiente)
 - [ ] 269 — Completar benchmarks
 - [>] 270 — Auditoría de seguridad (pruebas de escapes JSON, comentarios del manifiesto, rechazo de sintaxis inválida y duplicados, y corpus adversario acotado; no equivale a fuzzing coverage-guided ni auditoría externa)
 - [x] 271 — Auditoría de dependencias (auditoría automatizada del lockfile ejecutada correctamente en CI del commit `fcde532`; no equivale a auditoría manual de licencias ni garantiza ausencia futura de vulnerabilidades)
@@ -534,4 +534,6 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 
 ### Registro de progreso — 2026-10-18
 
-- Puntos 204, 261, 262, 265, 267, 268 y 270 avanzados: el parser de `DINAH.toml` sigue siendo deliberadamente un subconjunto, pero ahora rechaza errores sintácticos comunes, tablas conocidas/claves duplicadas y cadenas básicas con escapes no admitidos, e informa la línea del error. Se añaden cuatro grupos de pruebas de regresión y se alinean `docs/cli.md`, `docs/security-review.md` y el resumen de estado de `README.md`. No se marca como parser TOML completo, no se habilita ejecución de tareas y no se cierra fuzzing coverage-guided, umbral de cobertura, congelación API/arquitectura ni revisión legal. Checks locales de formato, diff y checklist correctos; CI del commit nuevo pendiente.
+- Puntos 204, 261, 262, 265, 267, 268 y 270 avanzados: el parser de `DINAH.toml` sigue siendo deliberadamente un subconjunto, pero ahora rechaza errores sintácticos comunes, tablas conocidas/claves duplicadas y cadenas básicas con escapes no admitidos, e informa la línea del error. Se añaden cuatro grupos de pruebas de regresión y se alinean `docs/cli.md`, `docs/security-review.md` y el resumen de estado de `README.md`. No se marca como parser TOML completo; la ejecución de tareas se habilita después con selección explícita en el bloque CLI siguiente, y no se cierra fuzzing coverage-guided, umbral de cobertura, congelación API/arquitectura ni revisión legal. Checks locales de formato, diff y checklist correctos; CI del commit nuevo pendiente.
+
+- 2026-10-18 — Bloque CLI: `dinah run` conserva la validación por defecto y añade ejecución explícita con `--task NAME`; el comando declarado se ejecuta en el directorio del proyecto, JSON captura stdout/stderr, y el código de salida se propaga. Se amplían pruebas unitarias e integración, `docs/cli.md` y revisión de seguridad; se documenta claramente que no hay sandbox. CI de este bloque pendiente; los puntos 220, 257, 267 y 268 siguen en progreso.

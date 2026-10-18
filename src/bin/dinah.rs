@@ -3,6 +3,7 @@ use std::env;
 use std::fs::{self, OpenOptions};
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
+use std::process::Command;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const MANIFEST: &str = "DINAH.toml";
@@ -28,10 +29,11 @@ struct CliOptions {
     path: Option<String>,
     format: OutputFormat,
     verbose: bool,
+    task_name: Option<String>,
 }
 
 fn usage() {
-    println!("dinah {VERSION} — DINAH project utility\n\nUSAGE:\n  dinah [--help | --version]\n  dinah [--format text|json] [--verbose] <COMMAND> [PATH]\n\nCOMMANDS:\n  init       Create DINAH.toml without overwriting\n  run        Validate the manifest (does not execute tasks yet)\n  task       List task declarations in [tasks]\n  inspect    Show project metadata\n  benchmark  List available benchmark suites\n  doctor     Check basic project health\n\nOPTIONS:\n  --format text|json  Select output format (default: text)\n  --verbose           Print diagnostic logging to stderr\n  -h, --help          Show help\n  -V, --version       Show version\n\nPATH defaults to the current directory. The manifest parser supports only the documented starter subset, not full TOML.");
+    println!("dinah {VERSION} — DINAH project utility\n\nUSAGE:\n  dinah [--help | --version]\n  dinah [--format text|json] [--verbose] <COMMAND> [PATH]\n\nCOMMANDS:\n  init       Create DINAH.toml without overwriting\n  run        Validate the manifest, or execute an explicitly selected task\n  task       List task declarations in [tasks]\n  inspect    Show project metadata\n  benchmark  List available benchmark suites\n  doctor     Check basic project health\n\nOPTIONS:\n  --format text|json  Select output format (default: text)\n  --verbose           Print diagnostic logging to stderr\n  --task NAME         Execute task NAME (only valid with run)\n  -h, --help          Show help\n  -V, --version       Show version\n\nPATH defaults to the current directory. The manifest parser supports only the documented starter subset, not full TOML.");
 }
 
 fn json_string(value: &str) -> String {
@@ -81,6 +83,7 @@ fn parse_options(arguments: &[String]) -> io::Result<Option<CliOptions>> {
     let mut path = None;
     let mut format = OutputFormat::Text;
     let mut verbose = false;
+    let mut task_name = None;
     let mut index = 0;
     while index < arguments.len() {
         match arguments[index].as_str() {
@@ -104,6 +107,24 @@ fn parse_options(arguments: &[String]) -> io::Result<Option<CliOptions>> {
                 };
             }
             "--verbose" => verbose = true,
+            "--task" => {
+                index += 1;
+                let value = arguments
+                    .get(index)
+                    .filter(|value| !value.trim().is_empty())
+                    .ok_or_else(|| {
+                        io::Error::new(
+                            io::ErrorKind::InvalidInput,
+                            "--task requires a non-empty task name",
+                        )
+                    })?;
+                if task_name.replace(value.clone()).is_some() {
+                    return Err(io::Error::new(
+                        io::ErrorKind::InvalidInput,
+                        "--task may be specified only once",
+                    ));
+                }
+            }
             value if value.starts_with('-') => {
                 return Err(io::Error::new(
                     io::ErrorKind::InvalidInput,
@@ -136,11 +157,18 @@ fn parse_options(arguments: &[String]) -> io::Result<Option<CliOptions>> {
             format!("unknown command {command}; run dinah --help"),
         ));
     }
+    if task_name.is_some() && command != "run" {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "--task is only valid with run",
+        ));
+    }
     Ok(Some(CliOptions {
         command,
         path,
         format,
         verbose,
+        task_name,
     }))
 }
 
@@ -353,41 +381,114 @@ fn parse_quoted(value: &str) -> Option<String> {
         return None;
     }
     let inner = &value[1..value.len() - 1];
-    let mut escaped = false;
-    for character in inner.chars() {
-        if escaped {
-            if !matches!(character, '"' | '\\' | 'n' | 'r' | 't' | 'b' | 'f') {
-                return None;
-            }
-            escaped = false;
+    let mut decoded = String::with_capacity(inner.len());
+    let mut characters = inner.chars();
+    while let Some(character) = characters.next() {
+        if character == '\\' {
+            decoded.push(match characters.next()? {
+                '"' => '"',
+                '\\' => '\\',
+                'n' => '\n',
+                'r' => '\r',
+                't' => '\t',
+                'b' => '\u{0008}',
+                'f' => '\u{000c}',
+                _ => return None,
+            });
+        } else if character == '"' || character.is_control() {
+            return None;
         } else {
-            match character {
-                '\\' => escaped = true,
-                '"' => return None,
-                c if c.is_control() => return None,
-                _ => {}
+            decoded.push(character);
+        }
+    }
+    Some(decoded.trim().to_owned())
+}
+
+fn task_command(path: &Path, requested: &str) -> io::Result<String> {
+    let (_, _, _) = read_manifest(path)?;
+    let manifest = path.join(MANIFEST);
+    let contents =
+        fs::read_to_string(&manifest).map_err(|error| friendly_io(error, "read task command"))?;
+    let mut in_tasks = false;
+    for (index, source_line) in contents.lines().enumerate() {
+        let line_number = index + 1;
+        let line = strip_manifest_comment(source_line).trim();
+        if line.starts_with('[') && line.ends_with(']') {
+            in_tasks = &line[1..line.len() - 1] == "tasks";
+            continue;
+        }
+        if !in_tasks || line.is_empty() {
+            continue;
+        }
+        if let Some((key, value)) = line.split_once('=') {
+            if key.trim() == requested {
+                return parse_quoted(value.trim())
+                    .filter(|command| !command.trim().is_empty())
+                    .ok_or_else(|| {
+                        io::Error::new(
+                            io::ErrorKind::InvalidData,
+                            format!(
+                                "{}:{line_number}: task command must be a non-empty quoted string",
+                                manifest.display()
+                            ),
+                        )
+                    });
             }
         }
     }
-    if escaped {
-        return None;
-    }
-    Some(inner.trim().to_owned())
+    Err(io::Error::new(
+        io::ErrorKind::NotFound,
+        format!("task '{requested}' is not declared in [tasks]"),
+    ))
 }
 
-fn run(path: &Path, format: OutputFormat) -> io::Result<()> {
+fn run(path: &Path, format: OutputFormat, selected_task: Option<&str>) -> io::Result<i32> {
     let (name, version, _) = read_manifest(path)?;
-    emit(
-        format,
-        &format!("Project {name} ({version}) validated. Task execution is not implemented yet."),
-        &[
-            ("status", "validated".into()),
-            ("name", name),
-            ("version", version),
-            ("task_execution", "not_implemented".into()),
-        ],
-    );
-    Ok(())
+    let Some(task_name) = selected_task else {
+        emit(
+            format,
+            &format!("Project {name} ({version}) validated. Select a task with --task NAME to execute it."),
+            &[("status", "validated".into()), ("name", name), ("version", version), ("task_execution", "explicit_opt_in".into())],
+        );
+        return Ok(0);
+    };
+    let command_text = task_command(path, task_name)?;
+    if format == OutputFormat::Text {
+        println!("Running task '{task_name}' for {name} ({version})");
+    }
+    // Task values are explicitly executable shell command strings. Selecting --task is the opt-in boundary.
+    #[cfg(windows)]
+    let output = Command::new("cmd")
+        .args(["/C", &command_text])
+        .current_dir(path)
+        .output()?;
+    #[cfg(not(windows))]
+    let output = Command::new("sh")
+        .arg("-c")
+        .arg(&command_text)
+        .current_dir(path)
+        .output()?;
+    let code = output.status.code().unwrap_or(1);
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    if format == OutputFormat::Json {
+        println!(
+            "{{\"status\":{},\"task\":{},\"exit_code\":{},\"stdout\":{},\"stderr\":{}}}",
+            json_string(if output.status.success() {
+                "success"
+            } else {
+                "failure"
+            }),
+            json_string(task_name),
+            code,
+            json_string(&stdout),
+            json_string(&stderr)
+        );
+    } else {
+        print!("{stdout}");
+        eprint!("{stderr}");
+    }
+    Ok(code)
 }
 
 fn task(path: &Path, format: OutputFormat) -> io::Result<()> {
@@ -398,11 +499,11 @@ fn task(path: &Path, format: OutputFormat) -> io::Result<()> {
             .map(|task| json_string(task))
             .collect::<Vec<_>>()
             .join(",");
-        println!("{{\"tasks\":[{values}],\"execution\":\"not_implemented\"}}");
+        println!("{{\"tasks\":[{values}],\"execution\":\"explicit_task_selection\"}}");
     } else if tasks.is_empty() {
         println!("No tasks declared in [tasks]. Add task names to DINAH.toml.");
     } else {
-        println!("Declared tasks (not executable yet):");
+        println!("Declared tasks (run one with dinah --task NAME run [PATH]):");
         for name in tasks {
             println!("  - {name}");
         }
@@ -497,7 +598,13 @@ fn execute(arguments: &[String]) -> io::Result<i32> {
     }
     match options.command.as_str() {
         "init" => init(&project_path(options.path.as_ref())?, options.format)?,
-        "run" => run(&project_path(options.path.as_ref())?, options.format)?,
+        "run" => {
+            return run(
+                &project_path(options.path.as_ref())?,
+                options.format,
+                options.task_name.as_deref(),
+            )
+        }
         "task" => task(&project_path(options.path.as_ref())?, options.format)?,
         "inspect" => inspect(&project_path(options.path.as_ref())?, options.format)?,
         "benchmark" => benchmark(options.format),
@@ -521,7 +628,9 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use super::{execute, init, json_string, parse_options, read_manifest, run, OutputFormat};
+    use super::{
+        execute, init, json_string, parse_options, read_manifest, run, task_command, OutputFormat,
+    };
     use std::fs;
     use std::path::PathBuf;
     use std::time::{SystemTime, UNIX_EPOCH};
@@ -556,6 +665,12 @@ mod tests {
         assert_eq!(parsed.format, OutputFormat::Json);
         assert!(parsed.verbose);
         assert!(parse_options(&["--format".into(), "xml".into(), "doctor".into()]).is_err());
+        assert!(parse_options(&["run".into(), "--task".into()]).is_err());
+        assert!(parse_options(&["--task".into(), "build".into(), "doctor".into()]).is_err());
+        let task_run = parse_options(&["run".into(), "--task".into(), "build".into()])
+            .unwrap()
+            .unwrap();
+        assert_eq!(task_run.task_name.as_deref(), Some("build"));
     }
 
     #[test]
@@ -573,7 +688,7 @@ mod tests {
     #[test]
     fn reads_project_metadata_and_task_names() {
         let path = temp_dir();
-        fs::write(path.join("DINAH.toml"), "[project]\nname = \"sample\"\nversion = \"0.2.0\"\n[tasks]\nbuild = \"description only\"\ntest = \"description only\"\n").unwrap();
+        fs::write(path.join("DINAH.toml"), "[project]\nname = \"sample\"\nversion = \"0.2.0\"\n[tasks]\nbuild = \"echo build\"\ntest = \"echo test\"\n").unwrap();
         let (name, version, tasks) = read_manifest(&path).unwrap();
         assert_eq!(name, "sample");
         assert_eq!(version, "0.2.0");
@@ -764,7 +879,42 @@ mod tests {
     fn run_rejects_missing_project_name() {
         let path = temp_dir();
         fs::write(path.join("DINAH.toml"), "[project]\nversion = \"0.1.0\"\n").unwrap();
-        assert!(run(&path, OutputFormat::Text).is_err());
+        assert!(run(&path, OutputFormat::Text, None).is_err());
+        fs::remove_dir_all(path).unwrap();
+    }
+
+    #[test]
+    fn quoted_values_decode_supported_escapes_for_shell_commands() {
+        assert_eq!(
+            super::parse_quoted(r#""printf \"hello\"\n""#).as_deref(),
+            Some("printf \"hello\"\n")
+        );
+        assert!(super::parse_quoted(r#""bad \q escape""#).is_none());
+    }
+
+    #[test]
+    fn selected_task_command_is_resolved_without_running_other_tasks() {
+        let path = temp_dir();
+        fs::write(path.join("DINAH.toml"), "[project]\nname = \"sample\"\n[tasks]\nbuild = \"printf build\"\ntest = \"printf test\"\n").unwrap();
+        assert_eq!(task_command(&path, "build").unwrap(), "printf build");
+        assert_eq!(task_command(&path, "test").unwrap(), "printf test");
+        assert_eq!(
+            task_command(&path, "missing").unwrap_err().kind(),
+            std::io::ErrorKind::NotFound
+        );
+        fs::remove_dir_all(path).unwrap();
+    }
+
+    #[test]
+    fn selected_task_propagates_exit_status_and_json_result() {
+        let path = temp_dir();
+        fs::write(
+            path.join("DINAH.toml"),
+            "[project]\nname = \"sample\"\n[tasks]\npass = \"exit 0\"\nfail = \"exit 7\"\n",
+        )
+        .unwrap();
+        assert_eq!(run(&path, OutputFormat::Json, Some("pass")).unwrap(), 0);
+        assert_eq!(run(&path, OutputFormat::Text, Some("fail")).unwrap(), 7);
         fs::remove_dir_all(path).unwrap();
     }
 }
