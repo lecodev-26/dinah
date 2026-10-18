@@ -6,7 +6,7 @@ use std::net::{Shutdown, SocketAddr};
 use std::thread;
 use std::time::Duration;
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     let endpoint = Endpoint::bind(SocketAddr::from(([127, 0, 0, 1], 0)))?;
     let address = endpoint.local_addr()?;
 
@@ -40,7 +40,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 fn read_exact_from_connection(
     connection: &mut Connection,
     buffer: &mut [u8],
-) -> Result<(), Box<dyn Error>> {
+) -> Result<(), Box<dyn Error + Send + Sync>> {
     let mut offset = 0;
     while offset < buffer.len() {
         let count = connection.read(&mut buffer[offset..])?;
