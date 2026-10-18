@@ -927,6 +927,25 @@ mod tests {
     }
 
     #[test]
+    fn selected_task_rejects_empty_or_whitespace_only_commands() {
+        let path = temp_dir();
+        fs::write(
+            path.join("DINAH.toml"),
+            "[project]\nname = \"sample\"\n[tasks]\nempty = \"\"\nblank = \"  \"\n",
+        )
+        .unwrap();
+
+        for task in ["empty", "blank"] {
+            let error = task_command(&path, task).unwrap_err();
+            assert_eq!(error.kind(), std::io::ErrorKind::InvalidData);
+            assert!(error
+                .to_string()
+                .contains("task command must be a non-empty quoted string"));
+        }
+        fs::remove_dir_all(path).unwrap();
+    }
+
+    #[test]
     fn selected_task_command_is_resolved_without_running_other_tasks() {
         let path = temp_dir();
         fs::write(path.join("DINAH.toml"), "[project]\nname = \"sample\"\n[tasks]\nbuild = \"printf build\"\ntest = \"printf test\"\n").unwrap();

@@ -19,7 +19,7 @@ dinah --verbose doctor [PATH]
 `PATH` defaults to the current directory. `init` creates `DINAH.toml` and refuses to overwrite it. The starter manifest contains a `[project]` section and an optional `[tasks]` section.
 
 - `run` without `--task` validates the project name/version. To execute one declared task, use `dinah --task build run [PATH]`; the command is run by the platform shell with the project directory as its working directory. Its exit code is propagated. JSON mode captures stdout/stderr and reports them as escaped fields.
-- `task` lists keys declared in `[tasks]`. Each value in `[tasks]` is an executable shell command string, for example `build = "cargo build"`; select it explicitly with `--task NAME` and `run`.
+- `task` lists keys declared in `[tasks]`. Each value in `[tasks]` is an executable shell command string, for example `build = "cargo build"`; select it explicitly with `--task NAME` and `run`. Empty or whitespace-only values may be listed during manifest inspection, but execution rejects them with a validation error.
 - `inspect` prints project metadata and the number of declared tasks.
 - `benchmark` lists the seven benchmark suite names; it does not execute benchmarks. Run `cargo bench --bench <suite>` from the repository to launch a suite.
 - `doctor` checks that the manifest is readable and the project name is present. It is a basic configuration check, not a security audit.
