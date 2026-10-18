@@ -615,16 +615,18 @@ mod tests {
     }
 
     #[test]
-    fn manifest_parser_handles_duplicate_project_fields_deterministically() {
+    fn manifest_parser_rejects_duplicate_project_fields_deterministically() {
         let path = temp_dir();
         fs::write(
             path.join("DINAH.toml"),
             "[project]\nname = \"first\"\nname = \"second\"\nversion = \"1\"\n",
         )
         .unwrap();
-        let parsed = read_manifest(&path).unwrap();
-        assert_eq!(parsed.0, "second");
-        assert_eq!(parsed.1, "1");
+        let error = read_manifest(&path).unwrap_err();
+        assert_eq!(error.kind(), std::io::ErrorKind::InvalidData);
+        assert!(error
+            .to_string()
+            .contains(":3: invalid starter manifest: duplicate project key"));
         fs::remove_dir_all(path).unwrap();
     }
 
