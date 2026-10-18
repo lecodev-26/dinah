@@ -172,7 +172,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 136 — Integrar Network con Simulation (el simulador puede liberar entregas según el tick lógico de `Simulation`; el consumidor aplica los mensajes explícitamente)
 - [x] 137 — Crear tests de red (`tests/network_advanced.rs` cubre ACK/reintentos, saturación, RTT, liveness, backoff, Runtime y escenarios deterministas de pérdida/latencia)
 - [x] 138 — Crear simulador de latencia (`NetworkSimulator` con latencia en ticks, pérdida scripted y orden estable por tick/secuencia; sin aleatoriedad implícita)
-- [x] 139 — Crear benchmarks (`benches/network.rs` mide RTT estimator y outbox; incluido en el runner multiplataforma, resultados pendientes de CI)
+- [x] 139 — Crear benchmarks (`benches/network.rs` mide RTT estimator y outbox; integrado en el runner de cinco plataformas. Resultados archivados, entre otros, para el commit `735ee2c` en `artifacts/benchmarks/735ee2cdc221fcf3c6f3a6036d33c1033264f986/run-39171110759/`; son mediciones sintéticas específicas del runner, no garantías de rendimiento)
 - [x] 140 — Documentar Network (estado real, límites, piezas implementadas y capacidades aún pendientes en `docs/network.md`)
 
 ## FASE 8 — Storage
@@ -616,3 +616,9 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 ### Revisión de ejemplos y alcance de Memory — 2026-10-19
 
 - En una revisión de los ocho ejemplos ejecutables contra su código y las guías de subsistema, se detectó una descripción excesiva en `docs/index.md`: `memory_basics` solo demuestra `Buffer<T>` acotado, inserción rechazada y reutilización tras `clear`; no usa `SoaBuffer`. Se corrigió la fila del índice para describir lo que el ejemplo ejecuta realmente. Las guías de Networking, Simulation y Storage describen sus ejemplos con límites compatibles con el código; el ejemplo Runtime documenta explícitamente que el orden de finalización paralela no está garantizado. Los puntos 265 y 266 siguen en progreso: esta revisión corrige un claim concreto, pero no sustituye la revisión funcional completa ni la aprobación de API/arquitectura v0.1.
+
+### Auditoría documental amplia y sincronización del estado — 2026-10-19
+
+- Tras verificar la CI verde de `ecaca7a`, se volvió a leer íntegramente esta checklist y se contrastaron el resumen público del README, el changelog, el índice de documentación, la checklist de release, los límites de seguridad del CLI, los workflows y los artefactos versionados de benchmarks. Se corrigieron dos fechas de snapshot del README que seguían en 2026-10-18 y la descripción del punto 139 y la sección de benchmarks de `docs/network.md`, que hablaban de resultados pendientes de CI pese a existir salidas archivadas en cinco runners para `735ee2c`. La evidencia histórica se enlaza con SHA/run concretos y se mantienen los límites de microbenchmark.
+- Se detectó además que `CHANGELOG.md` conservaba una advertencia temporal obsoleta que decía que el trabajo Unreleased requería CI propia, aunque ese texto provenía de antes de varios commits posteriores. Se sustituye por una nota de alcance: el changelog no es evidencia de validación y los resultados de CI siempre se deben verificar para el SHA exacto. La revisión no autoriza release: API/arquitectura, seguridad, licencias, package contents y otros bloqueos siguen abiertos.
+- Se mantienen los puntos 265, 266, 270, 272 y los gates de release en su estado abierto; esta pasada es una auditoría de coherencia documental/evidencia, no una aprobación global de API, una auditoría externa de seguridad/legal ni una validación de paquete.

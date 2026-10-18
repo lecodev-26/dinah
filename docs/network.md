@@ -34,7 +34,7 @@ Esta es contabilidad de reintentos **sobre un protocolo de aplicación**. TCP ya
 
 ### Pruebas y benchmarks — puntos 137 y 139
 
-`tests/network_advanced.rs` cubre límites y secuencias de ACK/reintento, estimación RTT, timeout lógico, backoff, despacho Runtime, pérdida scripted, latencia por ticks y orden de entrega. `benches/network.rs` mide el coste local de registrar muestras RTT y de encolar/reconocer 64 mensajes. El runner de benchmarks ejecuta esta suite en las plataformas configuradas por CI. Las cifras, cuando se archiven, son observaciones específicas del entorno y no garantías de rendimiento.
+`tests/network_advanced.rs` cubre límites y secuencias de ACK/reintento, estimación RTT, timeout lógico, backoff, despacho Runtime, pérdida scripted, latencia por ticks y orden de entrega. `benches/network.rs` mide el coste local de registrar muestras RTT y de encolar/reconocer 64 mensajes. El runner de benchmarks ejecuta esta suite en cinco plataformas; hay salidas archivadas, por ejemplo para el commit [`735ee2c`](../artifacts/benchmarks/735ee2cdc221fcf3c6f3a6036d33c1033264f986/run-39171110759/). Las cifras son observaciones específicas del runner y de esta carga sintética, no garantías de rendimiento ni comparaciones absolutas entre plataformas.
 
 ## Objetivo y estado actual
 
