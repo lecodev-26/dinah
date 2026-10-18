@@ -124,11 +124,11 @@ Se priorizan APIs Rust seguras, límites de campo, escape JSON, detección de co
 
 - `.github/workflows/quality-security.yml` ejecuta `cargo audit` sobre el lockfile, genera un artefacto LCOV con `cargo llvm-cov` y compila/enlaza/ejecuta un consumidor C mínimo contra `libdinah.a`. La ejecución del commit `fcde532` pasó.
 - `tests/ffi_smoke.c` comprueba los tres símbolos escalares públicos y las condiciones básicas de ABI; la compilación, el enlace y la ejecución pasaron en CI.
-- El artefacto LCOV se generó y subió correctamente, pero aún no se ha fijado un umbral de cobertura. La auditoría automatizada no sustituye una revisión manual de licencias ni una auditoría de seguridad externa.
+- El artefacto LCOV de `9debb1b` se revisó: 4.814/5.297 líneas (90,88 %) y 670/763 funciones (87,81 %). CI aplica un umbral inicial del 85 % de líneas mediante `cargo llvm-cov --fail-under-lines 85`. El informe no contiene cobertura de ramas; el porcentaje agregado no garantiza rutas críticas cubiertas y no sustituye una revisión manual de licencias ni una auditoría de seguridad externa.
 
 
 ## Matriz de CI validada (2026-10-18)
 
 - El workflow `.github/workflows/ci.yml` incluye una matriz explícita de Linux x86-64 y Linux ARM64. Para ambos runners, CI confirmó formato, tests de librería/integración, Clippy con warnings como errores y generación de rustdoc sin warnings en el commit `7a5e076`.
-- El workflow de calidad/seguridad del commit anterior `fcde532` confirmó auditoría de dependencias, compilación/enlace/ejecución del consumidor C y generación/subida de LCOV. El LCOV se genera como artefacto, pero todavía no se aplica un umbral cuantitativo de cobertura.
+- El workflow de calidad/seguridad de `9debb1b` confirma auditoría de dependencias, compilación/enlace/ejecución del consumidor C y generación/subida de LCOV con umbral mínimo de líneas del 85 %. Windows/macOS siguen fuera de la matriz de tests/Clippy/rustdoc descrita aquí.
 - La matriz de pruebas no debe confundirse con la matriz de benchmarks: Windows y macOS se incluyen en benchmarks, pero no están cubiertos por este job de tests/Clippy/rustdoc.

@@ -11,7 +11,7 @@ This is an evidence checklist, not a declaration that `v0.1.0` is ready. Do not 
 - [ ] Review license metadata, `LICENSE-MIT`, `LICENSE-APACHE`, third-party notices, and packaging contents.
 - [ ] Check the final package contents with Cargo packaging tooling and inspect the generated archive before publication.
 - [ ] Confirm the crate description, repository links, README rendering, version, and changelog match the exact artifact.
-- [ ] Decide and document the coverage threshold or explicitly defer it with rationale; review the latest LCOV artifact.
+- [x] Initial line-coverage guardrail set to 85% and enforced by `cargo llvm-cov --fail-under-lines 85`; latest reviewed LCOV (`9debb1b`) reports 90.88% lines and 87.81% functions. Re-evaluate before release; branch coverage is not reported and this aggregate threshold does not replace critical-path review.
 - [ ] Review remaining security limitations: no task sandbox, no full TOML parser, and no complete networking wire codec/authenticated transport.
 - [ ] Ensure examples compile in CI and accurately describe implemented capabilities.
 - [ ] Publish only after the release candidate commit has passed CI; then verify the registry page and GitHub release point to the same version/commit.

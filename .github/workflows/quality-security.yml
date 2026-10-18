@@ -59,7 +59,7 @@ jobs:
           components: llvm-tools-preview
       - uses: taiki-e/install-action@cargo-llvm-cov
       - name: Generate LCOV report
-        run: cargo llvm-cov --workspace --lib --tests --lcov --output-path lcov.info
+        run: cargo llvm-cov --workspace --lib --tests --fail-under-lines 85 --lcov --output-path lcov.info
       - name: Upload LCOV report
         uses: actions/upload-artifact@v4
         with:

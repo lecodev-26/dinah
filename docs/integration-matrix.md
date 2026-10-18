@@ -16,7 +16,7 @@ This records executable integration evidence without implying automatic wiring b
 
 These checks use public APIs and local process/filesystem resources. They do not claim a production server, asynchronous networking, message framing, authentication, a full TOML parser, automatic CLI task execution, hardware acceleration, or a complete production application. The TCP pipeline test sends a single fixed-width value on loopback; it is not evidence for a general wire protocol. CI remains responsible for compiling and running Rust tests/examples across configured targets.
 
-The integration work provides evidence for roadmap items 220, 252, 254, 255, 257 and 258. API/architecture freeze and review items 261–264 remain open until the contracts and implementation gaps are reviewed as a whole.
+The integration work provides executable evidence for the currently implemented public boundaries and closes roadmap item 220. It also supports items 252, 254, 255, 257 and 258. It does not claim missing framing/authentication or server-authority behavior. API/architecture freeze and review items 261–264 remain open until the contracts and implementation gaps are reviewed as a whole.
 
 ## Module dependency-cycle guard
 

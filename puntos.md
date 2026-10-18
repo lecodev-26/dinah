@@ -5,8 +5,8 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 242
-- En progreso: 19
+- Completados: 244
+- En progreso: 17
 - Pendientes: 26
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
@@ -271,14 +271,14 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 217 — Unit tests Network (`src/network.rs`: transiciones half-close y consistencia de direcciones cerradas)
 - [x] 218 — Unit tests Storage (`src/storage.rs`: replay determinista y rechazo de DELETE con payload)
 - [x] 219 — Unit tests Native (`src/native.rs`: metadatos host, tiempo monotónico, proveedor Unix y contrato ABI escalar)
-- [>] 220 — Integration tests (`tests/system_pipeline.rs` cubre Core/Runtime/Memory/Compute/ECS/Simulation/Storage/observabilidad, reconciliación de predicción, entrega simulada por tick y TCP loopback real hacia Simulation y persistencia/reapertura de DiskStore mediante Runtime; `tests/system_integration.rs` añade Network, Native y CLI real; faltan escenarios de integración con framing/auth aún no implementados)
+- [x] 220 — Integration tests (`tests/system_pipeline.rs` cubre Core/Runtime/Memory/Compute/ECS/Simulation/Storage/observabilidad, reconciliación de predicción, entrega simulada por tick y TCP loopback real hacia Simulation y persistencia/reapertura de DiskStore mediante Runtime; `tests/system_integration.rs` añade Network, Native y CLI real. Cierra la integración de las APIs existentes, sin afirmar framing, autenticación, autoridad de servidor ni una aplicación de producción; esas capacidades no están implementadas)
 - [x] 221 — Concurrency tests (`tests/robustness_regression.rs`: seis workers aislados actualizan y reabren journals independientes; no comparte una instancia mutable)
 - [x] 222 — Stress tests (6 workers × 128 actualizaciones, comprobación de 8 claves y replay al reabrir; stress acotado, no benchmark prolongado)
 - [x] 223 — Determinism tests (contratos repetidos públicos de Core, Runtime, Memory y Compute, más replay de Simulation; no implica determinismo temporal ni equivalencia bit a bit entre arquitecturas)
 - [x] 224 — Regression tests (`tests/robustness_regression.rs`: ABI escalar y orden/overwrite repetibles de MemoryStore)
 - [x] 225 — Benchmark suite (siete suites release —Runtime, Memory, Compute, ECS, Simulation, Network y Storage— ejecutadas por `scripts/run_benchmarks.py` y archivadas por CI en cinco runners; Native no tiene suite independiente porque no hay hotspot medido que la justifique)
 - [x] 226 — CI completa (CI principal, auditoría documental, archivo de artefactos y workflow de calidad/seguridad —auditoría de dependencias, smoke test C/link y LCOV— completados correctamente en `fcde532`; la matriz Linux queda separada en 228–229)
-- [>] 227 — Coverage (generación y subida del artefacto LCOV confirmadas en CI de `fcde532`; falta establecer y justificar un umbral de cobertura)
+- [x] 227 — Coverage (el workflow de calidad aplica `cargo llvm-cov --fail-under-lines 85`; LCOV de `9debb1b`: 4.814/5.297 líneas cubiertas, 90,88 %, y 670/763 funciones, 87,81 %. Se fija 85 % de líneas como guardrail inicial con ~5,9 puntos de margen; no mide branches en este reporte ni sustituye revisión de rutas críticas)
 - [x] 228 — Test matrix Linux (matriz de formato, tests, Clippy y rustdoc validada correctamente en Linux x86-64 y ARM64 por CI del commit `7a5e076`)
 - [x] 229 — Test matrix arquitecturas soportadas (matriz de tests/Clippy/rustdoc validada en Linux x86-64 y ARM64; Windows/macOS siguen cubiertos por benchmarks, no por esta matriz de tests)
 
@@ -553,3 +553,10 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 - 2026-10-18 — Punto 220 ampliado otra vez: se añadió un escenario transversal donde `NetworkSimulator` retiene una entrada hasta el tick lógico previsto, el consumidor la aplica explícitamente a `Simulation` y el estado final se escribe vía `StorageWorkQueue` en `DiskStore` y se recupera tras reabrir. La matriz de integración delimita que es transporte simulado y no protocolo de red real. Checks locales de formato/diff/checklist/auditoría documental ejecutados; CI pendiente.
 
 - 2026-10-18 — Punto 220 ampliado con un pipeline TCP loopback real: `Endpoint` acepta una `Connection`, recibe un valor fijo de 8 bytes, el consumidor lo aplica explícitamente a `Simulation` en un tick lógico y persiste/recupera el estado mediante `StorageWorkQueue` y `DiskStore`. `docs/integration-matrix.md` delimita que no hay framing ni autenticación y que un valor fijo no representa un protocolo general. Checks locales permitidos y CI pendiente.
+
+
+### Cierre de integración y umbral inicial de cobertura — 2026-10-18
+
+- Tras verificar los cuatro workflows verdes de `9debb1b`, se revisaron `tests/system_pipeline.rs`, `tests/system_integration.rs` y `docs/integration-matrix.md`. La cobertura de integración incluye las APIs actualmente implementadas de Core, Runtime, Memory, Compute, ECS, Simulation, Network, Native, Storage, observabilidad y CLI; se cierra 220 con límites explícitos para framing/autenticación y sin declarar una aplicación de producción.
+- Se descargó y revisó el artefacto LCOV de CI `dinah-lcov-9debb1b2ad13ddf00025e27d6210b789c238ce67`: 4.814 de 5.297 líneas cubiertas (90,88 %) y 670 de 763 funciones (87,81 %). El reporte no contiene contadores de ramas (`BRF:0`), por lo que no se hace ninguna afirmación de cobertura de ramas.
+- Se fija un umbral inicial y explícito del 85 % de líneas con `cargo llvm-cov --fail-under-lines 85`. La distancia de ~5,9 puntos respecto a la medición actual permite cierta variación mientras impide regresiones grandes; se revisará al ampliar el conjunto de pruebas y antes de release. Este umbral agregado no garantiza cobertura de rutas críticas ni sustituye pruebas de seguridad específicas.
