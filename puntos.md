@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 131
+- Completados: 139
 - En progreso: 8
-- Pendientes: 148
+- Pendientes: 140
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -165,14 +165,14 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 129 — Implementar reconciliation (snapshot autoritativo, reconocimiento de secuencia, rechazo de ACK futuro e ignorado de snapshots obsoletos)
 - [x] 130 — Implementar history/state buffers (historial de inputs pendientes acotado; capacidad cero y overflow de historial rechazados sin descartar inputs silenciosamente)
 - [x] 131 — Implementar deterministic resimulation (replay en orden con el callback de transición suministrado; tests de repetibilidad; no garantiza determinismo multiplataforma)
-- [ ] 132 — Gestionar pérdida de paquetes
-- [ ] 133 — Gestionar latencia
-- [ ] 134 — Gestionar desconexiones
-- [ ] 135 — Integrar Network con Runtime
-- [ ] 136 — Integrar Network con Simulation
-- [ ] 137 — Crear tests de red
-- [ ] 138 — Crear simulador de latencia
-- [ ] 139 — Crear benchmarks
+- [x] 132 — Gestionar pérdida de paquetes (outbox acotado de mensajes con secuencia, ACK acumulativo y reintentos por tick; política de nivel de aplicación, no sustituye la retransmisión de segmentos TCP)
+- [x] 133 — Gestionar latencia (`LatencyEstimator` con RTT suavizado entero, mínimo, máximo y contador; muestras aportadas por el llamador, sin reloj oculto)
+- [x] 134 — Gestionar desconexiones (`ConnectionMonitor` con timeout lógico y `ReconnectBackoff` exponencial acotado; no reconecta sockets automáticamente)
+- [x] 135 — Integrar Network con Runtime (`NetworkWorkQueue` acotada y despacho síncrono explícito mediante `Scheduler`; no crea tareas de fondo)
+- [x] 136 — Integrar Network con Simulation (el simulador puede liberar entregas según el tick lógico de `Simulation`; el consumidor aplica los mensajes explícitamente)
+- [x] 137 — Crear tests de red (`tests/network_advanced.rs` cubre ACK/reintentos, saturación, RTT, liveness, backoff, Runtime y escenarios deterministas de pérdida/latencia)
+- [x] 138 — Crear simulador de latencia (`NetworkSimulator` con latencia en ticks, pérdida scripted y orden estable por tick/secuencia; sin aleatoriedad implícita)
+- [x] 139 — Crear benchmarks (`benches/network.rs` mide RTT estimator y outbox; incluido en el runner multiplataforma, resultados pendientes de CI)
 - [ ] 140 — Documentar Network
 
 ## FASE 8 — Storage
@@ -503,3 +503,5 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 - 2026-10-18 — Investigación documentada en `docs/client-side-prediction.md`: servidor autoritativo, inputs con secuencia/tick, snapshot con última secuencia procesada, historial acotado, replay de inputs pendientes, separación entre estado simulado y suavizado visual, límites de determinismo, seguridad y memoria. Se documentan referencias técnicas y criterios incrementales para 128–131. No se afirma que prediction, reconciliation, history buffers ni resimulation estén implementadas. CI de este cambio pendiente.
 
 - 2026-10-18 — Bloque 128–131 implementado en `src/network/prediction.rs`, exportado como `dinah::network::prediction`. Incluye secuencias monotónicas, historial acotado, aplicación local inmediata, reconciliación con snapshots autoritativos, replay de inputs no confirmados y manejo de snapshots obsoletos/ACK futuros. Tests de contrato añadidos en `tests/network_prediction.rs`; CI pendiente. La transición de estado la aporta el consumidor y debe ser reproducible; no se declara determinismo universal.
+
+- 2026-10-18 — Puntos 132–139 completados en bloque: outbox fiable de nivel de aplicación, estimación RTT, política explícita de liveness/backoff, cola de trabajo Runtime, entrega por tick de Simulation, simulador determinista de pérdida/latencia, tests y benchmark de Networking. Los retries no sustituyen la fiabilidad TCP ni implican UDP; no hay reconexión automática. Formato, diff y checklist local validados; pendiente CI/auditoría/benchmarks del commit de este bloque.

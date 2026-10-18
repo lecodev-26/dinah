@@ -1,6 +1,36 @@
 # dinah Networking — diseño de API y límites de v0.1
 
-Estado: implementación incremental (puntos 120–127). Los contratos de transporte, mensaje y wire format están documentados; existen una conexión TCP bloqueante, un endpoint TCP de escucha/aceptación y seguimiento local del ciclo de vida de conexión. El encoder/decoder de wire sigue sin implementarse. La predicción cliente y reconciliación genéricas están implementadas en `src/network/prediction.rs`; el diseño, los límites y el alcance están en `docs/client-side-prediction.md`. No se integran todavía con el transporte ni con un modelo de Simulation concreto.
+Estado: implementación incremental (puntos 120–139). Los contratos de transporte, mensaje y wire format están documentados; existen una conexión TCP bloqueante, un endpoint TCP de escucha/aceptación y seguimiento local del ciclo de vida de conexión. El encoder/decoder de wire sigue sin implementarse. La predicción cliente y reconciliación genéricas están implementadas en `src/network/prediction.rs`; el diseño, los límites y el alcance están en `docs/client-side-prediction.md`. Se añadieron primitivas explícitas de reintentos a nivel de aplicación, estimación de RTT, seguimiento lógico de liveness/backoff, despacho acotado mediante Runtime y simulación de entregas por tick conectada a Simulation. No se integran automáticamente con el transporte TCP ni con un modelo de dominio concreto.
+
+## Primitivas implementadas — puntos 132–139
+
+### Reintentos de mensajes a nivel de aplicación — punto 132
+
+`network::reliability::ReliableOutbox<T>` mantiene un número finito de mensajes con secuencias monotónicas, tick del último envío y contador de intentos. `acknowledge(through)` retira los mensajes hasta un ACK acumulativo; `due_retries(now_tick, retry_interval, max_attempts)` devuelve las secuencias que el llamador debe volver a enviar. La cola rechaza capacidad cero, saturación e intervalos de reintento cero; no descarta silenciosamente mensajes pendientes.
+
+Esta es contabilidad de reintentos **sobre un protocolo de aplicación**. TCP ya gestiona la retransmisión de segmentos de su propio stream; esta API no observa la pérdida de paquetes IP, no implementa UDP y no garantiza entrega exactamente una vez. El llamador debe definir el formato del ACK, ejecutar los envíos y decidir qué hacer al agotar intentos.
+
+### Latencia — punto 133
+
+`network::latency::LatencyEstimator` recibe muestras RTT explícitas y expone cantidad de muestras, mínimo, máximo y suavizado exponencial entero (primer sample inicializa; después se usa 7/8 del valor anterior y 1/8 de la nueva muestra). No consulta el reloj ni mide la red por sí mismo; el consumidor mide el intervalo y aporta la duración.
+
+### Desconexiones y backoff — punto 134
+
+`network::disconnect::ConnectionMonitor` compara un tiempo lógico suministrado por el consumidor con el último instante de actividad y un timeout configurado. `ReconnectBackoff` calcula retardos exponenciales limitados. Ninguno crea temporizadores, detecta un cierre remoto sin actividad del llamador, abre sockets ni reconecta automáticamente. La decisión de declarar un peer inactivo y volver a conectar sigue perteneciendo a la aplicación.
+
+### Runtime — punto 135
+
+`network::runtime::NetworkWorkQueue<E>` almacena trabajo one-shot en una cola de capacidad fija y lo despacha explícitamente mediante `runtime::Scheduler`. El despacho es síncrono; no se crea un hilo de red, loop de polling ni tarea en segundo plano. Si está llena, `enqueue` devuelve el trabajo rechazado al llamador.
+
+### Simulation y simulador determinista — puntos 136 y 138
+
+`network::simulator::NetworkSimulator<T>` agenda payloads por tick de entrega. `send(now_tick, latency_ticks, payload, drop)` recibe una decisión de pérdida explícita para que las pruebas sean reproducibles; los mensajes entregados se ordenan por tick de llegada y orden de envío. Los contadores de pérdidas y entregas son observacionales, no métricas de una conexión real.
+
+`receive_due_for_simulation(&Simulation<S>)` usa el tick lógico actual para obtener los payloads vencidos, pero no modifica el estado de `Simulation`: el consumidor decide cómo validar y aplicar cada mensaje. La cola simulada no modela congestión, jitter, duplicación, reordenamiento configurable ni un generador aleatorio. Es una herramienta de prueba inicial, no un emulador completo de red.
+
+### Pruebas y benchmarks — puntos 137 y 139
+
+`tests/network_advanced.rs` cubre límites y secuencias de ACK/reintento, estimación RTT, timeout lógico, backoff, despacho Runtime, pérdida scripted, latencia por ticks y orden de entrega. `benches/network.rs` mide el coste local de registrar muestras RTT y de encolar/reconocer 64 mensajes. El runner de benchmarks ejecuta esta suite en las plataformas configuradas por CI. Las cifras, cuando se archiven, son observaciones específicas del entorno y no garantías de rendimiento.
 
 ## Objetivo
 
@@ -164,9 +194,9 @@ Los métodos requieren acceso mutable para leer/escribir. El wrapper no implemen
 - **122 Mensajes (decisión tomada):** envelope conceptual con versión de protocolo, identificador estable de tipo, versión de mensaje y payload opaco; codificación binaria y framing quedan para 123.
 - **123 Serialización (decisión tomada):** framing por longitud prefijada de 32 bits big-endian; cabecera de 6 bytes con versión de protocolo, tipo y versión de mensaje como enteros de 16 bits big-endian; frame máximo de 1 MiB incluido el encabezado; rechazos explícitos de longitud inválida, truncamiento y versiones/tipos inválidos. Formato propio mínimo, sin dependencia externa ni serialización de structs Rust.
 - **124 Conexiones (implementado inicialmente):** `dinah::network::Connection` envuelve `TcpStream` con lectura/escritura bloqueante, timeout explícito, direcciones y shutdown; sin framing integrado ni reconexión automática. **125 Endpoints (implementado inicialmente):** `dinah::network::Endpoint` envuelve `TcpListener` con bind, dirección local, accept y modo no bloqueante explícito. **126 Gestión de estado (implementado inicialmente):** `ConnectionState` registra el estado local observable (`Open`, `ReadClosed`, `WriteClosed`, `Closed`); no detecta inmediatamente un cierre remoto ni gestiona reconexión. **127 Prediction (investigación completada):** modelo y límites en `docs/client-side-prediction.md`. **128–131 Prediction/reconciliation/history/resimulation (implementación genérica inicial):** `network::prediction::PredictionBuffer` mantiene historial acotado, aplica inputs localmente y reconcilia snapshots autoritativos reproduciendo inputs pendientes. La transición de estado la aporta el consumidor; no hay adaptador de dominio ni garantía de determinismo multiplataforma.
-- **132–134 Pérdida/latencia/desconexión:** construir un simulador controlado y tests deterministas antes de implementar políticas de producción.
-- **135–136 Integración Runtime/Simulation:** solo mediante adaptadores explícitos, sin acoplamiento circular ni efectos secundarios ocultos.
-- **137–139 Tests/latencia/benchmarks:** tests unitarios con transportes falsos, escenarios de integración locales y benchmarks reproducibles con entorno archivado.
+- **132–134 Pérdida/latencia/desconexión (primitivas iniciales implementadas):** outbox de reintentos a nivel de aplicación, estimador RTT y monitor lógico/backoff. No hay reconexión automática ni control de retransmisión TCP.
+- **135–136 Integración Runtime/Simulation (adaptadores explícitos implementados):** cola de trabajo acotada con despacho síncrono y entrega simulada por tick; el consumidor aplica los mensajes.
+- **137–139 Tests/latencia/benchmarks (suite inicial implementada):** pruebas deterministas de políticas y simulador, benchmark de estimador/outbox integrado en el runner; las mediciones multiplataforma dependen de CI.
 - **140 Documentación:** documentar exclusivamente comportamiento implementado y límites medidos.
 
 ## Criterios de aceptación del punto 120

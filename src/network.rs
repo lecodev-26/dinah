@@ -240,3 +240,14 @@ impl Connection {
 ///
 /// These types are transport-independent and do not alter [`Connection`].
 pub mod prediction;
+
+/// Deterministic connection liveness and reconnect-delay policy.
+pub mod disconnect;
+/// Explicit round-trip latency estimation.
+pub mod latency;
+/// Application-level acknowledgement and retry bookkeeping.
+pub mod reliability;
+/// Explicit, bounded dispatch bridge into Runtime.
+pub mod runtime;
+/// Deterministic tick-based network simulation for tests and experiments.
+pub mod simulator;

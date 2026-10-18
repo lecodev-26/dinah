@@ -43,3 +43,9 @@ name = "simulation"
 path = "benches/simulation.rs"
 harness = false
 test = false
+
+[[bench]]
+name = "network"
+path = "benches/network.rs"
+harness = false
+test = false

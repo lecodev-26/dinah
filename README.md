@@ -12,13 +12,13 @@
 
 </div>
 
-> **Version status (updated 2026-10-18):** DINAH is pre-alpha and remains in active development. Core, Runtime, Memory, Compute and ECS foundations exist; Simulation's first five bounded models are implemented. Phase 7 (Networking) has completed points 120–131: API boundaries, the blocking byte-stream transport contract, logical message envelope and versioned binary wire format are documented; initial TCP connection and listening-endpoint wrappers are implemented. The wire encoder/decoder remains unimplemented; local connection lifecycle state is tracked; generic client-side prediction, bounded input history, reconciliation and replay primitives are implemented; domain integration and transport framing remain pending. A green CI gate validates the checks that ran; it is not a claim of API stability, release readiness or performance guarantees.
+> **Version status (updated 2026-10-18):** DINAH is pre-alpha and remains in active development. Core, Runtime, Memory, Compute and ECS foundations exist; Simulation's first five bounded models are implemented. Phase 7 (Networking) has completed points 120–139: API boundaries, the blocking byte-stream transport contract, logical message envelope and versioned binary wire format are documented; initial TCP connection and listening-endpoint wrappers are implemented. The wire encoder/decoder remains unimplemented; local connection lifecycle state is tracked; generic client-side prediction, bounded input history, reconciliation and replay primitives are implemented; application-level retry bookkeeping, RTT estimation, explicit liveness/backoff policy, bounded Runtime dispatch, tick-based simulation delivery, deterministic loss/latency simulation and a Networking benchmark suite are present. Full protocol/domain integration and automatic reconnection remain pending. A green CI gate validates the checks that ran; it is not a claim of API stability, release readiness or performance guarantees.
 
 <div align="center">
 
-**Repository snapshot:** 287 master checklist points · 131 complete · 8 in progress · 148 pending
-**Code snapshot:** single Rust crate · 5 benchmark suites (Runtime, Memory, Compute, ECS, Simulation) · 1 runnable example · five-platform benchmark history
-**Current milestone:** Networking contracts and v1 wire format documented; initial blocking TCP connection and endpoint wrappers implemented; local connection lifecycle tracking and generic prediction/reconciliation/replay primitives implemented; wire encoder/decoder and domain/protocol integration remain pending.
+**Repository snapshot:** 287 master checklist points · 139 complete · 8 in progress · 140 pending
+**Code snapshot:** single Rust crate · 6 benchmark suites (Runtime, Memory, Compute, ECS, Simulation, Networking) · 1 runnable example · five-platform benchmark history
+**Current milestone:** Networking contracts and v1 wire format documented; initial blocking TCP connection and endpoint wrappers implemented; local connection lifecycle tracking and generic prediction/reconciliation/replay primitives implemented; wire encoder/decoder and full protocol/domain integration remain pending; retry and liveness policies are explicit primitives, not automatic transport behavior.
 
 </div>
 
@@ -146,7 +146,7 @@ These are medians of nine samples; construction is included in the clock and ste
 
 </div>
 
-**Current phase — Phase 7: Networking.** Points 120–131 are complete: API boundaries, blocking byte-stream transport contract, logical message envelope, versioned binary wire format, and initial TCP connection/listening-endpoint wrappers. The next milestone is **132 — manage packet loss**. Phase 7 spans points 120–140 and will be implemented incrementally.
+**Current phase — Phase 7: Networking.** Points 120–139 are complete: API boundaries, blocking byte-stream transport contract, logical message envelope, versioned binary wire format, and initial TCP connection/listening-endpoint wrappers. The next milestone is **140 — document Networking**. Phase 7 spans points 120–140 and will be implemented incrementally.
 
 **Eight points remain in progress:**
 
