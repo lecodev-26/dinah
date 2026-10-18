@@ -16,7 +16,7 @@
 
 <div align="center">
 
-**Repository snapshot:** 287 master checklist points · 163 complete · 8 in progress · 116 pending
+**Repository snapshot:** 287 master checklist points · 171 complete · 8 in progress · 108 pending
 **Code snapshot:** single Rust crate · 7 benchmark suites (Runtime, Memory, Compute, ECS, Simulation, Networking, Storage) · 1 runnable example · five-platform benchmark history
 **Current milestone:** Native foundations now include safe host/POSIX capability traits and a minimal scalar C ABI. The ABI still needs a real C compiler/linker smoke test; no direct hardware access or handwritten assembly is claimed. Networking has initial blocking TCP wrappers and prediction/reconciliation/replay primitives, but its wire encoder/decoder and full protocol integration remain pending.
 

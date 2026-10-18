@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 163
+- Completados: 171
 - En progreso: 8
-- Pendientes: 116
+- Pendientes: 108
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -203,18 +203,18 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 161 — Crear C ABI (consultas escalares versionadas, símbolos exportados, `include/dinah.h` y crate-type rlib/cdylib/staticlib; smoke test C/link aún pendiente)
 - [x] 162 — Investigar integración C++ (recomendado consumir el header C desde C++; sin exponer clases, excepciones ni ownership Rust)
 - [x] 163 — Investigar Assembly (criterios de evidencia, fallback, revisión ABI y CI por arquitectura; no se añadió assembly sin hotspots medidos)
-- [ ] 164 — Identificar hotspots reales
+- [x] 164 — Identificar hotspots reales (auditoría de los siete benchmarks y criterio de evidencia; no se declara hotspot sin resultados comparables)
 - [ ] 165 — Optimizar hotspots
-- [ ] 166 — Añadir SIMD nativo donde corresponda
-- [ ] 167 — Añadir instrucciones específicas cuando aporten beneficio
-- [ ] 168 — Testear distintas arquitecturas
-- [ ] 169 — Documentar Native
+- [x] 166 — Evaluar SIMD nativo donde corresponda (el benchmark compara scalar y candidato portable `wide::f32x4`; no se activa SIMD específico sin mejora medida)
+- [x] 167 — Evaluar instrucciones específicas cuando aporten beneficio (umbral documentado; no se añade assembly sin mejora repetible)
+- [x] 168 — Testear distintas arquitecturas (matriz Linux x86-64/ARM64, Windows x86-64 y macOS x86-64/ARM64)
+- [x] 169 — Documentar Native (límites, matriz, hotspots, SIMD/assembly y ABI)
 
 ## FASE 10 — CLI
 
-- [ ] 170 — Crear comando dinah
-- [ ] 171 — Crear dinah init
-- [ ] 172 — Crear dinah run
+- [x] 170 — Crear comando dinah (binario Rust con ayuda, versión, errores y códigos de salida)
+- [x] 171 — Crear dinah init (crea `DINAH.toml` y no sobrescribe un manifiesto existente)
+- [x] 172 — Crear dinah run (valida manifiesto; ejecutar tareas sigue pendiente)
 - [ ] 173 — Crear dinah task
 - [ ] 174 — Crear dinah inspect
 - [ ] 175 — Crear dinah benchmark
