@@ -25,7 +25,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     samples.clear(); // drops current values while retaining the reserved storage
-    samples.try_push(42)?;
+    samples
+        .try_push(42)
+        .map_err(|_| std::io::Error::other("buffer rejected insertion after clear"))?;
     println!("after_clear={:?}", samples.as_slice());
     Ok(())
 }
