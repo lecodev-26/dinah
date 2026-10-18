@@ -58,6 +58,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: dinah-benchmark-results-${{ matrix.label }}-${{ github.sha }}
-          path: benchmark-results/*.txt
+          path: benchmark-results/*
           if-no-files-found: error
           retention-days: 90

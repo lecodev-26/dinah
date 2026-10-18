@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 231
+- Completados: 239
 - En progreso: 14
-- Pendientes: 42
+- Pendientes: 34
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -284,15 +284,15 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 
 ## FASE 14 — Optimización
 
-- [ ] 230 — Crear baseline
-- [ ] 231 — Perfilar Runtime
-- [ ] 232 — Perfilar Memory
-- [ ] 233 — Perfilar Compute
-- [ ] 234 — Perfilar ECS
-- [ ] 235 — Perfilar Simulation
-- [ ] 236 — Perfilar Network
-- [ ] 237 — Perfilar Storage
-- [ ] 238 — Identificar hotspots
+- [x] 230 — Crear baseline (el runner de benchmarks genera `baseline.json` y `baseline-summary.txt` con commit, timestamp, entorno, toolchain, casos medidos y duración por suite; baseline específico del runner, sin mezclar plataformas)
+- [x] 231 — Perfilar Runtime (perfilado basado en benchmarks release: executor, scheduler, colas, costes de arranque y comparación con pool persistente; no es un perfilador CPU muestreado)
+- [x] 232 — Perfilar Memory (perfilado basado en benchmarks de Buffer/SoA, escritura, escaneo AoS/SoA y lock compartido; no mide conteo de allocations ni cache misses)
+- [x] 233 — Perfilar Compute (suite release registra kernels escalares, lotes, rutas paralelas y candidato SIMD; resultados dependientes de workload/runner)
+- [x] 234 — Perfilar ECS (suite release registra ciclo de vida, acceso denso/disperso, generaciones obsoletas y reemplazos)
+- [x] 235 — Perfilar Simulation (suite release registra los kernels y tamaños definidos en `benches/simulation.rs`)
+- [x] 236 — Perfilar Network (suite release registra estimación de latencia y operaciones de outbox/reliability)
+- [x] 237 — Perfilar Storage (suite release registra operaciones de MemoryStore y escaneo ordenado)
+- [ ] 238 — Identificar hotspots (pendiente comparar artefactos equivalentes de varios runners y justificar candidatos repetibles; no inferir hotspots de CPU, allocations o cache sin perfiladores específicos)
 - [ ] 239 — Reducir allocations innecesarias
 - [ ] 240 — Reducir copias
 - [ ] 241 — Optimizar cache locality

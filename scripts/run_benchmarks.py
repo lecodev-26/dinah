@@ -3,10 +3,12 @@
 
 from __future__ import annotations
 
+import json
 import os
 import platform
 import subprocess
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -57,13 +59,60 @@ def main() -> int:
         "\n".join(metadata) + "\n", encoding="utf-8"
     )
 
+    suite_results: dict[str, dict[str, object]] = {}
     for name in BENCHMARKS:
         print(f"\n=== cargo bench --bench {name} ===", flush=True)
-        run(
+        started = time.perf_counter()
+        result = run(
             ["cargo", "bench", "--bench", name],
             output=artifact_dir / f"{name}-benchmark-results.txt",
         )
+        elapsed_seconds = time.perf_counter() - started
+        cases = [line.strip() for line in result.splitlines() if line.strip().startswith("case=")]
+        suite_results[name] = {
+            "elapsed_seconds": round(elapsed_seconds, 3),
+            "case_count": len(cases),
+            "cases": cases,
+        }
 
+    # Keep this machine/commit-specific: values from unlike runners are not
+    # silently merged into a universal performance claim.
+    baseline = {
+        "schema_version": 1,
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "commit": os.environ.get("GITHUB_SHA", "local"),
+        "environment": {
+            "os": platform.platform(),
+            "system": platform.system(),
+            "machine": platform.machine(),
+            "processor": platform.processor() or "not reported by platform",
+            "rustc": run(["rustc", "-Vv"]).strip(),
+            "cargo": run(["cargo", "--version"]).strip(),
+        },
+        "measurement_notes": [
+            "Per-case measurements are reported by each benchmark executable.",
+            "elapsed_seconds is suite wall time including process startup and compilation/cache effects.",
+            "Compare cases only when workload, toolchain, and runner context match.",
+            "This is benchmark-based profiling, not a sampled CPU or allocation profile.",
+        ],
+        "suites": suite_results,
+    }
+    (artifact_dir / "baseline.json").write_text(
+        json.dumps(baseline, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    summary = [
+        "DINAH benchmark baseline summary",
+        f"commit={baseline['commit']}",
+        f"timestamp_utc={baseline['timestamp_utc']}",
+        f"runner={platform.system()} {platform.machine()}",
+        "Note: suite wall time is not a per-operation performance metric.",
+    ]
+    for name, details in suite_results.items():
+        summary.append(
+            f"suite={name} elapsed_seconds={details['elapsed_seconds']} case_count={details['case_count']}"
+        )
+    (artifact_dir / "baseline-summary.txt").write_text("\n".join(summary) + "\n", encoding="utf-8")
+    print("\n".join(summary))
     return 0
 
 
