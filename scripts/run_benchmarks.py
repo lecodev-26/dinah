@@ -71,9 +71,30 @@ def repeated_case_summary(repetitions: list[dict[str, object]]) -> dict[str, obj
                 "scheduler_median_of_run_medians_ns": scheduler_median,
                 "persistent_pool_median_of_run_medians_ns": pool_median,
                 "scheduler_to_pool_ratio": round(scheduler_median / pool_median, 3),
-                "note": "comparison prototype excludes per-call worker startup; ratio is workload-specific",
+                "note": "steady-state pool comparison excludes per-call worker startup; ratio is workload-specific",
             }
-    return {"cases": summary, "scheduler_vs_persistent_pool": comparisons}
+
+    lifecycle_comparisons: dict[str, object] = {}
+    for workers in (2, 4):
+        scheduler_name = f"scheduler_queue_parallel_noop_{workers}_workers"
+        pool_name = f"persistent_pool_noop_lifecycle_{workers}_workers"
+        scheduler_values = values_by_case.get(scheduler_name, [])
+        pool_values = values_by_case.get(pool_name, [])
+        if not scheduler_values or not pool_values:
+            continue
+        scheduler_median = sorted(scheduler_values)[len(scheduler_values) // 2]
+        pool_median = sorted(pool_values)[len(pool_values) // 2]
+        lifecycle_comparisons[f"noop_{workers}_workers"] = {
+            "scheduler_median_of_run_medians_ns": scheduler_median,
+            "pool_lifecycle_median_of_run_medians_ns": pool_median,
+            "scheduler_to_pool_lifecycle_ratio": round(scheduler_median / pool_median, 3),
+            "note": "both include per-call worker startup/shutdown; queueing, result/error semantics and worker dispatch still differ",
+        }
+    return {
+        "cases": summary,
+        "scheduler_vs_persistent_pool": comparisons,
+        "scheduler_vs_pool_lifecycle": lifecycle_comparisons,
+    }
 
 
 def run(command: list[str], *, output: Path | None = None) -> str:
@@ -216,12 +237,19 @@ def main() -> int:
             f"min_run_median_ns={details['min_run_median_ns']} "
             f"max_run_median_ns={details['max_run_median_ns']}"
         )
-    summary.append("Runtime scheduler vs benchmark-only persistent pool (workload-specific):")
+    summary.append("Runtime scheduler vs benchmark-only persistent pool (steady-state; workload-specific):")
     for case_name, details in runtime_repeat_summary["scheduler_vs_persistent_pool"].items():
         summary.append(
             f"comparison={case_name} scheduler_ns={details['scheduler_median_of_run_medians_ns']} "
             f"pool_ns={details['persistent_pool_median_of_run_medians_ns']} "
             f"ratio={details['scheduler_to_pool_ratio']}x"
+        )
+    summary.append("Runtime scheduler vs pool with per-sample startup/shutdown (workload-specific):")
+    for case_name, details in runtime_repeat_summary["scheduler_vs_pool_lifecycle"].items():
+        summary.append(
+            f"comparison={case_name} scheduler_ns={details['scheduler_median_of_run_medians_ns']} "
+            f"pool_lifecycle_ns={details['pool_lifecycle_median_of_run_medians_ns']} "
+            f"ratio={details['scheduler_to_pool_lifecycle_ratio']}x"
         )
     (artifact_dir / "baseline-summary.txt").write_text("\n".join(summary) + "\n", encoding="utf-8")
     print("\n".join(summary))

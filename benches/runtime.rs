@@ -239,6 +239,25 @@ fn main() {
         }
 
         for &worker_count in &[2usize, 4] {
+            // Lifecycle-inclusive comparison: create the pool, execute the same
+            // no-op batch, then shut the pool down inside each measured sample.
+            // This is closer to the scheduler's per-call lifecycle than the
+            // steady-state pool case below, but still has different semantics.
+            let lifecycle_samples = measure(|| {
+                let pool = PersistentPool::new(worker_count);
+                pool.run_tasks(task_count, noop_task);
+                drop(pool);
+            });
+            report(
+                if worker_count == 2 {
+                    "persistent_pool_noop_lifecycle_2_workers"
+                } else {
+                    "persistent_pool_noop_lifecycle_4_workers"
+                },
+                task_count,
+                &lifecycle_samples,
+            );
+
             let pool = PersistentPool::new(worker_count);
             let noop_pool_samples = measure(|| pool.run_tasks(task_count, noop_task));
             report(
