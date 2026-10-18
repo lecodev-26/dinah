@@ -1,0 +1,6 @@
+[1m[92m   Compiling[0m dinah v0.1.0 (/Users/runner/work/dinah/dinah)
+[1m[92m    Finished[0m `bench` profile [optimized] target(s) in 1.28s
+[1m[92m     Running[0m benches/storage.rs (target/release/deps/storage-1a10787a896270cf)
+dinah Storage benchmark; build=release; statistic=median; architecture=x86_64; observations are machine-specific
+case=memory_put_get_256_keys iterations=1000 samples=9 median_op_ns=210284
+case=memory_ordered_scan_256_keys iterations=1000 samples=9 median_op_ns=748
