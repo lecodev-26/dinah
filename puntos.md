@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 218
+- Completados: 226
 - En progreso: 12
-- Pendientes: 57
+- Pendientes: 49
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -271,7 +271,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 217 — Unit tests Network (`src/network.rs`: transiciones half-close y consistencia de direcciones cerradas)
 - [x] 218 — Unit tests Storage (`src/storage.rs`: replay determinista y rechazo de DELETE con payload)
 - [x] 219 — Unit tests Native (`src/native.rs`: metadatos host, tiempo monotónico, proveedor Unix y contrato ABI escalar)
-- [>] 220 — Integration tests (existen contratos públicos de Core, Runtime y ECS, más suites de determinismo de Core/Runtime/Memory/Compute; faltan pruebas end-to-end de la arquitectura completa y de módulos aún no implementados)
+- [>] 220 — Integration tests (añadido `tests/system_pipeline.rs` para un flujo público Core/Runtime/Memory/Compute/ECS/Simulation/Storage/observabilidad; siguen faltando rutas alternativas, networking/native/CLI y cobertura de arquitectura completa)
 - [x] 221 — Concurrency tests (`tests/robustness_regression.rs`: seis workers aislados actualizan y reabren journals independientes; no comparte una instancia mutable)
 - [x] 222 — Stress tests (6 workers × 128 actualizaciones, comprobación de 8 claves y replay al reabrir; stress acotado, no benchmark prolongado)
 - [x] 223 — Determinism tests (contratos repetidos públicos de Core, Runtime, Memory y Compute, más replay de Simulation; no implica determinismo temporal ni equivalencia bit a bit entre arquitecturas)
@@ -304,19 +304,19 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 
 ## FASE 15 — Integración total
 
-- [ ] 247 — Integrar Core + Runtime
-- [ ] 248 — Integrar Runtime + Memory
-- [ ] 249 — Integrar Runtime + Compute
-- [ ] 250 — Integrar Compute + ECS
-- [ ] 251 — Integrar ECS + Simulation
+- [x] 247 — Integrar Core + Runtime (smoke test público valida límites de Core antes de orquestar el pipeline con Scheduler; `tests/system_pipeline.rs`)
+- [x] 248 — Integrar Runtime + Memory (Scheduler procesa una entrada desde el buffer acotado; `tests/system_pipeline.rs`)
+- [x] 249 — Integrar Runtime + Compute (Scheduler ejecuta una transformación mediante Compute; `tests/system_pipeline.rs`)
+- [x] 250 — Integrar Compute + ECS (resultado transformado almacenado como componente ECS; `tests/system_pipeline.rs`)
+- [x] 251 — Integrar ECS + Simulation (Simulation avanza el World con timestep fijo y actualiza el componente; `tests/system_pipeline.rs`)
 - [ ] 252 — Integrar Runtime + Network
-- [ ] 253 — Integrar Runtime + Storage
+- [x] 253 — Integrar Runtime + Storage (cola de trabajo despachada por Scheduler aplica snapshot a MemoryStore; `tests/system_pipeline.rs`)
 - [ ] 254 — Integrar Native
 - [ ] 255 — Integrar CLI
-- [ ] 256 — Integrar observabilidad
+- [x] 256 — Integrar observabilidad (el test reporta métricas explícitas de Runtime y Compute y verifica exportación JSON; `tests/system_pipeline.rs`)
 - [ ] 257 — Ejecutar sistema completo
 - [ ] 258 — Crear ejemplos completos
-- [ ] 259 — Crear tests end-to-end
+- [x] 259 — Crear tests end-to-end (smoke test público cubre un pipeline Core/Runtime/Memory/Compute/ECS/Simulation/Storage/observabilidad; no representa todavía la arquitectura completa ni subsistemas sin implementar)
 - [ ] 260 — Resolver dependencias circulares
 - [ ] 261 — Revisar API pública
 - [ ] 262 — Revisar arquitectura completa
@@ -516,3 +516,10 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 - El punto 270 sigue en progreso porque los controles automatizados no sustituyen una auditoría externa. El punto 272 sigue en progreso hasta completar una revisión formal de licencias.
 
 - 2026-10-18 — CI de `7a5e076` verificada: pasaron los cuatro jobs de `dinah CI`, incluidos los runners `ubuntu-latest` (x86-64) y `ubuntu-24.04-arm` (ARM64), además del workflow de archivo de artefactos. Se cierran los puntos 228–229; la matriz de pruebas explícita sigue limitada a Linux.
+
+
+### Integración pública entre subsistemas — 2026-10-18
+
+- Añadido `tests/system_pipeline.rs`: valida configuración Core, buffer acotado, transformación Compute programada por Runtime, persistencia del resultado como componente ECS, avance de Simulation con tiempo lógico fijo, despacho de StorageWorkQueue a MemoryStore y métricas opt-in exportadas a JSON.
+- Cerrados los puntos 247–251, 253, 256 y 259 con evidencia en el test. El punto 220 permanece en progreso porque un smoke test no demuestra integración completa ni cubre Networking, Native o CLI.
+- Validaciones locales permitidas: `cargo fmt --all -- --check` y `git diff --check`; la compilación y ejecución de tests queda a cargo de CI.
