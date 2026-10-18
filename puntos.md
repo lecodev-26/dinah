@@ -6,8 +6,8 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 
 - Total de puntos numerados: 287
 - Completados: 241
-- En progreso: 22
-- Pendientes: 24
+- En progreso: 25
+- Pendientes: 21
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -252,7 +252,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 201 — Revisar permisos (privilegios efectivos, create_new, sockets y recomendaciones de mínimo privilegio documentados)
 - [x] 202 — Revisar filesystem (límites, TOCTOU, symlinks, journals sin límite global y falta de sync_all documentados)
 - [x] 203 — Revisar networking (TCP bloqueante, ausencia de framing/TLS/auth/rate limit y responsabilidades del consumidor documentadas)
-- [>] 204 — Añadir fuzzing (corpus determinista acotado para replay y parser de manifiesto; sigue pendiente integrar y ejecutar fuzzing coverage-guided con libFuzzer)
+- [>] 204 — Añadir fuzzing (corpus determinista acotado ampliado para replay y parser de manifiesto con entradas malformadas/comentarios/controles; sigue pendiente fuzzing coverage-guided con libFuzzer)
 - [x] 205 — Añadir tests de corrupción (longitudes excesivas, versión desconocida y opcode inválido; checksum y truncado ya cubiertos)
 - [x] 206 — Añadir tests de estrés (8 hilos × 2000 incrementos sobre el registro compartido; estrés acotado, no benchmark)
 - [x] 207 — Añadir tests de concurrencia (seis hilos operan sobre journals independientes y verifican actualizaciones/reapertura; no prueba multiwriter sobre un mismo archivo)
@@ -271,7 +271,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 217 — Unit tests Network (`src/network.rs`: transiciones half-close y consistencia de direcciones cerradas)
 - [x] 218 — Unit tests Storage (`src/storage.rs`: replay determinista y rechazo de DELETE con payload)
 - [x] 219 — Unit tests Native (`src/native.rs`: metadatos host, tiempo monotónico, proveedor Unix y contrato ABI escalar)
-- [>] 220 — Integration tests (`tests/system_pipeline.rs` cubre Core/Runtime/Memory/Compute/ECS/Simulation/Storage/observabilidad y `tests/system_integration.rs` añade Network, Native y CLI real; siguen faltando rutas alternativas y cobertura de arquitectura completa)
+- [>] 220 — Integration tests (`tests/system_pipeline.rs` cubre Core/Runtime/Memory/Compute/ECS/Simulation/Storage/observabilidad y `tests/system_integration.rs` añade Network, Native y CLI real en init/inspect/task/run/doctor/benchmark; siguen faltando rutas alternativas y cobertura de arquitectura completa)
 - [x] 221 — Concurrency tests (`tests/robustness_regression.rs`: seis workers aislados actualizan y reabren journals independientes; no comparte una instancia mutable)
 - [x] 222 — Stress tests (6 workers × 128 actualizaciones, comprobación de 8 claves y replay al reabrir; stress acotado, no benchmark prolongado)
 - [x] 223 — Determinism tests (contratos repetidos públicos de Core, Runtime, Memory y Compute, más replay de Simulation; no implica determinismo temporal ni equivalencia bit a bit entre arquitecturas)
@@ -314,23 +314,23 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 254 — Integrar Native (`tests/system_integration.rs` consume metadatos de `HostPlatform` dentro de una operación del Scheduler; integración de capacidades host, no acceso directo al hardware)
 - [x] 255 — Integrar CLI (`tests/system_integration.rs` invoca el binario real para `init` e `inspect --format json` y comprueba que `init` no sobrescribe el manifiesto)
 - [x] 256 — Integrar observabilidad (el test reporta métricas explícitas de Runtime y Compute y verifica exportación JSON; `tests/system_pipeline.rs`)
-- [>] 257 — Ejecutar sistema completo (smoke tests públicos integran Runtime/Network, Native, CLI, Storage, Simulation y observabilidad por rutas explícitas; todavía no constituye una aplicación completa ni integra framing/auth de red o ejecución de tareas CLI)
+- [>] 257 — Ejecutar sistema completo (smoke tests públicos integran Runtime/Network, Native, CLI en seis comandos, Storage, Simulation y observabilidad por rutas explícitas; todavía no constituye una aplicación completa ni integra framing/auth de red o ejecución de tareas CLI)
 - [x] 258 — Crear ejemplos completos (`examples/system_integration.rs` demuestra NetworkWorkQueue + Scheduler + Native + métricas; ejemplo intencionalmente acotado, sin prometer socket real ni ejecución de tareas CLI)
 - [x] 259 — Crear tests end-to-end (smoke test público cubre un pipeline Core/Runtime/Memory/Compute/ECS/Simulation/Storage/observabilidad; no representa todavía la arquitectura completa ni subsistemas sin implementar)
 - [ ] 260 — Resolver dependencias circulares
-- [>] 261 — Revisar API pública (revisión inicial de superficies de integración registrada en `docs/integration-matrix.md`; falta revisión completa de compatibilidad y congelación v0.1)
+- [>] 261 — Revisar API pública (salida JSON del CLI ahora escapa controles válidamente y comentarios no truncan hashes dentro de valores entrecomillados; falta revisión completa de compatibilidad y congelación v0.1)
 - [>] 262 — Revisar arquitectura completa (matriz inicial de dependencias/garantías y límites en `docs/integration-matrix.md`; faltan revisar dependencias circulares, gaps de framing de red y ejecución CLI antes de congelar arquitectura)
 
 ## FASE 16 — dinah v0.1
 
 - [ ] 263 — Congelar arquitectura v0.1
 - [ ] 264 — Congelar API v0.1
-- [ ] 265 — Completar documentación
+- [>] 265 — Completar documentación (actualizados docs/cli.md y docs/security-review.md con límites del parser, escapes JSON y comandos cubiertos; falta completar toda la documentación pública)
 - [ ] 266 — Completar ejemplos
-- [ ] 267 — Completar CLI
-- [ ] 268 — Completar testing
+- [>] 267 — Completar CLI (robustez de comentarios del manifiesto y escape JSON mejorados; ejecución de tareas y parser TOML completo siguen pendientes)
+- [>] 268 — Completar testing (añadidos corpus determinista acotado y smoke de CLI para task/run/doctor/benchmark; falta umbral de cobertura y rutas restantes)
 - [ ] 269 — Completar benchmarks
-- [>] 270 — Auditoría de seguridad (se amplían controles automatizados; no equivale a auditoría externa)
+- [>] 270 — Auditoría de seguridad (pruebas de escapes JSON, comentarios del manifiesto y corpus adversario acotado; no equivale a fuzzing coverage-guided ni auditoría externa)
 - [x] 271 — Auditoría de dependencias (auditoría automatizada del lockfile ejecutada correctamente en CI del commit `fcde532`; no equivale a auditoría manual de licencias ni garantiza ausencia futura de vulnerabilidades)
 - [>] 272 — Revisar licencia (licencia dual y smoke test ABI en revisión; falta completar comprobación legal formal)
 - [ ] 273 — Preparar release

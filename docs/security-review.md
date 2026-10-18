@@ -18,7 +18,7 @@ Fecha de revisión: 2026-10-18. Alcance: superficie actual del crate, memoria, c
 
 ## 197 — Serialización
 
-- La salida JSON del CLI escapa comillas, barras inversas y saltos de línea; los controles restantes se sustituyen por espacios. La nueva exportación de métricas produce un array JSON determinista desde el snapshot ordenado y escapa nombres arbitrarios de métricas.
+- La salida JSON del CLI escapa comillas, barras inversas, saltos de línea, tabuladores y el resto de caracteres de control mediante escapes JSON. Las pruebas cubren estos casos. El parser ignora comentarios solo fuera de valores entrecomillados y mantiene un corpus determinista acotado de entradas adversarias; no equivale a fuzzing coverage-guided. La nueva exportación de métricas produce un array JSON determinista desde el snapshot ordenado y escapa nombres arbitrarios de métricas.
 - No hay deserializador JSON ni decoder de wire format de networking declarado como implementado en esta revisión. No se debe asumir que un formato documentado ya tiene encoder/decoder.
 - Riesgo residual: la exportación de métricas no fija un esquema de compatibilidad versionado; los consumidores deben tratarla como formato de diagnóstico local de esta versión.
 
@@ -117,7 +117,7 @@ Se priorizan APIs Rust seguras, límites de campo, escape JSON, detección de co
 ## Trabajo de robustez del corpus (punto 204, en progreso)
 
 - Storage ahora comprueba entradas binarias pseudoaleatorias deterministas de hasta 512 bytes, todas las truncaciones de un registro válido, mutaciones de cada byte y sufijos truncados tras registros concatenados. Los tests comprueban ausencia de panic, no que cada entrada deba ser aceptada.
-- El CLI cubre nombre vacío/no entrecomillado, campos duplicados y asignaciones fuera de secciones conocidas. La semántica sigue siendo el subconjunto documentado, no TOML completo.
+- El CLI cubre nombre vacío/no entrecomillado, campos duplicados, asignaciones fuera de secciones conocidas, comentarios junto a valores entrecomillados, límite de tamaño, escapes JSON y corpus determinista de entradas adversarias. Las pruebas de integración invocan task, run, doctor y benchmark en JSON. La semántica sigue siendo el subconjunto documentado, no TOML completo.
 - Limitación explícita: estas pruebas son corpus determinista y no reemplazan libFuzzer, cobertura guiada, sanitizadores ni sesiones de larga duración.
 
 ## Controles automatizados de CI (2026-10-18)

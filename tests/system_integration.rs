@@ -103,5 +103,82 @@ fn cli_binary_initializes_and_inspects_project_as_json_without_overwrite() {
         "init must refuse to overwrite"
     );
     assert_eq!(std::fs::read(root.join("DINAH.toml")).unwrap(), original);
+    let manifest = root.join("DINAH.toml");
+    std::fs::write(
+        &manifest,
+        "[project]\nname = \"integration#project\" # trailing comment\nversion = \"0.3.0\"\n\n[tasks]\nbuild = \"description only\"\ntest = \"description only\"\n",
+    )
+    .unwrap();
+
+    let task = Command::new(env!("CARGO_BIN_EXE_dinah"))
+        .args(["--format", "json", "task"])
+        .arg(&root)
+        .output()
+        .expect("task CLI starts");
+    assert!(
+        task.status.success(),
+        "{}",
+        String::from_utf8_lossy(&task.stderr)
+    );
+    let task_json = String::from_utf8(task.stdout).unwrap();
+    assert!(
+        task_json.contains("\"tasks\":[\"build\",\"test\"]"),
+        "{task_json}"
+    );
+    assert!(task_json.contains("not_implemented"), "{task_json}");
+
+    let run = Command::new(env!("CARGO_BIN_EXE_dinah"))
+        .args(["--format", "json", "run"])
+        .arg(&root)
+        .output()
+        .expect("run CLI starts");
+    assert!(
+        run.status.success(),
+        "{}",
+        String::from_utf8_lossy(&run.stderr)
+    );
+    let run_json = String::from_utf8(run.stdout).unwrap();
+    assert!(run_json.contains("integration#project"), "{run_json}");
+    assert!(
+        run_json.contains("\"task_execution\":\"not_implemented\""),
+        "{run_json}"
+    );
+
+    let doctor = Command::new(env!("CARGO_BIN_EXE_dinah"))
+        .args(["--format", "json", "doctor"])
+        .arg(&root)
+        .output()
+        .expect("doctor CLI starts");
+    assert!(
+        doctor.status.success(),
+        "{}",
+        String::from_utf8_lossy(&doctor.stderr)
+    );
+    let doctor_json = String::from_utf8(doctor.stdout).unwrap();
+    assert!(
+        doctor_json.contains("\"status\":\"healthy\""),
+        "{doctor_json}"
+    );
+    assert!(
+        doctor_json.contains("\"manifest_readable\":true"),
+        "{doctor_json}"
+    );
+
+    let benchmark = Command::new(env!("CARGO_BIN_EXE_dinah"))
+        .args(["--format", "json", "benchmark"])
+        .output()
+        .expect("benchmark CLI starts");
+    assert!(
+        benchmark.status.success(),
+        "{}",
+        String::from_utf8_lossy(&benchmark.stderr)
+    );
+    let benchmark_json = String::from_utf8(benchmark.stdout).unwrap();
+    assert!(
+        benchmark_json.contains("\"status\":\"listed_only\""),
+        "{benchmark_json}"
+    );
+    assert!(benchmark_json.contains("\"runtime\""), "{benchmark_json}");
+
     std::fs::remove_dir_all(root).unwrap();
 }

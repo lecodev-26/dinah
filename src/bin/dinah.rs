@@ -42,7 +42,7 @@ fn json_string(value: &str) -> String {
             '\n' => result.push_str("\\n"),
             '\r' => result.push_str("\\r"),
             '\t' => result.push_str("\\t"),
-            c if c.is_control() => result.push(' '),
+            c if c.is_control() => result.push_str(&format!("\\u{:04x}", c as u32)),
             c => result.push(c),
         }
     }
@@ -234,7 +234,7 @@ fn read_manifest(path: &Path) -> io::Result<(String, String, Vec<String>)> {
     let mut version = None;
     let mut tasks = Vec::new();
     for source_line in contents.lines() {
-        let line = source_line.split('#').next().unwrap_or("").trim();
+        let line = strip_manifest_comment(source_line).trim();
         if line.starts_with('[') && line.ends_with(']') {
             section = line[1..line.len() - 1].trim().to_owned();
             continue;
@@ -261,6 +261,24 @@ fn read_manifest(path: &Path) -> io::Result<(String, String, Vec<String>)> {
         )
     })?;
     Ok((name, version.unwrap_or_else(|| "unspecified".into()), tasks))
+}
+
+fn strip_manifest_comment(line: &str) -> &str {
+    let mut quoted = false;
+    let mut escaped = false;
+    for (index, character) in line.char_indices() {
+        if escaped {
+            escaped = false;
+            continue;
+        }
+        match character {
+            '\\' if quoted => escaped = true,
+            '"' => quoted = !quoted,
+            '#' if !quoted => return &line[..index],
+            _ => {}
+        }
+    }
+    line
 }
 
 fn parse_quoted(value: &str) -> Option<String> {
@@ -417,7 +435,7 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use super::{execute, init, parse_options, read_manifest, run, OutputFormat};
+    use super::{execute, init, json_string, parse_options, read_manifest, run, OutputFormat};
     use std::fs;
     use std::path::PathBuf;
     use std::time::{SystemTime, UNIX_EPOCH};
@@ -535,6 +553,53 @@ mod tests {
         let parsed = read_manifest(&path).unwrap();
         assert_eq!(parsed.0, "valid");
         assert_eq!(parsed.1, "unspecified");
+        fs::remove_dir_all(path).unwrap();
+    }
+
+    #[test]
+    fn json_string_escapes_all_json_control_characters() {
+        let escaped = json_string("quote: \" slash: \\ newline: \n tab: \t backspace: \u{0008} formfeed: \u{000c} nul: \u{0000}");
+        assert_eq!(escaped, "\"quote: \\\" slash: \\\\ newline: \\n tab: \\t backspace: \\u0008 formfeed: \\u000c nul: \\u0000\"");
+    }
+
+    #[test]
+    fn manifest_comments_do_not_truncate_hashes_inside_quoted_values() {
+        let path = temp_dir();
+        fs::write(
+            path.join("DINAH.toml"),
+            "[project]\nname = \"sample#one\" # actual comment\nversion = \"0.2.0\"\n",
+        )
+        .unwrap();
+        let parsed = read_manifest(&path).unwrap();
+        assert_eq!(parsed.0, "sample#one");
+        assert_eq!(parsed.1, "0.2.0");
+        fs::remove_dir_all(path).unwrap();
+    }
+
+    #[test]
+    fn deterministic_adversarial_manifest_corpus_never_panics() {
+        let path = temp_dir();
+        let corpus = [
+            "",
+            "# only comment",
+            "[",
+            "]",
+            "[]",
+            "[[project]]",
+            "[project]\nname = \"x\"",
+            "[project]\nname = \"x#y\"",
+            "[project]\nname = \"unterminated",
+            "[project]\nname = \"\\\"\"",
+            "[tasks]\n\"quoted-key\" = \"value\"",
+            "[project]\nname = \"a\"\n[project]\nname = \"b\"",
+            "[project]\nname = \"\u{0000}\"",
+            "[unknown]\nname = \"ignored\"",
+        ];
+        for input in corpus {
+            fs::write(path.join("DINAH.toml"), input).unwrap();
+            let result = std::panic::catch_unwind(|| read_manifest(&path));
+            assert!(result.is_ok(), "parser panicked for input {input:?}");
+        }
         fs::remove_dir_all(path).unwrap();
     }
 
