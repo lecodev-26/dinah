@@ -64,6 +64,9 @@ impl core::fmt::Display for MetricError {
 
 impl std::error::Error for MetricError {}
 
+/// One named metric key and its recorded value.
+pub type MetricEntry = ((Subsystem, String), MetricValue);
+
 /// Thread-safe named metrics registry. Counter increments saturate rather than wrap.
 #[derive(Debug, Default)]
 pub struct MetricsRegistry {
@@ -115,7 +118,7 @@ impl MetricsRegistry {
         Ok(())
     }
 
-    pub fn snapshot(&self) -> Result<Vec<((Subsystem, String), MetricValue)>, MetricError> {
+    pub fn snapshot(&self) -> Result<Vec<MetricEntry>, MetricError> {
         self.values
             .lock()
             .map(|values| {
