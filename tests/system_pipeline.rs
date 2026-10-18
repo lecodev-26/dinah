@@ -8,9 +8,9 @@ use dinah::observability::{MetricsRegistry, Subsystem};
 use dinah::runtime::Scheduler;
 use dinah::simulation::Simulation;
 use dinah::storage::runtime::{StorageCommand, StorageWorkQueue};
-use dinah::storage::{MemoryStore, Storage};
+use dinah::storage::{DiskStore, MemoryStore, Storage};
 use std::num::NonZeroUsize;
-use std::time::Duration;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 #[test]
 fn public_subsystems_form_a_deterministic_data_pipeline() {
@@ -141,4 +141,66 @@ fn prediction_reconciliation_flows_into_simulation_and_storage() {
         store.get(b"prediction/confirmed-frame"),
         Some(persisted.to_vec())
     );
+}
+
+#[test]
+fn runtime_storage_queue_persists_and_recovers_a_simulation_snapshot() {
+    let nonce = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("system clock is after the Unix epoch")
+        .as_nanos();
+    let path = std::env::temp_dir().join(format!(
+        "dinah-system-pipeline-{}-{nonce}.journal",
+        std::process::id()
+    ));
+    let scheduler = Scheduler::new();
+    let snapshot = [3_u64, 5, 8, 13]
+        .into_iter()
+        .flat_map(u64::to_le_bytes)
+        .collect::<Vec<_>>();
+
+    {
+        let mut store = DiskStore::open(&path).expect("journal opens");
+        let mut queue = StorageWorkQueue::new(NonZeroUsize::new(2).unwrap());
+        queue
+            .enqueue(StorageCommand::Put {
+                key: b"simulation/tick-4".to_vec(),
+                value: snapshot.clone(),
+            })
+            .unwrap();
+        queue
+            .enqueue(StorageCommand::Put {
+                key: b"simulation/transient".to_vec(),
+                value: b"remove-me".to_vec(),
+            })
+            .unwrap();
+
+        assert_eq!(store.get(b"simulation/tick-4"), None);
+        for _ in 0..2 {
+            assert!(queue
+                .dispatch_next(&scheduler, &mut store)
+                .expect("queued command exists")
+                .expect("scheduler dispatch succeeds")
+                .is_ok());
+        }
+        queue
+            .enqueue(StorageCommand::Delete {
+                key: b"simulation/transient".to_vec(),
+            })
+            .unwrap();
+        assert!(queue
+            .dispatch_next(&scheduler, &mut store)
+            .expect("delete command exists")
+            .expect("scheduler dispatch succeeds")
+            .is_ok());
+        assert_eq!(store.get(b"simulation/tick-4"), Some(snapshot.clone()));
+        assert_eq!(store.get(b"simulation/transient"), None);
+    }
+
+    // Reopening exercises journal replay across the Runtime queue boundary.
+    let recovered = DiskStore::open(&path).expect("journal replays after reopen");
+    assert_eq!(recovered.get(b"simulation/tick-4"), Some(snapshot));
+    assert_eq!(recovered.get(b"simulation/transient"), None);
+    drop(recovered);
+    std::fs::remove_file(path).expect("temporary journal is removed");
 }

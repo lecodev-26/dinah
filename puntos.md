@@ -271,7 +271,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 217 — Unit tests Network (`src/network.rs`: transiciones half-close y consistencia de direcciones cerradas)
 - [x] 218 — Unit tests Storage (`src/storage.rs`: replay determinista y rechazo de DELETE con payload)
 - [x] 219 — Unit tests Native (`src/native.rs`: metadatos host, tiempo monotónico, proveedor Unix y contrato ABI escalar)
-- [>] 220 — Integration tests (`tests/system_pipeline.rs` cubre Core/Runtime/Memory/Compute/ECS/Simulation/Storage/observabilidad y ahora reconciliación de predicción de red hacia Simulation/ECS/Storage; `tests/system_integration.rs` añade Network, Native y CLI real; falta ampliar escenarios de integración)
+- [>] 220 — Integration tests (`tests/system_pipeline.rs` cubre Core/Runtime/Memory/Compute/ECS/Simulation/Storage/observabilidad, reconciliación de predicción y ahora persistencia/reapertura de DiskStore despachada por Runtime; `tests/system_integration.rs` añade Network, Native y CLI real; falta ampliar escenarios de integración)
 - [x] 221 — Concurrency tests (`tests/robustness_regression.rs`: seis workers aislados actualizan y reabren journals independientes; no comparte una instancia mutable)
 - [x] 222 — Stress tests (6 workers × 128 actualizaciones, comprobación de 8 claves y replay al reabrir; stress acotado, no benchmark prolongado)
 - [x] 223 — Determinism tests (contratos repetidos públicos de Core, Runtime, Memory y Compute, más replay de Simulation; no implica determinismo temporal ni equivalencia bit a bit entre arquitecturas)
@@ -546,3 +546,6 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 - 2026-10-18 — Avanzado el punto 266 con `examples/network_basics.rs`: intercambio TCP de loopback usando Endpoint/Connection, lecturas parciales seguras, cierre de escritura y detección de EOF; `docs/network.md` incluye comando y límites explícitos. Se mantiene en progreso hasta validar este ejemplo por CI y revisar subsistemas restantes.
 
 - 2026-10-18 — Revisión de orden: se aplazan 033, 035, 084, 085, 100, 103, 165 y 204 con su dependencia concreta descrita en la checklist; no se declaran completados ni se inventan benchmarks/consumidores. Se continúa por el siguiente trabajo que pueda avanzar con evidencia real.
+
+
+- 2026-10-18 — Punto 220 ampliado: `tests/system_pipeline.rs` ahora valida el límite Runtime → Storage → DiskStore con comandos FIFO PUT/DELETE, confirma que encolar no muta el almacén y comprueba la recuperación del snapshot tras cerrar y reabrir el journal. `docs/integration-matrix.md` describe la evidencia y aclara que el replay no equivale a durabilidad ante pérdida de energía. Punto 220 sigue en progreso; CI de este cambio pendiente.

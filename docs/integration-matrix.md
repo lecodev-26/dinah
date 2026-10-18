@@ -8,7 +8,7 @@ This records executable integration evidence without implying automatic wiring b
 | Runtime → Native | `tests/system_integration.rs` | Host OS, architecture, process ID and monotonic elapsed time can be consumed inside scheduled work; this is host metadata, not direct hardware access. |
 | CLI → manifest/tasks | `tests/system_integration.rs` invokes the actual `dinah` binary | `init` creates a manifest and refuses overwrite; `inspect --format json` reads it; `run` validates by default, while `--task NAME run` explicitly executes a declared shell command and propagates its exit status. Task execution is unsandboxed. |
 | Network prediction → Simulation/ECS → Storage | `tests/system_pipeline.rs` | A bounded prediction history reconciles an authoritative snapshot, replays pending input in order, then the caller transfers the corrected state into ECS/Simulation and explicitly stores a snapshot; this does not send packets or imply server authority. |
-| Storage and application data | `tests/system_pipeline.rs` | Explicit FIFO storage work writes a simulation snapshot to `MemoryStore`; this is not a durability guarantee for disk storage. |
+| Storage and application data | `tests/system_pipeline.rs` | Explicit FIFO storage work writes a simulation snapshot to `MemoryStore`; a separate cross-subsystem test dispatches PUT/DELETE through Runtime into `DiskStore` and verifies the surviving snapshot after journal reopen. Flush/replay evidence is not a power-loss durability guarantee. |
 | Observability | Both system integration tests | Metrics are caller-reported and do not automatically instrument subsystems. |
 
 ## Validation boundary
