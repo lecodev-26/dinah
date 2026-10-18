@@ -4,6 +4,7 @@ use dinah::core::CoreConfig;
 use dinah::ecs::World;
 use dinah::memory::Buffer;
 use dinah::network::prediction::{AuthoritativeSnapshot, PredictionBuffer, ReconcileOutcome};
+use dinah::network::simulator::NetworkSimulator;
 use dinah::observability::{MetricsRegistry, Subsystem};
 use dinah::runtime::Scheduler;
 use dinah::simulation::Simulation;
@@ -201,6 +202,72 @@ fn runtime_storage_queue_persists_and_recovers_a_simulation_snapshot() {
     let recovered = DiskStore::open(&path).expect("journal replays after reopen");
     assert_eq!(recovered.get(b"simulation/tick-4"), Some(snapshot));
     assert_eq!(recovered.get(b"simulation/transient"), None);
+    drop(recovered);
+    std::fs::remove_file(path).expect("temporary journal is removed");
+}
+
+#[test]
+fn simulated_network_delivery_updates_simulation_before_disk_persistence() {
+    let nonce = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("system clock is after the Unix epoch")
+        .as_nanos();
+    let path = std::env::temp_dir().join(format!(
+        "dinah-simulated-delivery-{}-{nonce}.journal",
+        std::process::id()
+    ));
+    let mut simulation = Simulation::new(0_u64, Duration::from_millis(16)).unwrap();
+    let mut network = NetworkSimulator::new();
+
+    assert_eq!(network.send(0, 2, 7_u64, false), Ok(Some(0)));
+    assert!(network.receive_due_for_simulation(&simulation).is_empty());
+    simulation
+        .step(|state, _| {
+            *state += 1;
+            Ok::<_, &'static str>(())
+        })
+        .unwrap();
+    assert!(network.receive_due_for_simulation(&simulation).is_empty());
+    simulation
+        .step(|state, _| {
+            *state += 1;
+            Ok::<_, &'static str>(())
+        })
+        .unwrap();
+
+    let delivered = network.receive_due_for_simulation(&simulation);
+    assert_eq!(delivered, vec![7]);
+    assert_eq!(network.delivered_count(), 1);
+    for input in delivered {
+        simulation
+            .step(|state, _| {
+                *state += input;
+                Ok::<_, &'static str>(())
+            })
+            .unwrap();
+    }
+    assert_eq!(*simulation.state(), 9);
+
+    {
+        let mut store = DiskStore::open(&path).expect("journal opens");
+        let mut queue = StorageWorkQueue::new(NonZeroUsize::new(1).unwrap());
+        queue
+            .enqueue(StorageCommand::Put {
+                key: b"simulation/network-tick-3".to_vec(),
+                value: simulation.state().to_le_bytes().to_vec(),
+            })
+            .unwrap();
+        assert!(queue
+            .dispatch_next(&Scheduler::new(), &mut store)
+            .expect("snapshot command is queued")
+            .expect("scheduler dispatch succeeds")
+            .is_ok());
+    }
+    let recovered = DiskStore::open(&path).expect("persisted journal reopens");
+    assert_eq!(
+        recovered.get(b"simulation/network-tick-3"),
+        Some(9_u64.to_le_bytes().to_vec())
+    );
     drop(recovered);
     std::fs::remove_file(path).expect("temporary journal is removed");
 }
