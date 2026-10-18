@@ -167,12 +167,13 @@ The CLI baseline and opt-in observability primitives are implemented; tracing, m
 
 ## What's next
 
-The next milestone is to close the remaining security and validation gaps before attempting the first `dinah` v0.1 integration milestone. Work is prioritized by risk and evidence, not by a promise that the release is near.
+The next milestone is to close the remaining security and validation gaps before attempting the first `dinah` v0.1 integration milestone. Work is prioritized by risk and evidence, not by a promise that the release is near. Concurrency, determinism, bounded stress and regression suites, plus the Network, Storage and Native unit suites, are already in place (points 207–208, 217–219 and 221–224), so the list below only covers what is still open.
 
 1. **Fuzzing (point 204):** add repeatable fuzz targets for the `DINAH.toml` starter parser and Storage journal replay; extend to network codecs when a codec exists.
-2. **Validation (points 207–209, 217–229):** add broader concurrency and determinism checks, finish the missing Network/Storage/Native unit suites, run longer stress tests, add regression coverage and measure test coverage across supported CI targets.
-3. **Dependency and ABI assurance:** audit the lockfile/toolchain and add a real C compiler/linker smoke test for the scalar ABI on supported runners.
-4. **Integration (phases 15–16):** connect only APIs that are implemented, add end-to-end examples and tests, review public API boundaries, and then decide whether the scoped `dinah` v0.1 milestone is genuinely met.
+2. **Dependency and ABI assurance (point 209):** audit the lockfile and toolchain, and add a real C compiler/linker smoke test for the scalar ABI on supported runners (still pending under points 161 and 198).
+3. **Validation infrastructure (points 226–229):** complete CI, measure test coverage and define the Linux and supported-architecture test matrices.
+4. **Integration tests and benchmarks (points 220 and 225):** add end-to-end tests for the full architecture, and extend the benchmark suite to Networking, Storage and Native once those modules are implemented.
+5. **Integration (phases 15–16):** connect only APIs that are implemented, add end-to-end examples, review public API boundaries, and then decide whether the scoped `dinah` v0.1 milestone is genuinely met.
 
 **Current security status:** initial reviews and targeted corruption/concurrency tests are in place, but DINAH is still pre-alpha. It does not claim a production network stack, strong crash durability, stable public APIs or an independently audited security posture. The canonical task status is [`puntos.md`](puntos.md); phase definitions and release criteria are in [`roadmap.md`](roadmap.md).
 
