@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 171
+- Completados: 181
 - En progreso: 8
-- Pendientes: 108
+- Pendientes: 98
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -215,16 +215,16 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 170 — Crear comando dinah (binario Rust con ayuda, versión, errores y códigos de salida)
 - [x] 171 — Crear dinah init (crea `DINAH.toml` y no sobrescribe un manifiesto existente)
 - [x] 172 — Crear dinah run (valida manifiesto; ejecutar tareas sigue pendiente)
-- [ ] 173 — Crear dinah task
-- [ ] 174 — Crear dinah inspect
-- [ ] 175 — Crear dinah benchmark
-- [ ] 176 — Crear dinah doctor
-- [ ] 177 — Crear configuración CLI
-- [ ] 178 — Crear output estructurado
-- [ ] 179 — Crear logs
-- [ ] 180 — Crear errores amigables
-- [ ] 181 — Crear documentación CLI
-- [ ] 182 — Testear comandos
+- [x] 173 — Crear dinah task (enumera declaraciones de [tasks]; no ejecuta comandos)
+- [x] 174 — Crear dinah inspect (muestra metadatos básicos y número de tareas)
+- [x] 175 — Crear dinah benchmark (enumera las siete suites; no ejecuta benchmarks)
+- [x] 176 — Crear dinah doctor (validación básica de directorio y manifiesto)
+- [x] 177 — Crear configuración CLI (--format text/json y --verbose)
+- [x] 178 — Crear output estructurado (JSON para resultados de comandos)
+- [x] 179 — Crear logs (diagnóstico verbose en stderr)
+- [x] 180 — Crear errores amigables (mensajes accionables y código de salida no cero)
+- [x] 181 — Crear documentación CLI (comandos, límites y ejemplos)
+- [x] 182 — Testear comandos (pruebas unitarias para parsing, init, metadatos y manifiestos inválidos)
 
 ## FASE 11 — Observabilidad
 

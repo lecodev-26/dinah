@@ -95,7 +95,7 @@ Definir APIs de almacenamiento en memoria y disco, formato, persistencia, journa
 **Estado parcial (puntos 157–169):** HAL y abstracciones de plataforma documentadas; proveedor host y adaptador Unix seguro; ABI C escalar versionada y header público; auditoría de hotspots y matriz de benchmarks documentadas. El punto 165 (optimizar hotspots) sigue pendiente por falta de una mejora repetible demostrada. La ABI aún necesita una prueba real de compilación/enlace en CI. No existe acceso directo al hardware ni assembly optimizado.
 
 ### Fase 10 — CLI
-Estado inicial (puntos 170–172): existe el binario dinah, init crea un manifiesto sin sobrescribirlo y run valida el nombre del proyecto. run todavía no ejecuta tareas. Restan task, inspect, benchmark, doctor, configuración completa, salida estructurada, logs, errores útiles y pruebas de integración.
+Estado actual (puntos 170–182): existe el binario dinah con init, validación run, listado de declaraciones task, inspect, catálogo benchmark y doctor básico. Hay opciones de salida text/json, logging verbose, mensajes de error y pruebas unitarias. Las tareas y benchmarks solo se enumeran: no se ejecutan desde el CLI. El parser de DINAH.toml es deliberadamente parcial, no un parser TOML completo.
 
 ### Fase 11 — Observabilidad
 Unificar métricas, tracing, profiler hooks, diagnósticos y exportación de resultados reproducibles.
