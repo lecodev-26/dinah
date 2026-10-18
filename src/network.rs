@@ -235,3 +235,8 @@ impl Connection {
         Ok(())
     }
 }
+
+/// Client-side prediction and authoritative state reconciliation primitives.
+///
+/// These types are transport-independent and do not alter [`Connection`].
+pub mod prediction;

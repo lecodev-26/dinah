@@ -1,6 +1,6 @@
 # Client-side prediction — investigación (punto 127)
 
-Estado: investigación de arquitectura completada. Este documento fija un modelo recomendado para los puntos 128–131; **no implementa prediction, reconciliation, buffers de historial ni resimulación**.
+Estado: investigación y primera implementación genérica de los puntos 128–131. `dinah::network::prediction::PredictionBuffer` implementa predicción local, historial acotado, reconciliación y replay mediante un callback del consumidor. No transmite inputs ni proporciona una simulación de dominio, servidor autoritativo o garantía de determinismo entre plataformas.
 
 ## Problema y objetivo
 
@@ -47,12 +47,20 @@ La predicción del jugador local no resuelve la visualización de otras entidade
 - Un historial demasiado corto no permite replay; uno ilimitado expone al cliente a consumo de memoria creciente. La capacidad debe derivarse de una ventana temporal y un máximo configurados.
 - No es correcto asumir que la predicción eliminará el lag, evitará trampas o garantizará sincronización exacta.
 
+## Implementación inicial (puntos 128–131)
+
+La API está en `src/network/prediction.rs` y se exporta como `dinah::network::prediction`. `PredictionBuffer<S, I>` conserva estado genérico, asigna secuencias desde 1, aplica cada input en cuanto se predice y retiene las entradas pendientes hasta un snapshot que las reconoce. La capacidad se configura al construir el buffer; si se llena, `predict` devuelve `HistoryFull` sin aplicar ni asignar el input nuevo.
+
+`AuthoritativeSnapshot<S>` incluye tick, última secuencia procesada y estado autoritativo. `reconcile` rechaza acknowledgements por encima de la última secuencia emitida, ignora snapshots obsoletos y, si acepta el snapshot, elimina entradas reconocidas y vuelve a aplicar las restantes en orden original. El consumidor aporta la función de transición, que debe evitar efectos secundarios y ser reproducible para que el replay tenga sentido.
+
+Los tests de `tests/network_prediction.rs` cubren aplicación inmediata, secuencias, reconciliación, replay, snapshots obsoletos, límite de historial, ACK futuro y repetibilidad con la misma función de transición. Esto demuestra repetibilidad en el modelo de test, no determinismo bit a bit universal.
+
 ## Secuencia de trabajo para puntos 128–131
 
-- **128 — Implementar prediction:** comenzar con un modelo de estado pequeño y puro, inputs explícitos y tick fijo; comparar resultado predictivo con la ejecución de referencia. No integrarlo aún con sockets.
-- **129 — Implementar reconciliation:** definir snapshot autoritativo y secuencia confirmada; aplicar snapshot y reejecutar solo los inputs posteriores a esa secuencia. Cubrir snapshots atrasados, duplicados y discrepancias.
-- **130 — Implementar history/state buffers:** limitar capacidad, validar secuencias, especificar overflow y medir memoria; los buffers no deben retener datos sin límite.
-- **131 — Implementar deterministic resimulation:** replay repetible con la misma base/inputs, tests de repetición y trazas por tick. Documentar exactamente el alcance del determinismo que las pruebas demuestren.
+- **128 — Implementar prediction:** comenzar con un modelo de estado pequeño y puro, inputs explícitos y tick fijo; comparar resultado predictivo con la ejecución de referencia. No integrarlo aún con sockets. (Implementación inicial completada; faltan adaptadores de dominio/protocolo.)
+- **129 — Implementar reconciliation:** definir snapshot autoritativo y secuencia confirmada; aplicar snapshot y reejecutar solo los inputs posteriores a esa secuencia. Implementación inicial y tests de snapshots obsoletos/ACK inválido completados.
+- **130 — Implementar history/state buffers:** limitar capacidad y validar secuencias; implementación inicial rechaza overflow sin descartar inputs silenciosamente. El buffer no retiene datos sin límite.
+- **131 — Implementar deterministic resimulation:** replay repetible con la misma base/inputs mediante callback compartido y test de repetibilidad. El alcance demostrado no incluye determinismo multiplataforma.
 
 Los tests iniciales deben ser deterministas y locales, con retrasos, duplicados, pérdida, reordenación y snapshots antiguos simulados mediante entradas explícitas; no deben depender de sleeps ni de servicios externos. Los escenarios de pérdida/latencia de producción corresponden también a los puntos 132–134.
 

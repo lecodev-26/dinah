@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 127
+- Completados: 131
 - En progreso: 8
-- Pendientes: 152
+- Pendientes: 148
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -161,10 +161,10 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 125 — Crear endpoints (`dinah::network::Endpoint` implementa bind TCP, consulta de dirección local, accept que devuelve `Connection` y modo no bloqueante explícito; pruebas loopback para aceptación/intercambio y `WouldBlock`; sin gestión de estado ni tareas de fondo)
 - [x] 126 — Crear gestión de estado (ConnectionState local para estados Open, ReadClosed, WriteClosed y Closed)
 - [x] 127 — Investigar client-side prediction (modelo autoritativo, inputs numerados, reconciliación conceptual, límites y plan 128–131 documentados en `docs/client-side-prediction.md`; sin implementación de prediction)
-- [ ] 128 — Implementar prediction
-- [ ] 129 — Implementar reconciliation
-- [ ] 130 — Implementar history/state buffers
-- [ ] 131 — Implementar deterministic resimulation
+- [x] 128 — Implementar prediction (`network::prediction::PredictionBuffer` aplica inputs localmente con secuencias monotónicas y ticks explícitos)
+- [x] 129 — Implementar reconciliation (snapshot autoritativo, reconocimiento de secuencia, rechazo de ACK futuro e ignorado de snapshots obsoletos)
+- [x] 130 — Implementar history/state buffers (historial de inputs pendientes acotado; capacidad cero y overflow de historial rechazados sin descartar inputs silenciosamente)
+- [x] 131 — Implementar deterministic resimulation (replay en orden con el callback de transición suministrado; tests de repetibilidad; no garantiza determinismo multiplataforma)
 - [ ] 132 — Gestionar pérdida de paquetes
 - [ ] 133 — Gestionar latencia
 - [ ] 134 — Gestionar desconexiones
@@ -501,3 +501,5 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 ### Networking — investigación de client-side prediction (punto 127)
 
 - 2026-10-18 — Investigación documentada en `docs/client-side-prediction.md`: servidor autoritativo, inputs con secuencia/tick, snapshot con última secuencia procesada, historial acotado, replay de inputs pendientes, separación entre estado simulado y suavizado visual, límites de determinismo, seguridad y memoria. Se documentan referencias técnicas y criterios incrementales para 128–131. No se afirma que prediction, reconciliation, history buffers ni resimulation estén implementadas. CI de este cambio pendiente.
+
+- 2026-10-18 — Bloque 128–131 implementado en `src/network/prediction.rs`, exportado como `dinah::network::prediction`. Incluye secuencias monotónicas, historial acotado, aplicación local inmediata, reconciliación con snapshots autoritativos, replay de inputs no confirmados y manejo de snapshots obsoletos/ACK futuros. Tests de contrato añadidos en `tests/network_prediction.rs`; CI pendiente. La transición de estado la aporta el consumidor y debe ser reproducible; no se declara determinismo universal.
