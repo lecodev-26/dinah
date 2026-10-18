@@ -148,7 +148,7 @@ These are medians of nine samples; construction is included in the clock and ste
 
 </div>
 
-**Current work — Phase 12: Security and robustness.** Phases 7–8 (Networking and Storage) have their scoped checklist points complete; this does not mean either subsystem is production-ready. Phase 9 (Native / Hardware) is nearly complete, with point 165 (hotspot optimization) and a real C compiler/linker smoke test still open. The CLI baseline and observability foundations are implemented within their documented limits. Security review and targeted corruption/concurrency tests are in place; fuzzing (204), dependency audit (207–209), longer stress runs, integration coverage and the C/link smoke test remain open. Networking still lacks an implemented wire encoder/decoder and full protocol integration.
+**Current work — Phase 9: Native / Hardware.** Points 156–163 are implemented and documented: Storage final guide, HAL/platform contracts, safe Unix-family adapter, scalar C ABI and C++/Assembly research. The C ABI still needs a real C compiler/linker smoke test, and no direct hardware access or handwritten assembly is claimed. Networking remains a pre-alpha foundation with wire encoder/decoder and full protocol integration pending.
 
 **Eight points remain in progress:**
 
@@ -174,7 +174,7 @@ The next milestone is to close the remaining security and validation gaps before
 3. **Dependency and ABI assurance:** audit the lockfile/toolchain and add a real C compiler/linker smoke test for the scalar ABI on supported runners.
 4. **Integration (phases 15–16):** connect only APIs that are implemented, add end-to-end examples and tests, review public API boundaries, and then decide whether the scoped `dinah` v0.1 milestone is genuinely met.
 
-**Current security status:** initial reviews and targeted corruption/concurrency tests are in place, but DINAH is still pre-alpha. It does not claim a production network stack, strong crash durability, stable public APIs or an independently audited security posture. The canonical task status is [`puntos.md`](puntos.md) (**213 complete, 8 in progress, 66 pending**); phase definitions and release criteria are in [`roadmap.md`](roadmap.md).
+**Current security status:** initial reviews and targeted corruption/concurrency tests are in place, but DINAH is still pre-alpha. It does not claim a production network stack, strong crash durability, stable public APIs or an independently audited security posture. The canonical task status is [`puntos.md`](puntos.md); phase definitions and release criteria are in [`roadmap.md`](roadmap.md).
 
 <div align="center">
 
