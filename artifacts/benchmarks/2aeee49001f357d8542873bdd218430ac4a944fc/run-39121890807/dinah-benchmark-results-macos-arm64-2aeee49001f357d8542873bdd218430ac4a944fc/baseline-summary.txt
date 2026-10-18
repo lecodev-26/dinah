@@ -1,0 +1,12 @@
+DINAH benchmark baseline summary
+commit=2aeee49001f357d8542873bdd218430ac4a944fc
+timestamp_utc=2026-10-18T11:06:50.659870+00:00
+runner=Darwin arm64
+Note: suite wall time is not a per-operation performance metric.
+suite=runtime elapsed_seconds=10.972 case_count=35
+suite=memory elapsed_seconds=0.409 case_count=28
+suite=compute elapsed_seconds=0.819 case_count=40
+suite=ecs elapsed_seconds=0.389 case_count=24
+suite=simulation elapsed_seconds=0.341 case_count=8
+suite=network elapsed_seconds=0.276 case_count=2
+suite=storage elapsed_seconds=0.748 case_count=2
