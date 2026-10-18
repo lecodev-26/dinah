@@ -326,7 +326,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [ ] 263 — Congelar arquitectura v0.1
 - [ ] 264 — Congelar API v0.1
 - [>] 265 — Completar documentación (`docs/cli.md` documenta escapes Unicode, whitespace, límites del parser y ejecución shell; `docs/release-checklist.md` registra los requisitos de publicación; falta completar y revisar toda la documentación pública)
-- [>] 266 — Completar ejemplos (añadidos `examples/compute_basics.rs`, `examples/memory_basics.rs` y `examples/ecs_basics.rs` para Compute, buffers acotados y ciclo de vida ECS; falta validar en CI y ampliar cobertura de APIs/subsistemas)
+- [>] 266 — Completar ejemplos (añadidos ejemplos ejecutables de Compute, buffers, ECS, Storage y Networking; la CI verde valida la compilación del ejemplo de Storage, el de Networking queda pendiente de CI; falta ampliar cobertura de APIs/subsistemas)
 - [>] 267 — Completar CLI (parser del subconjunto starter con escapes Unicode `\u`/`\U` validados y whitespace preservado; ejecución opt-in de tareas con salida/código propagados; regresiones para Unicode inválido y selección de tarea verificadas por CI verde en `02e30b0`, más test añadido para comandos vacíos/al solo whitespace; parser TOML completo y compatibilidad siguen pendientes)
 - [>] 268 — Completar testing (tests para sintaxis malformada, duplicados, escapes Unicode válidos/inválidos, whitespace, selección de tarea, salida capturada, comandos vacíos y exit codes; regresiones end-to-end existentes verificadas por CI verde en `02e30b0` y nuevo test de comandos vacíos añadido en el commit actual; falta establecer un umbral de cobertura y cubrir rutas restantes)
 - [ ] 269 — Completar benchmarks
@@ -542,3 +542,5 @@ Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado
 ### Ejemplos públicos — 2026-10-18
 
 - Avanzado el punto 266 con ejemplos ejecutables para Compute, Buffer, ECS y Storage. `examples/storage_basics.rs` cubre MemoryStore, DiskStore, replay al reabrir y eliminación; `docs/storage.md` enlaza ahora el comando reproducible `cargo run --example storage_basics` y recuerda los límites de durabilidad. La CI del commit `54e9a9b` confirmó la compilación de ejemplos; este punto sigue en progreso hasta revisar cobertura de los subsistemas restantes. Checks locales permitidos ejecutados; no se ha ejecutado `cargo test` localmente.
+
+- 2026-10-18 — Avanzado el punto 266 con `examples/network_basics.rs`: intercambio TCP de loopback usando Endpoint/Connection, lecturas parciales seguras, cierre de escritura y detección de EOF; `docs/network.md` incluye comando y límites explícitos. Se mantiene en progreso hasta validar este ejemplo por CI y revisar subsistemas restantes.

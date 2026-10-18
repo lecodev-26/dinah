@@ -2,6 +2,10 @@
 
 Estado: implementación incremental (puntos 120–140). Los contratos de transporte, mensaje y wire format están documentados; existen una conexión TCP bloqueante, un endpoint TCP de escucha/aceptación y seguimiento local del ciclo de vida de conexión. El encoder/decoder de wire sigue sin implementarse. La predicción cliente y reconciliación genéricas están implementadas en `src/network/prediction.rs`; el diseño, los límites y el alcance están en `docs/client-side-prediction.md`. Se añadieron primitivas explícitas de reintentos a nivel de aplicación, estimación de RTT, seguimiento lógico de liveness/backoff, despacho acotado mediante Runtime y simulación de entregas por tick conectada a Simulation. No se integran automáticamente con el transporte TCP ni con un modelo de dominio concreto.
 
+## Ejemplo ejecutable
+
+`examples/network_basics.rs` levanta un `Endpoint` en loopback con puerto efímero, acepta una conexión, intercambia `ping`/`pong` y observa el EOF después del cierre de escritura del servidor. Se ejecuta con `cargo run --example network_basics`. La demostración usa TCP bloqueante y un mensaje de longitud fija solo para ilustrar lecturas/escrituras; DINAH no añade framing, TLS, autenticación, reintentos ni sandbox. No expongas este ejemplo como servicio de red público.
+
 ## Primitivas implementadas — puntos 132–139
 
 ### Reintentos de mensajes a nivel de aplicación — punto 132
