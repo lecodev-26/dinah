@@ -341,6 +341,68 @@ mod tests {
         ));
     }
 
+    #[test]
+    fn replay_handles_bounded_arbitrary_byte_corpus_without_panicking() {
+        // Deterministic seed corpus for fast CI smoke coverage. This is not a
+        // substitute for coverage-guided libFuzzer runs.
+        let mut state = 0xD1_A4_2026_u64;
+        for len in 0..=512usize {
+            let mut bytes = Vec::with_capacity(len);
+            for _ in 0..len {
+                state ^= state << 13;
+                state ^= state >> 7;
+                state ^= state << 17;
+                bytes.push(state as u8);
+            }
+            let result = std::panic::catch_unwind(|| replay(&bytes));
+            assert!(
+                result.is_ok(),
+                "replay panicked for deterministic input length {len}"
+            );
+        }
+    }
+
+    #[test]
+    fn replay_handles_every_truncation_of_a_valid_record() {
+        let mut journal = Vec::new();
+        append_v2_put(&mut journal, b"key", b"value");
+        for end in 0..journal.len() {
+            let result = std::panic::catch_unwind(|| replay(&journal[..end]));
+            assert!(result.is_ok(), "replay panicked at truncation {end}");
+        }
+    }
+
+    #[test]
+    fn replay_rejects_single_byte_mutations_of_complete_record() {
+        let mut journal = Vec::new();
+        append_v2_put(&mut journal, b"key", b"value");
+        for index in 0..journal.len() {
+            let mut mutated = journal.clone();
+            mutated[index] ^= 0x80;
+            let result = std::panic::catch_unwind(|| replay(&mutated));
+            assert!(
+                result.is_ok(),
+                "replay panicked after mutating byte {index}"
+            );
+        }
+    }
+
+    #[test]
+    fn replay_handles_concatenated_valid_records_with_torn_suffixes() {
+        let mut journal = Vec::new();
+        append_v2_put(&mut journal, b"a", b"1");
+        append_v2_put(&mut journal, b"b", b"2");
+        for suffix_len in 1..14 {
+            let mut input = journal.clone();
+            input.extend(std::iter::repeat_n(0xA5, suffix_len));
+            let result = std::panic::catch_unwind(|| replay(&input));
+            assert!(
+                result.is_ok(),
+                "replay panicked with torn suffix {suffix_len}"
+            );
+        }
+    }
+
     fn append_v2_put(journal: &mut Vec<u8>, key: &[u8], value: &[u8]) {
         journal.extend_from_slice(b"DNST");
         journal.extend_from_slice(&[2, 1]);

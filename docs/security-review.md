@@ -1,6 +1,6 @@
 # DINAH — Modelo y revisión de seguridad (puntos 195–203, 205–206, 210)
 
-Fecha de revisión: 2026-10-18. Alcance: superficie actual del crate, memoria, concurrencia, permisos, filesystem, networking, entrada del CLI, journal de Storage, salida JSON y ABI C escalar. Se añadieron pruebas unitarias de transiciones de Connection, replay de Storage, regresión del ABI y una carga paralela acotada sobre journals independientes. Esta revisión estática no es una auditoría externa ni demuestra ausencia de vulnerabilidades.
+Fecha de revisión: 2026-10-18. Alcance: superficie actual del crate, memoria, concurrencia, permisos, filesystem, networking, entrada del CLI, journal de Storage, salida JSON y ABI C escalar. Se añadieron pruebas unitarias de transiciones de Connection, replay de Storage, regresión del ABI y una carga paralela acotada sobre journals independientes. Se amplió el corpus determinista de entradas adversarias para replay y manifiestos; no se presenta como fuzzing coverage-guided. Esta revisión estática no es una auditoría externa ni demuestra ausencia de vulnerabilidades.
 
 ## 195 — Superficie de ataque
 
@@ -31,7 +31,7 @@ Fecha de revisión: 2026-10-18. Alcance: superficie actual del crate, memoria, c
 
 ## Acciones pendientes
 
-- Añadir fuzzing para parser de manifiesto, futuros codecs de networking y formatos persistidos.
+- Ejecutar fuzzing coverage-guided (libFuzzer) para parser de manifiesto y replay del journal; el corpus determinista actual solo es una primera barrera de regresión.
 - Fuzzing y auditoría formal de dependencias siguen pendientes. Las pruebas de estrés/concurrencia actuales son acotadas; no incluyen model checking, escritores concurrentes sobre el mismo journal ni cargas prolongadas.
 - Ejecutar el smoke test C/link en CI antes de declarar estable el ABI.
 - Repetir esta revisión cuando se introduzcan ejecución de tareas, deserialización de red, acceso a archivos externos o APIs FFI basadas en punteros.
@@ -112,3 +112,10 @@ Se priorizan APIs Rust seguras, límites de campo, escape JSON, detección de co
 - `src/native.rs` conserva tests unitarios para HostPlatform, PosixPlatform (en Unix) y los símbolos ABI escalares.
 - `tests/robustness_regression.rs` comprueba invariantes ABI, orden y overwrite repetibles, y seis workers sobre archivos de journal separados con 128 actualizaciones cada uno y reapertura posterior.
 - Estas pruebas mejoran regresión y concurrencia acotada; no sustituyen fuzzing, model checking, pruebas de múltiples escritores sobre el mismo archivo ni un smoke test de compilador/linker C.
+
+
+## Trabajo de robustez del corpus (punto 204, en progreso)
+
+- Storage ahora comprueba entradas binarias pseudoaleatorias deterministas de hasta 512 bytes, todas las truncaciones de un registro válido, mutaciones de cada byte y sufijos truncados tras registros concatenados. Los tests comprueban ausencia de panic, no que cada entrada deba ser aceptada.
+- El CLI cubre nombre vacío/no entrecomillado, campos duplicados y asignaciones fuera de secciones conocidas. La semántica sigue siendo el subconjunto documentado, no TOML completo.
+- Limitación explícita: estas pruebas son corpus determinista y no reemplazan libFuzzer, cobertura guiada, sanitizadores ni sesiones de larga duración.

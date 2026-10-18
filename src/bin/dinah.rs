@@ -489,6 +489,56 @@ mod tests {
     }
 
     #[test]
+    fn manifest_parser_rejects_empty_quoted_project_name() {
+        let path = temp_dir();
+        fs::write(path.join("DINAH.toml"), "[project]\nname = \"   \"\n").unwrap();
+        assert_eq!(
+            read_manifest(&path).unwrap_err().kind(),
+            std::io::ErrorKind::InvalidData
+        );
+        fs::remove_dir_all(path).unwrap();
+    }
+
+    #[test]
+    fn manifest_parser_rejects_unquoted_project_name() {
+        let path = temp_dir();
+        fs::write(path.join("DINAH.toml"), "[project]\nname = sample\n").unwrap();
+        assert_eq!(
+            read_manifest(&path).unwrap_err().kind(),
+            std::io::ErrorKind::InvalidData
+        );
+        fs::remove_dir_all(path).unwrap();
+    }
+
+    #[test]
+    fn manifest_parser_handles_duplicate_project_fields_deterministically() {
+        let path = temp_dir();
+        fs::write(
+            path.join("DINAH.toml"),
+            "[project]\nname = \"first\"\nname = \"second\"\nversion = \"1\"\n",
+        )
+        .unwrap();
+        let parsed = read_manifest(&path).unwrap();
+        assert_eq!(parsed.0, "second");
+        assert_eq!(parsed.1, "1");
+        fs::remove_dir_all(path).unwrap();
+    }
+
+    #[test]
+    fn manifest_parser_ignores_assignments_outside_known_sections() {
+        let path = temp_dir();
+        fs::write(
+            path.join("DINAH.toml"),
+            "name = \"ignored\"\n[project]\nname = \"valid\"\n[other]\nversion = \"ignored\"\n",
+        )
+        .unwrap();
+        let parsed = read_manifest(&path).unwrap();
+        assert_eq!(parsed.0, "valid");
+        assert_eq!(parsed.1, "unspecified");
+        fs::remove_dir_all(path).unwrap();
+    }
+
+    #[test]
     fn run_rejects_missing_project_name() {
         let path = temp_dir();
         fs::write(path.join("DINAH.toml"), "[project]\nversion = \"0.1.0\"\n").unwrap();

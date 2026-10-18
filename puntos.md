@@ -6,8 +6,8 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 
 - Total de puntos numerados: 287
 - Completados: 213
-- En progreso: 8
-- Pendientes: 66
+- En progreso: 9
+- Pendientes: 65
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -252,7 +252,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 201 — Revisar permisos (privilegios efectivos, create_new, sockets y recomendaciones de mínimo privilegio documentados)
 - [x] 202 — Revisar filesystem (límites, TOCTOU, symlinks, journals sin límite global y falta de sync_all documentados)
 - [x] 203 — Revisar networking (TCP bloqueante, ausencia de framing/TLS/auth/rate limit y responsabilidades del consumidor documentadas)
-- [ ] 204 — Añadir fuzzing
+- [>] 204 — Añadir fuzzing (corpus determinista acotado para replay y parser de manifiesto; sigue pendiente integrar y ejecutar fuzzing coverage-guided con libFuzzer)
 - [x] 205 — Añadir tests de corrupción (longitudes excesivas, versión desconocida y opcode inválido; checksum y truncado ya cubiertos)
 - [x] 206 — Añadir tests de estrés (8 hilos × 2000 incrementos sobre el registro compartido; estrés acotado, no benchmark)
 - [x] 207 — Añadir tests de concurrencia (seis hilos operan sobre journals independientes y verifican actualizaciones/reapertura; no prueba multiwriter sobre un mismo archivo)
