@@ -188,7 +188,9 @@ fn validate_field(field: &[u8]) -> Result<(), StorageError> {
     }
 }
 
-fn replay(bytes: &[u8]) -> Result<(BTreeMap<Vec<u8>, Vec<u8>>, usize), StorageError> {
+type Entries = BTreeMap<Vec<u8>, Vec<u8>>;
+
+fn replay(bytes: &[u8]) -> Result<(Entries, usize), StorageError> {
     let mut entries = BTreeMap::new();
     let mut cursor = 0usize;
     while cursor < bytes.len() {
