@@ -5,9 +5,9 @@ Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. P
 ## Estado inicial
 
 - Total de puntos numerados: 287
-- Completados: 241
+- Completados: 242
 - En progreso: 25
-- Pendientes: 21
+- Pendientes: 20
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -317,9 +317,9 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [>] 257 — Ejecutar sistema completo (smoke tests públicos integran Runtime/Network, Native, CLI, Storage, Simulation y observabilidad; el CLI ejecuta una tarea seleccionada y la integración comprueba un escape Unicode; esto no constituye una aplicación completa ni integra framing/auth de red; CI de `2374187` verde)
 - [x] 258 — Crear ejemplos completos (`examples/system_integration.rs` demuestra NetworkWorkQueue + Scheduler + Native + métricas; ejemplo intencionalmente acotado, sin prometer socket real ni integración de todos los subsistemas)
 - [x] 259 — Crear tests end-to-end (smoke test público cubre un pipeline Core/Runtime/Memory/Compute/ECS/Simulation/Storage/observabilidad; no representa todavía la arquitectura completa ni subsistemas sin implementar)
-- [ ] 260 — Resolver dependencias circulares
+- [x] 260 — Resolver dependencias circulares (CI ejecuta `scripts/check_module_cycles.py`, que inspecciona referencias fuente `crate::` entre módulos raíz y no detecta ciclos en el grafo actual; tests Python verifican grafos cíclicos/acíclicos. Es un guardrail de referencias, no prueba ausencia de dependencias conceptuales o de runtime.)
 - [>] 261 — Revisar API pública (salida JSON escapa controles, comentarios no truncan hashes y el parser conserva whitespace y valida escapes Unicode escalares; release checklist explicita revisión de compatibilidad pendiente; congelación v0.1 sigue abierta)
-- [>] 262 — Revisar arquitectura completa (matriz inicial en `docs/integration-matrix.md`; release checklist registra pendientes de dependencias circulares, framing de red y revisión global antes de congelar arquitectura)
+- [>] 262 — Revisar arquitectura completa (matriz en `docs/integration-matrix.md` y guardrail CI del grafo de referencias entre módulos raíz; siguen pendientes framing de red, límites de integración y revisión global antes de congelar arquitectura)
 
 ## FASE 16 — dinah v0.1
 
