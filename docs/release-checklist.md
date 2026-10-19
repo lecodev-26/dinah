@@ -28,7 +28,7 @@ Blocker review:
 - Fuzzing and independent audits are deferred to the v0.2 cycle (`puntos2.md`, puntos 307–311) and documented as limits in `docs/security-review.md` and the README. Not blockers for 0.1.0: pre-alpha software with no consumers yet.
 - MSRV is now explicit (`rust-version = "1.95"`), verified empirically on the release commit.
 - Benchmarks exist and are archived for five platforms via CI (`artifacts/`), plus a full local run on the release commit.
-- `cargo publish` was NOT executed as part of this release commit: publication on crates.io remains an explicit owner decision. Everything required for it is verified (dry-run green, package contents inspected).
+- `cargo publish` was executed by the owner with an explicit API token after the release verification: `dinah 0.1.0` is live on crates.io (`cargo add dinah`). The dry-run, package inspection and MSRV verification all preceded the upload.
 
 ## Pre-release gates
 
@@ -38,7 +38,7 @@ Blocker review:
 - Confirm `puntos.md`/`puntos2.md` status counters match the checklist markers (`python3 scripts/check_points.py`).
 - Verify MSRV claim (`rust-version`) against the actual minimum toolchain that compiles the workspace.
 
-## Publication process (owner decision)
+## Publication process
 
 1. Wait for CI green on the release commit (all four workflows that trigger for it).
 2. `cargo publish` (owner decision; `--dry-run` already verified).
