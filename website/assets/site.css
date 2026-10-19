@@ -173,13 +173,13 @@ section { position: relative; }
   font-size: 1.35rem;
   letter-spacing: 0.02em;
   text-decoration: none;
-  display: inline-flex; align-items: baseline; gap: 0.55rem;
+  display: inline-flex; align-items: center; gap: 0.55rem;
 }
-.wordmark .dot {
-  width: 0.5rem; height: 0.5rem; border-radius: 50%;
-  background: var(--color-accent);
-  align-self: center;
+.wordmark .logo {
+  width: 1.75rem; height: 1.75rem;
+  display: block;
 }
+.footer-brand .wordmark .logo { width: 1.55rem; height: 1.55rem; }
 .site-nav { display: flex; gap: var(--space-5); margin-left: auto; }
 .site-nav a {
   font-size: var(--text-sm); font-weight: 500;
@@ -452,6 +452,7 @@ section { position: relative; }
 .arch-note h3 { font-size: var(--text-lg); font-weight: 700; margin-bottom: var(--space-1); }
 .arch-note p { font-size: var(--text-sm); color: var(--color-text-muted); }
 .arch-svg { width: 100%; height: auto; }
+.arch-svg--mobile { display: none; }
 .arch-svg .layer-box {
   fill: var(--color-surface);
   stroke: var(--color-border);
@@ -461,10 +462,12 @@ section { position: relative; }
   font-family: var(--font-mono); font-size: 13px; fill: var(--color-text);
 }
 .arch-svg .layer-sub {
-  font-family: var(--font-mono); font-size: 10.5px; fill: var(--color-text-faint);
+  font-family: var(--font-mono); font-size: 10.5px; fill: var(--color-text-muted);
 }
 .arch-svg .layer-core { fill: var(--color-accent-soft); stroke: var(--color-accent); }
 .arch-svg .core-label { fill: var(--color-accent-strong); font-weight: 600; }
+.arch-svg--mobile .layer-label { font-size: 17px; }
+.arch-svg--mobile .layer-sub { font-size: 13.5px; }
 
 /* ---------- benchmarks ---------- */
 .bench-cards {
@@ -504,7 +507,7 @@ section { position: relative; }
 .bench-note {
   margin-top: var(--space-5);
   font-size: var(--text-xs);
-  color: var(--color-text-faint);
+  color: var(--color-text-muted);
   line-height: 1.6;
 }
 
@@ -597,7 +600,7 @@ section { position: relative; }
 .post-meta {
   display: flex; gap: var(--space-3); align-items: baseline;
   font-family: var(--font-mono); font-size: var(--text-xs);
-  color: var(--color-text-faint);
+  color: var(--color-text-muted);
   margin-bottom: var(--space-3);
 }
 .post-card-body h3 { font-size: var(--text-xl); font-weight: 800; margin-bottom: var(--space-2); }
@@ -745,19 +748,26 @@ section { position: relative; }
   .stats-grid { grid-template-columns: repeat(3, 1fr); row-gap: var(--space-6); }
   .bench-cards { grid-template-columns: 1fr; }
   .modules-grid { grid-template-columns: repeat(2, 1fr); }
-  .mod-card, .mod-card--wide { grid-column: span 1; }
+  .modules-grid > .mod-card { grid-column: span 1; }
   .modules-grid .mod-card--capstone { grid-column: span 2; flex-direction: column; gap: var(--space-2); align-items: stretch; }
   .modules-grid .mod-card--capstone .mod-desc { max-width: none; }
   .post-card { grid-column: span 1; grid-template-columns: 1fr; }
   .footer-grid { grid-template-columns: repeat(2, 1fr); }
   .site-nav { display: none; }
   .mobile-nav-btn { display: inline-flex; }
+  .blog-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 560px) {
-  .stats-grid { grid-template-columns: repeat(2, 1fr); }
-  .modules-grid { grid-template-columns: 1fr; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); row-gap: var(--space-6); }
+  .stat-label { font-size: 0.8rem; }
+  .modules-grid { grid-template-columns: 1fr; gap: var(--space-3); }
+  .modules-grid > .mod-card { grid-column: span 1; }
+  .modules-grid .mod-card--capstone { grid-column: span 1; }
+  .mod-card { padding: var(--space-4); }
   .limits-grid { grid-template-columns: 1fr; }
-  .footer-grid { grid-template-columns: 1fr; }
-  .site-nav { display: none; }
+  .hero-badges { gap: var(--space-2); }
+  .hero-badges .badge { padding: 0.25rem 0.5rem; }
+  .arch-svg--desktop { display: none; }
+  .arch-svg--mobile { display: block; }
   .post-card-art { min-height: 150px; }
 }

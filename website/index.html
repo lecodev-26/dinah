@@ -8,7 +8,9 @@
   <meta property="og:title" content="DINAH — the runtime that shows its work">
   <meta property="og:description" content="Zero-dependency, unsafe-free Rust runtime & compute foundation. v0.1.0 on crates.io.">
   <meta property="og:type" content="website">
-  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/logo-32.png">
+  <link rel="icon" type="image/png" sizes="64x64" href="assets/logo-64.png">
+  <link rel="apple-touch-icon" href="assets/logo-180.png">
   <link rel="preconnect" href="https://api.fontshare.com">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,7 +25,7 @@
   <header class="site-header" id="siteHeader">
     <div class="container header-inner">
       <a class="wordmark" href="./" aria-label="DINAH home">
-        <span class="dot" aria-hidden="true"></span>DINAH
+        <img class="logo" src="assets/logo.png" alt="" width="30" height="30" decoding="async">DINAH
       </a>
       <nav class="site-nav" aria-label="Primary">
         <a href="#modules" data-i18n-nav="modules">Modules</a>
@@ -184,7 +186,7 @@
           </div>
         </div>
         <div class="reveal">
-          <svg class="arch-svg" viewBox="0 0 520 400" role="img" aria-label="Layered architecture diagram of DINAH">
+          <svg class="arch-svg arch-svg--desktop" viewBox="0 0 520 400" role="img" aria-label="Layered architecture diagram of DINAH">
             <g>
               <rect class="layer-box" x="10" y="10" width="500" height="58"/>
               <text class="layer-label" x="30" y="36">application</text>
@@ -229,6 +231,53 @@
               <rect class="layer-box layer-core" x="10" y="350" width="500" height="42"/>
               <text class="layer-label core-label" x="30" y="376">core</text>
               <text class="layer-sub" x="110" y="376">shared types & errors — the contract vocabulary</text>
+            </g>
+          </svg>
+          <svg class="arch-svg arch-svg--mobile" viewBox="0 0 360 620" role="img" aria-label="Layered architecture diagram of DINAH">
+            <g>
+              <rect class="layer-box" x="6" y="6" width="348" height="62"/>
+              <text class="layer-label" x="26" y="36">application</text>
+              <text class="layer-sub" x="26" y="56">your deterministic domain</text>
+            </g>
+            <g>
+              <rect class="layer-box" x="6" y="76" width="348" height="62"/>
+              <text class="layer-label" x="26" y="106">simulation</text>
+              <text class="layer-sub" x="26" y="126">fixed-step clock · replay</text>
+            </g>
+            <g>
+              <rect class="layer-box" x="6" y="146" width="348" height="62"/>
+              <text class="layer-label" x="26" y="176">networking</text>
+              <text class="layer-sub" x="26" y="196">TCP · prediction · simulator</text>
+            </g>
+            <g>
+              <rect class="layer-box" x="6" y="216" width="348" height="62"/>
+              <text class="layer-label" x="26" y="246">ecs</text>
+              <text class="layer-sub" x="26" y="266">world · entities · storage</text>
+            </g>
+            <g>
+              <rect class="layer-box" x="6" y="286" width="348" height="62"/>
+              <text class="layer-label" x="26" y="316">compute</text>
+              <text class="layer-sub" x="26" y="336">sequential · parallel · pipelines</text>
+            </g>
+            <g>
+              <rect class="layer-box" x="6" y="356" width="348" height="62"/>
+              <text class="layer-label" x="26" y="386">storage</text>
+              <text class="layer-sub" x="26" y="406">journal · CRC-32 replay</text>
+            </g>
+            <g>
+              <rect class="layer-box" x="6" y="426" width="348" height="62"/>
+              <text class="layer-label" x="26" y="456">runtime</text>
+              <text class="layer-sub" x="26" y="476">scheduler · shared state</text>
+            </g>
+            <g>
+              <rect class="layer-box" x="6" y="496" width="348" height="62"/>
+              <text class="layer-label" x="26" y="526">memory</text>
+              <text class="layer-sub" x="26" y="546">bounded buffers · soa</text>
+            </g>
+            <g>
+              <rect class="layer-box layer-core" x="6" y="566" width="348" height="50"/>
+              <text class="layer-label core-label" x="26" y="598">core</text>
+              <text class="layer-sub" x="100" y="598">types & errors</text>
             </g>
           </svg>
         </div>
@@ -406,7 +455,7 @@
     <div class="container">
       <div class="footer-grid">
         <div class="footer-brand">
-          <a class="wordmark" href="./"><span class="dot" aria-hidden="true"></span>DINAH</a>
+          <a class="wordmark" href="./"><img class="logo" src="assets/logo.png" alt="" width="26" height="26" decoding="async">DINAH</a>
           <p data-i18n="footerBlurb">A Rust-first modular runtime and high-performance compute foundation. Hand-built documentation, measured evidence, no unverifiable claims.</p>
         </div>
         <div class="footer-col">
