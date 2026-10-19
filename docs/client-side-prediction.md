@@ -1,82 +1,82 @@
-# Client-side prediction — investigación (punto 127)
+# Client-side prediction — research (point 127)
 
-Estado: investigación y primera implementación genérica de los puntos 128–131. `dinah::network::prediction::PredictionBuffer` implementa predicción local, historial acotado, reconciliación y replay mediante un callback del consumidor. No transmite inputs ni proporciona una simulación de dominio, servidor autoritativo o garantía de determinismo entre plataformas.
+Status: research and first generic implementation of points 128–131. `dinah::network::prediction::PredictionBuffer` implements local prediction, bounded history, reconciliation and replay through a consumer callback. It does not transmit inputs and provides no domain simulation, authoritative server or cross-platform determinism guarantee.
 
-## Problema y objetivo
+## Problem and goal
 
-En un modelo cliente-servidor autoritativo, esperar a que un input viaje al servidor y vuelva su resultado añade al control al menos el retardo de ida y vuelta más el tiempo de procesamiento. La predicción del cliente ejecuta inmediatamente una simulación local de los inputs propios para que el control se sienta receptivo. Esa simulación es provisional: el servidor conserva la autoridad y puede rechazar inputs o producir un estado distinto.
+In an authoritative client-server model, waiting for an input to travel to the server and its result to return adds at least the round-trip latency plus processing time to the controls. Client prediction immediately runs a local simulation of the player's own inputs so the controls feel responsive. That simulation is provisional: the server retains authority and may reject inputs or produce a different state.
 
-La predicción no es reconciliación. Prediction estima el resultado antes de recibir confirmación; reconciliation incorpora un estado autoritativo posterior y vuelve a aplicar los inputs aún no confirmados para recuperar el presente local.
+Prediction is not reconciliation. Prediction estimates the result before receiving confirmation; reconciliation incorporates a later authoritative state and re-applies the still-unconfirmed inputs to recover the local present.
 
-## Modelo recomendado para DINAH
+## Recommended model for DINAH
 
-Adoptar para la primera iteración un modelo **autoritativo de servidor + inputs numerados + predicción local acotada + reconciliación por secuencia confirmada**. Debe ser una capa explícita sobre Simulation, no una responsabilidad implícita de `network::Connection`.
+Adopt for the first iteration an **authoritative server + numbered inputs + bounded local prediction + reconciliation by confirmed sequence** model. It must be an explicit layer over Simulation, not an implicit responsibility of `network::Connection`.
 
-1. El cliente crea un input de dominio con secuencia monotónica y tick lógico. El input representa una intención validable (por ejemplo, dirección de movimiento), no una posición final que el cliente pueda imponer al servidor.
-2. El cliente guarda el input en un historial acotado y lo aplica inmediatamente a su estado predictivo local.
-3. El transporte envía inputs al servidor. La entrega, el orden, la duplicación y la pérdida deben definirse en el protocolo posterior; TCP existente solo ofrece un byte stream y no equivale a un protocolo de inputs.
-4. El servidor valida y procesa los inputs conforme a su política autoritativa y publica un snapshot del estado con el último número de secuencia procesado para ese cliente.
-5. Al recibir un snapshot, el cliente instala como base el estado autoritativo, descarta inputs reconocidos y vuelve a simular en orden los inputs pendientes posteriores al reconocimiento.
-6. La simulación corregida es el estado de juego. Cualquier suavizado visual debe ser una capa de presentación separada: no debe contaminar el estado usado para física, colisiones, reglas o próximos inputs.
+1. The client creates a domain input with a monotonic sequence and logical tick. The input represents a validatable intent (for example, a movement direction), not a final position the client can impose on the server.
+2. The client stores the input in a bounded history and immediately applies it to its local predictive state.
+3. The transport sends inputs to the server. Delivery, ordering, duplication and loss must be defined in the later protocol; the existing TCP only offers a byte stream and is not equivalent to an input protocol.
+4. The server validates and processes inputs according to its authoritative policy and publishes a state snapshot with the last processed sequence number for that client.
+5. On receiving a snapshot, the client installs the authoritative state as the base, discards acknowledged inputs and re-simulates in order the pending inputs after the acknowledgement.
+6. The corrected simulation is the game state. Any visual smoothing must be a separate presentation layer: it must not contaminate the state used for physics, collisions, rules or future inputs.
 
-## Datos y contratos conceptuales del protocolo de aplicación
+## Data and conceptual contracts of the application protocol
 
-- **Input:** secuencia, tick o referencia temporal lógica y payload de dominio validado. Los tipos exactos pertenecen al protocolo de aplicación, no al wrapper TCP.
-- **Snapshot autoritativo:** tick del servidor, estado mínimo necesario para reanudar la simulación y última secuencia de input procesada. Debe ser posible distinguir snapshot viejo, duplicado o incompatible.
-- **Historial:** buffer circular o estructura acotada que guarda inputs pendientes; cada entrada tiene identidad estable. La política de capacidad, overflow y pérdida de entradas debe ser explícita, sin crecer sin límite por datos remotos.
-- **Reloj:** usar ticks explícitos de `Simulation`; no depender de `wall-clock`, del orden de llegada de paquetes ni de timers ocultos para producir un replay reproducible.
-- **Autoridad y seguridad:** el servidor valida cada input y el estado definitivo. La predicción del cliente no concede permisos ni constituye evidencia fiable para economía, combate, inventario o resultados competitivos.
-- **Errores y límites:** inputs inválidos, secuencias imposibles, snapshots obsoletos, saltos de tick, historial agotado y versiones incompatibles necesitan políticas explícitas. No ocultar un fallo borrando el historial y fingiendo una reconciliación correcta.
-- **Integración:** Networking transporta bytes; el futuro codec valida el wire format; una capa de protocolo mapea mensajes a inputs/snapshots; Simulation ejecuta la transición de estado. Evitar dependencias circulares y mutación oculta del mundo.
+- **Input:** sequence, logical tick or time reference and a validated domain payload. The exact types belong to the application protocol, not the TCP wrapper.
+- **Authoritative snapshot:** server tick, the minimum state needed to resume the simulation and the last processed input sequence. It must be possible to distinguish a stale, duplicated or incompatible snapshot.
+- **History:** a ring buffer or bounded structure that keeps pending inputs; each entry has a stable identity. The capacity, overflow and entry-loss policy must be explicit, without growing without limit from remote data.
+- **Clock:** use explicit `Simulation` ticks; do not depend on wall-clock, packet arrival order or hidden timers to produce a reproducible replay.
+- **Authority and security:** the server validates every input and the definitive state. Client prediction grants no permissions and is not reliable evidence for economy, combat, inventory or competitive outcomes.
+- **Errors and limits:** invalid inputs, impossible sequences, stale snapshots, tick jumps, exhausted history and incompatible versions need explicit policies. Do not hide a failure by clearing the history and pretending a correct reconciliation.
+- **Integration:** Networking transports bytes; the future codec validates the wire format; a protocol layer maps messages to inputs/snapshots; Simulation executes the state transition. Avoid circular dependencies and hidden world mutation.
 
-## Determinismo: requisito condicionado, no supuesto
+## Determinism: a conditional requirement, not an assumption
 
-El replay solo reconstruirá el mismo resultado si el modelo simulado es suficientemente reproducible para el estado inicial y la misma secuencia de inputs. Debe investigarse por cada modelo: orden de iteración, aritmética de punto flotante, estado externo, aleatoriedad, concurrencia y efectos secundarios. No se debe declarar determinismo bit a bit entre arquitecturas sin pruebas específicas. Si la simulación no es determinista, la reconciliación todavía puede corregir el estado, pero la resimulación puede divergir y necesitar snapshots más completos o un diseño distinto.
+The replay will only reconstruct the same result if the simulated model is sufficiently reproducible for the initial state and the same input sequence. This must be investigated per model: iteration order, floating-point arithmetic, external state, randomness, concurrency and side effects. Bit-for-bit determinism across architectures must not be declared without specific tests. If the simulation is not deterministic, reconciliation can still correct the state, but resimulation may diverge and need more complete snapshots or a different design.
 
-## Corrección y experiencia visual
+## Correction and visual experience
 
-La opción segura por defecto es corregir el estado de simulación a la autoridad y reejecutar inputs pendientes. Un pequeño offset visual amortiguado puede disimular correcciones pequeñas, pero no debe alterar la verdad de simulación ni esconder indefinidamente una divergencia grande. Para correcciones grandes, estado inválido o historial perdido, priorizar convergencia explícita sobre suavidad estética.
+The safe default is to correct the simulation state to the authority and re-execute pending inputs. A small damped visual offset can disguise small corrections, but it must not alter the simulation truth or indefinitely hide a large divergence. For large corrections, invalid state or lost history, prefer explicit convergence over aesthetic smoothness.
 
-La predicción del jugador local no resuelve la visualización de otras entidades. Interpolación de snapshots remotos y lag compensation son problemas relacionados pero separados; no deben colarse dentro del punto 128.
+Local player prediction does not solve the visualization of other entities. Remote snapshot interpolation and lag compensation are related but separate problems; they must not creep into point 128.
 
-## Riesgos y límites
+## Risks and limits
 
-- Colisiones con otros jugadores, objetos movidos por el servidor, eventos simultáneos y reglas no predecibles producen correcciones legítimas.
-- Un cliente puede ejecutar inputs localmente que el servidor luego rechace; el juego debe separar feedback provisional de efectos autoritativos irreversibles.
-- TCP puede sufrir bloqueo de cabecera de línea cuando se pierde un segmento; el transporte actual no ofrece garantías de tiempo real ni es una política de entrega de inputs.
-- Un historial demasiado corto no permite replay; uno ilimitado expone al cliente a consumo de memoria creciente. La capacidad debe derivarse de una ventana temporal y un máximo configurados.
-- No es correcto asumir que la predicción eliminará el lag, evitará trampas o garantizará sincronización exacta.
+- Collisions with other players, server-moved objects, simultaneous events and unpredictable rules produce legitimate corrections.
+- A client may run inputs locally that the server later rejects; the game must separate provisional feedback from irreversible authoritative effects.
+- TCP can suffer head-of-line blocking when a segment is lost; the current transport offers no real-time guarantees and is not an input delivery policy.
+- A history that is too short prevents replay; an unlimited one exposes the client to growing memory consumption. Capacity must derive from a configured time window and maximum.
+- It is not correct to assume that prediction will eliminate lag, prevent cheating or guarantee exact synchronization.
 
-## Implementación inicial (puntos 128–131)
+## Initial implementation (points 128–131)
 
-La API está en `src/network/prediction.rs` y se exporta como `dinah::network::prediction`. `PredictionBuffer<S, I>` conserva estado genérico, asigna secuencias desde 1, aplica cada input en cuanto se predice y retiene las entradas pendientes hasta un snapshot que las reconoce. La capacidad se configura al construir el buffer; si se llena, `predict` devuelve `HistoryFull` sin aplicar ni asignar el input nuevo.
+The API is in `src/network/prediction.rs` and is exported as `dinah::network::prediction`. `PredictionBuffer<S, I>` keeps generic state, assigns sequences from 1, applies each input as soon as it is predicted and retains pending entries until a snapshot acknowledges them. Capacity is configured when building the buffer; if it fills, `predict` returns `HistoryFull` without applying or assigning the new input.
 
-`AuthoritativeSnapshot<S>` incluye tick, última secuencia procesada y estado autoritativo. `reconcile` rechaza acknowledgements por encima de la última secuencia emitida, ignora snapshots obsoletos y, si acepta el snapshot, elimina entradas reconocidas y vuelve a aplicar las restantes en orden original. El consumidor aporta la función de transición, que debe evitar efectos secundarios y ser reproducible para que el replay tenga sentido.
+`AuthoritativeSnapshot<S>` includes the tick, the last processed sequence and the authoritative state. `reconcile` rejects acknowledgements above the last emitted sequence, ignores stale snapshots and, if it accepts the snapshot, removes acknowledged entries and re-applies the remaining ones in original order. The consumer provides the transition function, which must avoid side effects and be reproducible for the replay to make sense.
 
-Los tests de `tests/network_prediction.rs` cubren aplicación inmediata, secuencias, reconciliación, replay, snapshots obsoletos, límite de historial, ACK futuro y repetibilidad con la misma función de transición. Esto demuestra repetibilidad en el modelo de test, no determinismo bit a bit universal.
+The tests in `tests/network_prediction.rs` cover immediate application, sequences, reconciliation, replay, stale snapshots, the history limit, future ACKs and repeatability with the same transition function. This demonstrates repeatability in the test model, not universal bit-for-bit determinism.
 
-## Secuencia de trabajo para puntos 128–131
+## Work sequence for points 128–131
 
-- **128 — Implementar prediction:** implementación genérica inicial completada y descrita arriba. La integración con sockets, adaptadores de dominio y un protocolo de aplicación siguen fuera del alcance actual.
-- **129 — Implementar reconciliation:** definir snapshot autoritativo y secuencia confirmada; aplicar snapshot y reejecutar solo los inputs posteriores a esa secuencia. Implementación inicial y tests de snapshots obsoletos/ACK inválido completados.
-- **130 — Implementar history/state buffers:** limitar capacidad y validar secuencias; implementación inicial rechaza overflow sin descartar inputs silenciosamente. El buffer no retiene datos sin límite.
-- **131 — Implementar deterministic resimulation:** replay repetible con la misma base/inputs mediante callback compartido y test de repetibilidad. El alcance demostrado no incluye determinismo multiplataforma.
+- **128 — Implement prediction:** initial generic implementation completed and described above. Integration with sockets, domain adapters and an application protocol remain outside the current scope.
+- **129 — Implement reconciliation:** define the authoritative snapshot and confirmed sequence; apply the snapshot and re-execute only the inputs after that sequence. Initial implementation and stale/invalid-ACK tests completed.
+- **130 — Implement history/state buffers:** bound capacity and validate sequences; the initial implementation rejects overflow without silently discarding inputs. The buffer does not retain data without limit.
+- **131 — Implement deterministic resimulation:** repeatable replay with the same base/inputs via a shared callback and a repeatability test. The demonstrated scope does not include cross-platform determinism.
 
-Los tests iniciales deben ser deterministas y locales, con retrasos, duplicados, pérdida, reordenación y snapshots antiguos simulados mediante entradas explícitas; no deben depender de sleeps ni de servicios externos. Los escenarios de pérdida/latencia de producción corresponden también a los puntos 132–134.
+The initial tests must be deterministic and local, with delays, duplicates, loss, reordering and stale snapshots simulated through explicit inputs; they must not depend on sleeps or external services. Production loss/latency scenarios also belong to points 132–134.
 
-## Criterios de aceptación de la investigación
+## Research acceptance criteria
 
-- Separación explícita entre predicción, reconciliación, historial, resimulación e interpolación visual.
-- Autoridad del servidor y confianza limitada en el cliente documentadas.
-- Separación conceptual entre secuencias, snapshots e inputs pendientes; la API genérica de `PredictionBuffer` existe, pero no implementa un protocolo de red ni adaptadores de dominio.
-- Determinismo, límites de memoria, errores, eventos no predecibles y políticas de corrección identificados.
-- Plan incremental para 128–131 y pruebas deterministas definido.
+- Explicit separation between prediction, reconciliation, history, resimulation and visual interpolation.
+- Server authority and limited client trust documented.
+- Conceptual separation between sequences, snapshots and pending inputs; the generic `PredictionBuffer` API exists, but it implements no network protocol or domain adapters.
+- Determinism, memory limits, errors, unpredictable events and correction policies identified.
+- Incremental plan for 128–131 and deterministic tests defined.
 
-## Referencias consultadas
+## References consulted
 
-- Gabriel Gambetta, [Client-Side Prediction and Server Reconciliation](https://www.gabrielgambetta.com/client-side-prediction-server-reconciliation.html): inputs numerados, estado autoritativo y replay de inputs no confirmados.
-- Glenn Fiedler, [What Every Programmer Needs To Know About Game Networking](https://www.gafferongames.com/post/what_every_programmer_needs_to_know_about_game_networking/): historial circular de estado/inputs y rewind/replay tras una corrección.
-- Gabriel Gambetta, [Entity Interpolation](https://www.gabrielgambetta.com/entity-interpolation.html): predicción de entidad local frente a interpolación de entidades remotas.
-- Glenn Fiedler, [Snapshot Interpolation](https://gafferongames.com/post/snapshot_interpolation/): límites de asumir determinismo perfecto y alternativa de interpolar snapshots.
+- Gabriel Gambetta, [Client-Side Prediction and Server Reconciliation](https://www.gabrielgambetta.com/client-side-prediction-server-reconciliation.html): numbered inputs, authoritative state and replay of unconfirmed inputs.
+- Glenn Fiedler, [What Every Programmer Needs To Know About Game Networking](https://www.gafferongames.com/post/what_every_programmer_needs_to_know_about_game_networking/): circular state/input history and rewind/replay after a correction.
+- Gabriel Gambetta, [Entity Interpolation](https://www.gabrielgambetta.com/entity-interpolation.html): local entity prediction versus remote entity interpolation.
+- Glenn Fiedler, [Snapshot Interpolation](https://gafferongames.com/post/snapshot_interpolation/): limits of assuming perfect determinism and the alternative of interpolating snapshots.
 
-Las referencias fundamentan el modelo conceptual; no implican copiar sus implementaciones ni garantizan que sus parámetros sean adecuados para DINAH.
+The references ground the conceptual model; they do not imply copying their implementations or guarantee that their parameters are suitable for DINAH.

@@ -1,240 +1,240 @@
-# dinah Memory — modelo de diseño inicial
+# dinah Memory — initial design model
 
-Estado: diseño inicial; el punto 062 implementa el primer buffer acotado. El subsistema sigue siendo experimental y su API no es una garantía de estabilidad.
+Status: initial design; point 062 implements the first bounded buffer. The subsystem remains experimental and its API is not a stability guarantee.
 
-## Objetivos
+## Goals
 
-- Hacer explícitos el propietario de cada recurso, su duración y el coste de reservar capacidad.
-- Mantener la seguridad de memoria de Rust sin `unsafe` en la implementación inicial.
-- Permitir almacenamiento contiguo y reutilización cuando una carga real demuestre que son útiles.
-- Hacer que límites, fallos de reserva y sincronización sean visibles para quien llama.
-- Evitar promesas de rendimiento sin benchmarks reproducibles.
+- Make the owner of each resource, its lifetime and the cost of reserving capacity explicit.
+- Keep Rust's memory safety without `unsafe` in the initial implementation.
+- Allow contiguous storage and reuse when a real workload demonstrates they are useful.
+- Make limits, reservation failures and synchronization visible to the caller.
+- Avoid performance promises without reproducible benchmarks.
 
-## Modelo de ownership y ciclo de vida
+## Ownership and lifecycle model
 
-1. **Propiedad única por defecto.** Los valores pertenecen a una estructura propietaria (`Vec<T>`, `Box<T>` u otro contenedor estándar adecuado). La destrucción sigue el ciclo de vida de Rust y libera los recursos propiedad del contenedor.
-2. **Préstamos para acceso temporal.** Las vistas usan referencias y slices con lifetimes explícitos; no retienen referencias más allá de lo permitido por el compilador. Una vista no adquiere ni transfiere la propiedad del almacenamiento.
-3. **Transferencia explícita.** Mover un valor transfiere la propiedad sin duplicar por sí mismo el buffer. Las copias de elementos o clones de almacenamiento deben ser operaciones explícitas y documentadas.
-4. **Compartición excepcional y visible.** Cuando varios consumidores deban compartir datos, preferir primero préstamos; usar `Arc<T>` para propiedad compartida y `Mutex<T>`/`RwLock<T>` solo si hace falta mutabilidad sincronizada. La sincronización no se añade implícitamente.
-5. **Sin referencias colgantes ni liberación manual.** No exponer punteros crudos ni permitir que un pool recicle almacenamiento mientras existan vistas válidas. La implementación inicial no usa `unsafe` ni libera memoria manualmente.
+1. **Single ownership by default.** Values belong to an owning structure (`Vec<T>`, `Box<T>` or another suitable standard container). Destruction follows Rust's lifecycle and frees the resources owned by the container.
+2. **Borrows for temporary access.** Views use references and slices with explicit lifetimes; they retain no references beyond what the compiler allows. A view acquires or transfers no storage ownership.
+3. **Explicit transfer.** Moving a value transfers ownership without by itself duplicating the buffer. Copying elements or cloning storage must be explicit, documented operations.
+4. **Exceptional, visible sharing.** When several consumers must share data, prefer borrows first; use `Arc<T>` for shared ownership and `Mutex<T>`/`RwLock<T>` only if synchronized mutability is needed. Synchronization is not added implicitly.
+5. **No dangling references or manual freeing.** Do not expose raw pointers or allow a pool to recycle storage while valid views exist. The initial implementation uses no `unsafe` and frees no memory manually.
 
-## Reservas, capacidad y errores
+## Reservations, capacity and errors
 
-- Los contenedores estándar de Rust son la estrategia inicial; no crear un allocator propio por anticipado.
-- Las APIs que acepten límites deben distinguir capacidad máxima de longitud actual y documentar qué pasa al alcanzar el límite.
-- Las estructuras acotadas deben preferir un error recuperable o devolver el elemento no insertado frente a truncar, sobrescribir o crecer silenciosamente.
-- No prometer que una capacidad solicitada puede reservarse físicamente. Si una API necesita informar fallos de reserva, debe usar una operación fallible cuando esté disponible y preservar el error concreto.
-- Una reserva inicial puede reducir realocaciones, pero no equivale a una garantía de ausencia de futuras reservas salvo que el contrato y las operaciones lo aseguren.
-- Los tamaños derivados de entradas externas deben validarse antes de reservar y evitar cálculos de capacidad que desborden.
+- Standard Rust containers are the initial strategy; do not create a custom allocator in anticipation.
+- APIs accepting limits must distinguish maximum capacity from current length and document what happens when the limit is reached.
+- Bounded structures must prefer a recoverable error or returning the un-inserted element over truncating, overwriting or silently growing.
+- Do not promise that a requested capacity can be physically reserved. If an API needs to report reservation failures, it must use a fallible operation when available and preserve the concrete error.
+- An initial reservation may reduce reallocations, but it is not a guarantee of no future reservations unless the contract and operations ensure it.
+- Sizes derived from external input must be validated before reserving and must avoid capacity calculations that overflow.
 
-## Abstracción de asignación (punto 064)
+## Allocation abstraction (point 064)
 
-**Decisión: no introducir todavía un trait `Allocator` propio ni un allocator global.** El único almacenamiento implementado utiliza `Vec<T>` de la biblioteca estándar y `try_reserve_exact`, que ya permite informar fallos de reserva sin recurrir a una ruta de asignación deliberadamente infalible. Una interfaz propia ahora duplicaría capacidades sin tener un segundo backend que demuestre qué contrato común necesita DINAH.
+**Decision: do not introduce a custom `Allocator` trait or a global allocator yet.** The only implemented storage uses the standard library's `Vec<T>` and `try_reserve_exact`, which already allows reporting reservation failures without resorting to a deliberately infallible allocation path. A custom interface now would duplicate capabilities without a second backend that demonstrates what common contract DINAH needs.
 
-Contrato inicial:
+Initial contract:
 
-- Los tipos de Memory solicitan y poseen almacenamiento mediante contenedores estándar seguros; no administran direcciones ni liberación manual.
-- Las operaciones de construcción que necesitan reservar capacidad usan rutas fallibles cuando la biblioteca las ofrece. El error público describe el fallo de la operación, sin exponer detalles internos del allocator del sistema.
-- La capacidad lógica solicitada pertenece al contrato del contenedor; no se interpreta como un presupuesto exacto de bytes ni como garantía de memoria residente.
-- Las abstracciones futuras deberán separar, si la evidencia lo requiere, el mecanismo de reserva de la política del contenedor (límite, crecimiento y recuperación). No se debe añadir un trait que pretenda soportar allocators incompatibles sin un caso de uso y pruebas concretos.
-- Reconsiderar un trait cuando exista al menos un segundo backend real (por ejemplo, un pool explícito) que comparta operaciones y semántica de error con el almacenamiento estándar. Evaluar entonces fallos, alineación, ownership, concurrencia, compatibilidad `no_std` si aplica y coste de abstracción.
+- Memory types request and own storage through safe standard containers; they administer no addresses or manual freeing.
+- Construction operations that need to reserve capacity use fallible paths where the library offers them. The public error describes the operation's failure, without exposing internal system allocator details.
+- The requested logical capacity belongs to the container's contract; it is not interpreted as an exact byte budget or a resident-memory guarantee.
+- Future abstractions should separate, if evidence requires it, the reservation mechanism from the container policy (limit, growth and recovery). A trait that claims to support incompatible allocators must not be added without a concrete use case and tests.
+- Reconsider a trait when at least one real second backend exists (for example, an explicit pool) that shares operations and error semantics with standard storage. Then evaluate failures, alignment, ownership, concurrency, `no_std` compatibility if applicable and abstraction cost.
 
-`BufferCreateError::AllocationFailed` es la frontera pública actual: evita filtrar el error concreto del allocator y mantiene estable el contrato del buffer. Esta decisión no impide introducir una abstracción más rica en un punto posterior; evita comprometer prematuramente la API.
+`BufferCreateError::AllocationFailed` is the current public boundary: it avoids leaking the allocator's concrete error and keeps the buffer's contract stable. This decision does not prevent introducing a richer abstraction at a later point; it avoids prematurely committing the API.
 
-## Buffers, pools y reutilización
+## Buffers, pools and reuse
 
-- Los buffers propios serán dueños de sus elementos; las vistas serán prestadas y no poseerán la memoria.
-- Pools y arenas son optimizaciones opt-in, acotadas por una política explícita de capacidad y recuperación. No se introducen como asignador global ni como comportamiento oculto.
-- Una API de pool debe definir quién adquiere y devuelve cada recurso, cuándo puede reutilizarse, qué sucede al agotarse y si el pool es local a un hilo o compartido.
-- La reutilización no puede cambiar la semántica de inicialización ni exponer valores obsoletos. Los elementos deben estar correctamente inicializados antes de leerse.
-- El descarte de un pool libera sus recursos propios; los handles prestados no pueden sobrevivir al propietario del almacenamiento.
+- Own buffers own their elements; views are borrowed and do not own the memory.
+- Pools and arenas are opt-in optimizations, bounded by an explicit capacity and recovery policy. They are not introduced as a global allocator or hidden behavior.
+- A pool API must define who acquires and returns each resource, when it may be reused, what happens on exhaustion and whether the pool is thread-local or shared.
+- Reuse must not change initialization semantics or expose stale values. Elements must be correctly initialized before being read.
+- Discarding a pool frees its own resources; borrowed handles cannot outlive the storage owner.
 
-## Contrato de pools (punto 065)
+## Pool contract (point 065)
 
-**Decisión: diseñar primero un pool explícito, acotado y local a su propietario; no implementarlo todavía ni convertirlo en allocator global.** El punto 065 fija el contrato. El punto 066 resolverá por separado cómo reiniciar y limpiar cada clase de recurso antes de reutilizarla.
+**Decision: first design an explicit, bounded pool local to its owner; do not implement it yet or turn it into a global allocator.** Point 065 fixes the contract. Point 066 will separately resolve how to reset and clean each resource class before reuse.
 
-Contrato de diseño para una primera implementación futura:
+Design contract for a first future implementation:
 
-1. **Capacidad fija y explícita.** La creación recibe un límite de recursos y falla de forma recuperable si no puede reservar/preparar lo requerido. El pool no crece automáticamente al agotarse y no promete un presupuesto exacto de bytes salvo que una API posterior lo mida explícitamente.
-2. **Agotamiento visible.** Una adquisición sin recursos disponibles devuelve un error/resultado de agotamiento; no bloquea indefinidamente, no asigna un recurso ocultamente y no sobrescribe un recurso prestado.
-3. **Préstamo exclusivo con retorno verificable.** La primera API preferirá un lease/handle RAII que represente la adquisición exclusiva y devuelva el recurso al pool al finalizar su vida. El tipo de handle debe impedir que el pool se destruya o que el mismo slot se adquiera dos veces mientras el lease siga vivo. No se devolverán índices o referencias que permitan reutilización sin controlar el ciclo de vida.
-4. **Propiedad y fallos claros.** El pool es dueño de sus slots y recursos; el usuario posee temporalmente el lease, no el slot subyacente. Si la construcción del pool falla, no se publica una instancia parcial. Si no puede satisfacerse una adquisición, el estado del pool permanece válido y el error es observable.
-5. **Sin crecimiento ni recuperación implícitos.** La capacidad y la política de agotamiento forman parte del contrato. La liberación de un lease permite volver a adquirir el recurso, pero la política de reset/limpieza queda definida en el punto 066 y no se presume que todos los tipos puedan reutilizarse de la misma forma.
-6. **Sincronización explícita.** La primera implementación será local y no sincronizada: no promete `Send`/`Sync` adicionales ni acceso concurrente automático. El uso compartido y su estrategia de sincronización se deciden en los puntos 071 y 073; no habrá mutex global implícito.
-7. **Seguridad de memoria.** Mantener la implementación inicial en Rust seguro, sin punteros crudos ni `unsafe`. No se podrá leer un slot sin inicializar ni reciclarlo mientras exista un lease válido.
-8. **Sin compromiso prematuro de backend.** El pool no obliga a introducir un trait `Allocator`. Solo se extraerá una abstracción común cuando otro backend real demuestre operaciones y semánticas compartidas.
+1. **Fixed, explicit capacity.** Creation takes a resource limit and fails recoverably if it cannot reserve/prepare what is required. The pool does not grow automatically on exhaustion and promises no exact byte budget unless a later API measures it explicitly.
+2. **Visible exhaustion.** An acquisition with no resources available returns an exhaustion error/result; it does not block indefinitely, does not secretly allocate a resource and does not overwrite a lent resource.
+3. **Exclusive lease with verifiable return.** The first API will prefer an RAII lease/handle representing the exclusive acquisition that returns the resource to the pool at the end of its life. The handle type must prevent the pool from being destroyed or the same slot from being acquired twice while the lease is alive. No indices or references will be returned that allow reuse without controlling the lifecycle.
+4. **Clear ownership and failures.** The pool owns its slots and resources; the user temporarily owns the lease, not the underlying slot. If pool construction fails, no partial instance is published. If an acquisition cannot be satisfied, the pool's state remains valid and the error is observable.
+5. **No implicit growth or recovery.** Capacity and the exhaustion policy are part of the contract. Releasing a lease allows re-acquiring the resource, but the reset/cleaning policy is defined in point 066 and it is not assumed that every type can be reused the same way.
+6. **Explicit synchronization.** The first implementation will be local and unsynchronized: it promises no additional `Send`/`Sync` or automatic concurrent access. Shared use and its synchronization strategy are decided in points 071 and 073; there will be no implicit global mutex.
+7. **Memory safety.** Keep the initial implementation in safe Rust, with no raw pointers or `unsafe`. An uninitialized slot must not be readable, nor recycled while a valid lease exists.
+8. **No premature backend commitment.** The pool does not force introducing an `Allocator` trait. A common abstraction will only be extracted when another real backend demonstrates shared operations and semantics.
 
-**Criterio para implementar más adelante:** pruebas de pool vacío y lleno, agotamiento, adquisición/retorno, destrucción con recursos disponibles, exclusividad de leases, fallo de construcción y ausencia de acceso a recursos no inicializados. Los detalles de limpieza/reset, las pruebas de concurrencia y los benchmarks corresponden a sus puntos específicos; no se consideran completados por esta decisión de diseño.
+**Criteria for implementing later:** tests for empty and full pool, exhaustion, acquisition/return, destruction with available resources, lease exclusivity, construction failure and absence of access to uninitialized resources. Cleaning/reset details, concurrency tests and benchmarks belong to their specific points; they are not considered completed by this design decision.
 
-## Contrato de reutilización de memoria (punto 066)
+## Memory reuse contract (point 066)
 
-**Decisión: reutilizar almacenamiento no significa conservar vivos los valores anteriores.** La estrategia por defecto será destruir los valores que ya no pertenecen al usuario y conservar solo la reserva de almacenamiento cuando el contenedor lo permita. No se añadirá un trait genérico `Reset` ni se supondrá que cualquier tipo puede volver a un estado inicial de forma segura.
+**Decision: reusing storage does not mean keeping previous values alive.** The default strategy will be to destroy values that no longer belong to the user and keep only the storage reservation where the container allows it. No generic `Reset` trait will be added, nor will it be assumed that any type can safely return to an initial state.
 
-Reglas para las APIs presentes y futuras:
+Rules for present and future APIs:
 
-1. **Separar almacenamiento y valor.** La capacidad reservada puede reutilizarse aunque los valores anteriores se hayan destruido. La vida útil de cada valor sigue las reglas de Rust; reservar memoria no equivale a inicializar objetos en ella.
-2. **`Buffer::clear` destruye, no resetea.** Destruye exactamente los elementos actualmente contenidos y conserva la reserva del buffer. Un `Drop` de elemento puede ejecutar efectos observables. Una inserción posterior debe aportar un valor nuevo y correctamente inicializado.
-3. **`pop` transfiere propiedad.** El elemento extraído pasa al llamador y deja de pertenecer al buffer; el buffer puede reutilizar la capacidad liberada para futuras inserciones. El llamador es responsable de la vida útil del valor extraído.
-4. **No exponer contenido obsoleto.** Las vistas solo cubren los elementos inicializados actualmente. Después de limpiar o extraer elementos, ninguna API podrá leerlos mediante el buffer ni asumir que la memoria reservada contiene valores válidos. No se expondrá memoria sin inicializar ni se usarán bytes antiguos como valores nuevos.
-5. **Reset explícito y específico.** Si una estructura futura necesita conservar un objeto vivo y reiniciarlo, deberá definir una operación explícita cuyo contrato describa qué campos se restablecen, qué recursos se liberan, cómo se manejan errores y qué invariantes quedan garantizadas. No se aplicará automáticamente a tipos arbitrarios.
-6. **Reutilización de slots de pool.** Un lease devuelto marca el slot como disponible, pero no autoriza por sí solo a reutilizar el estado anterior. Antes de entregarlo al siguiente usuario, el pool deberá destruir y reconstruir el valor o ejecutar un reset específico, documentado y probado. La política concreta se elige por tipo y no debe permitir dos leases simultáneos para el mismo slot.
-7. **Fallos sin estado corrupto.** Si reinicializar un recurso puede fallar, la API debe representar ese fallo y mantener el slot fuera de circulación hasta que vuelva a un estado válido o se retire de forma segura. Nunca debe marcarse como disponible un recurso parcialmente reinicializado.
-8. **Sin garantías de puesta a cero.** Destruir un valor no garantiza borrar físicamente sus bytes. Los datos sensibles requieren una política de borrado seguro específica; no se afirmará que `clear` o `Drop` constituyen borrado criptográfico.
-9. **Medir antes de sofisticar.** La reutilización debe preservar la semántica observable y se optimizará solo cuando las mediciones indiquen que evitar construcciones/asignaciones compensa la complejidad añadida.
+1. **Separate storage and value.** Reserved capacity may be reused even though previous values have been destroyed. Each value's lifetime follows Rust's rules; reserving memory does not equal initializing objects in it.
+2. **`Buffer::clear` destroys, it does not reset.** It destroys exactly the currently contained elements and keeps the buffer's reservation. An element `Drop` may run observable effects. A later insertion must provide a new, correctly initialized value.
+3. **`pop` transfers ownership.** The extracted element passes to the caller and no longer belongs to the buffer; the buffer may reuse the freed capacity for future insertions. The caller is responsible for the extracted value's lifetime.
+4. **Do not expose stale content.** Views only cover the currently initialized elements. After clearing or extracting elements, no API may read them through the buffer or assume the reserved memory contains valid values. Uninitialized memory will not be exposed, nor will old bytes be used as new values.
+5. **Explicit, specific reset.** If a future structure needs to keep an object alive and reset it, it must define an explicit operation whose contract describes which fields are restored, which resources are released, how errors are handled and which invariants remain guaranteed. It will not be applied automatically to arbitrary types.
+6. **Pool slot reuse.** A returned lease marks the slot as available, but does not by itself authorize reusing the previous state. Before handing it to the next user, the pool must destroy and reconstruct the value or run a specific, documented and tested reset. The concrete policy is chosen per type and must not allow two simultaneous leases for the same slot.
+7. **Failures without corrupt state.** If re-initializing a resource can fail, the API must represent that failure and keep the slot out of circulation until it returns to a valid state or is safely retired. A partially re-initialized resource must never be marked available.
+8. **No zeroing guarantees.** Destroying a value does not guarantee physically erasing its bytes. Sensitive data requires a specific secure-erasure policy; `clear` or `Drop` will not be claimed to constitute cryptographic erasure.
+9. **Measure before sophisticating.** Reuse must preserve observable semantics and will only be optimized when measurements indicate that avoiding constructions/allocations justifies the added complexity.
 
-**Pruebas requeridas al implementar:** contar destrucciones con tipos instrumentados; comprobar que `clear` mantiene la capacidad y permite insertar valores nuevos; verificar que `pop` transfiere exactamente un valor; probar errores de reset si se introduce; y demostrar que no se puede observar contenido de elementos destruidos o no inicializados. El pool concreto, la sincronización y los benchmarks siguen siendo tareas separadas.
+**Tests required when implementing:** count destructions with instrumented types; check that `clear` keeps capacity and allows inserting new values; verify that `pop` transfers exactly one value; test reset errors if introduced; and demonstrate that content of destroyed or uninitialized elements cannot be observed. The concrete pool, synchronization and benchmarks remain separate tasks.
 
-## Contrato de alineación (punto 067)
+## Alignment contract (point 067)
 
-**Decisión: la alineación debe venir garantizada por el tipo y por la API de almacenamiento utilizada; DINAH no prometerá alineación especial sin representarla explícitamente en el contrato.** La implementación inicial permanece en Rust seguro y no calculará direcciones ni desplazamientos manualmente.
+**Decision: alignment must come guaranteed by the type and the storage API used; DINAH will not promise special alignment without representing it explicitly in the contract.** The initial implementation stays in safe Rust and will not compute addresses or offsets manually.
 
-Reglas:
+Rules:
 
-1. **Alineación ordinaria.** Para `Buffer<T>` y los contenedores estándar, confiar en las garantías de alineación de `T` y del contenedor de Rust. El consumidor no necesita ni puede asumir una alineación adicional distinta de la documentada por el tipo.
-2. **Sin promesas basadas en el layout accidental.** No inferir offsets, padding ni layout estable a partir de `repr(Rust)`. Si un contrato binario requiere una representación concreta, deberá elegir y documentar una representación admitida, como `repr(C)`, sin confundir layout de campos con alineación especial de una reserva.
-3. **Alineación mayor que la ordinaria.** Si un caso real exige alineación explícita (por ejemplo, una interfaz de hardware), modelarla en un tipo o API de asignación cuya garantía sea verificable. La construcción debe fallar de forma recuperable cuando no pueda cumplirse el contrato; nunca devolver almacenamiento con alineación insuficiente.
-4. **No falsear alineación SIMD.** Que un buffer sea contiguo no significa que empiece en una frontera SIMD específica. El punto 068 evaluará por separado requisitos concretos de instrucciones, tipos y plataformas; no añadir padding ni sobreasignación especulativa sin mediciones.
-5. **Sin aritmética manual de punteros.** No exponer punteros crudos ni usar `unsafe` para ajustar direcciones en esta fase. Si las APIs seguras disponibles no pueden satisfacer un requisito demostrado, documentar la limitación y proponer un diseño separado antes de ampliar el alcance.
-6. **Casos límite.** Cualquier implementación futura debe definir el comportamiento para capacidad cero y tipos de tamaño cero (ZST), además de tamaños/alineaciones elevados y fallos de reserva. No deducir alineación útil de una dirección cuando no exista almacenamiento de elementos.
-7. **Alineación no es rendimiento garantizado.** Una alineación más estricta puede aumentar el coste o el desperdicio de memoria; solo se adoptará si benchmarks representativos demuestran una mejora sin romper el contrato de seguridad.
+1. **Ordinary alignment.** For `Buffer<T>` and standard containers, trust the alignment guarantees of `T` and Rust's container. The consumer neither needs nor can assume additional alignment beyond what the type documents.
+2. **No promises based on accidental layout.** Do not infer offsets, padding or stable layout from `repr(Rust)`. If a binary contract requires a concrete representation, it must choose and document an admitted representation, such as `repr(C)`, without confusing field layout with special alignment of a reservation.
+3. **Greater-than-ordinary alignment.** If a real case demands explicit alignment (for example, a hardware interface), model it in a type or allocation API whose guarantee is verifiable. Construction must fail recoverably when the contract cannot be met; never return storage with insufficient alignment.
+4. **Do not fake SIMD alignment.** A buffer being contiguous does not mean it starts at a specific SIMD boundary. Point 068 will separately evaluate concrete requirements of instructions, types and platforms; add no padding or speculative over-allocation without measurements.
+5. **No manual pointer arithmetic.** Do not expose raw pointers or use `unsafe` to adjust addresses in this phase. If the available safe APIs cannot satisfy a demonstrated requirement, document the limitation and propose a separate design before expanding scope.
+6. **Edge cases.** Any future implementation must define behavior for zero capacity and zero-sized types (ZST), plus large sizes/alignments and reservation failures. Do not deduce useful alignment from an address when no element storage exists.
+7. **Alignment is not guaranteed performance.** Stricter alignment may increase cost or memory waste; it will only be adopted if representative benchmarks demonstrate an improvement without breaking the safety contract.
 
-**Pruebas requeridas al implementar alineación especial:** comprobar con `align_of`/`align_of_val` las garantías del tipo; probar tipos ordinarios y sobrealineados en las APIs que los admitan; cubrir capacidad cero y ZST; comprobar que un fallo de construcción no publica una instancia parcial; y verificar que la API no afirma garantías más fuertes que las que realmente ofrece. Las pruebas SIMD y los benchmarks comparativos permanecen en los puntos 068 y 074–075.
+**Tests required when implementing special alignment:** check type guarantees with `align_of`/`align_of_val`; test ordinary and over-aligned types in the APIs that admit them; cover zero capacity and ZST; check that a construction failure publishes no partial instance; and verify the API claims no stronger guarantees than it actually offers. SIMD tests and comparative benchmarks remain in points 068 and 074–075.
 
-## Investigación de layouts compatibles con SIMD (punto 068)
+## SIMD-compatible layout research (point 068)
 
-**Resultado de la investigación: no existe un layout universalmente óptimo.** La elección debe seguir el patrón de acceso y los datos que realmente procesa una operación. Este punto fija criterios de diseño; no añade instrucciones SIMD, dependencias, tipos vectoriales ni garantías de alineación nuevas.
+**Research outcome: no universally optimal layout exists.** The choice must follow the access pattern and the data an operation actually processes. This point fixes design criteria; it adds no SIMD instructions, dependencies, vector types or new alignment guarantees.
 
-### Alternativas de layout
+### Layout alternatives
 
-- **Array of Structures (AoS).** Cada elemento contiene todos sus campos (por ejemplo, `struct Particle { x, y, z, mass }`). Es adecuado cuando se consume la mayoría de los campos de cada elemento. Si una operación recorre solo un campo entre muchos, los datos relevantes quedan intercalados y puede reducirse la eficiencia de caché/vectorización.
-- **Structure of Arrays (SoA).** Cada campo ocupa su propio array (`x[]`, `y[]`, `z[]`, `mass[]`). Favorece recorridos que aplican la misma operación a muchos valores de un campo y puede facilitar el acceso contiguo y la vectorización automática. Puede ser menos cómodo cuando casi siempre se necesita reunir todos los campos de un único elemento.
-- **Array of Structures of Arrays (AoSoA).** Agrupa bloques de varios elementos y almacena cada campo en arrays dentro de cada bloque. Puede equilibrar procesamiento por lotes y agrupación por entidad, pero añade complejidad, padding potencial y una elección de tamaño de bloque dependiente de la carga y del hardware. No será la opción inicial sin evidencia.
-- **Slices contiguos de un solo tipo.** Para operaciones simples sobre un campo (`&[f32]`, por ejemplo), empezar por slices contiguos y bucles ordinarios seguros. Permitir que el compilador optimice antes de introducir intrinsics o una API vectorial específica.
+- **Array of Structures (AoS).** Each element contains all its fields (for example, `struct Particle { x, y, z, mass }`). It is suitable when most fields of each element are consumed. If an operation traverses only one field among many, the relevant data ends up interleaved and cache/vectorization efficiency may drop.
+- **Structure of Arrays (SoA).** Each field occupies its own array (`x[]`, `y[]`, `z[]`, `mass[]`). It favors traversals that apply the same operation to many values of one field and can ease contiguous access and automatic vectorization. It may be less convenient when nearly all fields of a single element are needed together.
+- **Array of Structures of Arrays (AoSoA).** It groups blocks of several elements and stores each field in arrays within each block. It can balance batch processing and per-entity grouping, but adds complexity, potential padding and a block-size choice dependent on workload and hardware. It will not be the initial option without evidence.
+- **Contiguous single-type slices.** For simple operations over one field (`&[f32]`, for example), start with contiguous slices and ordinary safe loops. Let the compiler optimize before introducing intrinsics or a specific vector API.
 
-### Decisiones para DINAH
+### Decisions for DINAH
 
-1. **Primero, semántica y patrón de acceso.** Documentar si una operación consume entidades completas, campos individuales o bloques, y si inserta/elimina elementos con frecuencia. Elegir AoS, SoA o AoSoA en función de ese patrón.
-2. **SoA es un candidato, no una regla global.** Para cargas numéricas que recorren el mismo campo de muchas entidades, evaluar SoA primero; conservar AoS cuando las operaciones usan casi todos los campos de cada entidad o el diseño simplifica ownership y coherencia.
-3. **Contigüidad no implica vectorización.** Un slice contiguo ayuda al acceso secuencial, pero la vectorización depende también de aliasing, dependencias entre iteraciones, tipos, opciones de compilación y arquitectura. No prometer que un bucle será vectorizado por su forma o por su alineación.
-4. **No exigir alineación SIMD especial por defecto.** El diseño base respeta la alineación normal del tipo. Solo considerar alineación/padding adicional si una API o instrucción elegida lo exige y una medición lo justifica. No asumir un ancho fijo de vector ni un tamaño de bloque universal.
-5. **Mantener una implementación escalar de referencia.** La corrección no debe depender de que SIMD esté disponible. Si más adelante se añade una ruta vectorial, comparar sus resultados con la ruta escalar, incluidos tamaños no múltiplos del ancho de lote y el procesamiento del resto (tail).
-6. **No introducir todavía una API SIMD pública.** Primero identificar una operación real y sus datos. Evaluar las capacidades estables del toolchain objetivo cuando se diseñe la implementación; cualquier intrinsics, feature detection o ruta específica de CPU queda fuera de este punto.
-7. **Medir de forma reproducible.** Comparar layouts con los mismos datos, algoritmo, configuración de compilación y condiciones de ejecución. Separar tiempo de conversión/reorganización de datos del tiempo del kernel; incluir tamaños pequeños y grandes. Registrar CPU, versión de Rust, flags, número de iteraciones y variabilidad. Los benchmarks de Memory y la optimización permanecen en los puntos 074–075.
+1. **Semantics and access pattern first.** Document whether an operation consumes whole entities, individual fields or blocks, and whether it inserts/removes elements frequently. Choose AoS, SoA or AoSoA based on that pattern.
+2. **SoA is a candidate, not a global rule.** For numeric workloads traversing the same field of many entities, evaluate SoA first; keep AoS when operations use almost all fields of each entity or the design simplifies ownership and coherence.
+3. **Contiguity does not imply vectorization.** A contiguous slice helps sequential access, but vectorization also depends on aliasing, dependencies between iterations, types, compilation options and architecture. Do not promise that a loop will be vectorized because of its shape or alignment.
+4. **Do not require special SIMD alignment by default.** The base design respects the type's normal alignment. Only consider additional alignment/padding if a chosen API or instruction demands it and a measurement justifies it. Do not assume a fixed vector width or a universal block size.
+5. **Keep a reference scalar implementation.** Correctness must not depend on SIMD being available. If a vector route is added later, compare its results against the scalar route, including sizes that are not multiples of the batch width and tail processing.
+6. **Do not introduce a public SIMD API yet.** First identify a real operation and its data. Evaluate the target toolchain's stable capabilities when designing the implementation; any intrinsics, feature detection or CPU-specific route is outside this point.
+7. **Measure reproducibly.** Compare layouts with the same data, algorithm, build configuration and execution conditions. Separate data conversion/reorganization time from kernel time; include small and large sizes. Record CPU, Rust version, flags, iteration count and variability. Memory benchmarks and optimization remain in points 074–075.
 
-### Matriz de decisión inicial
+### Initial decision matrix
 
-| Patrón de trabajo | Candidato inicial | Riesgo que comprobar |
+| Work pattern | Initial candidate | Risk to check |
 |---|---|---|
-| Operaciones que consumen la mayoría de campos de cada entidad | AoS | Campos no usados y stride entre valores equivalentes |
-| Mismo cálculo sobre un campo de muchas entidades | SoA | Coste de reconstruir una entidad completa y coherencia entre arrays |
-| Procesamiento por lotes que necesita agrupación de entidades y campos | AoSoA experimental | Tamaño de bloque, padding y complejidad de mantenimiento |
-| Transformación numérica sobre una secuencia homogénea | Slice contiguo y bucle escalar idiomático | Si el compilador vectoriza y cómo procesa el resto |
+| Operations consuming most fields of each entity | AoS | Unused fields and stride between equivalent values |
+| Same computation over one field of many entities | SoA | Cost of reconstructing a whole entity and cross-array coherence |
+| Batch processing needing entity and field grouping | Experimental AoSoA | Block size, padding and maintenance complexity |
+| Numeric transformation over a homogeneous sequence | Contiguous slice and idiomatic scalar loop | Whether the compiler vectorizes and how it processes the remainder |
 
-**Criterio para avanzar a implementación:** elegir una operación real, establecer una versión escalar correcta, crear datos representativos y medir al menos dos layouts comparables. Solo añadir complejidad SIMD/alineación cuando los resultados repetibles demuestren una mejora útil y se mantenga una ruta correcta para los casos límite.
+**Criterion for advancing to implementation:** choose a real operation, establish a correct scalar version, create representative data and measure at least two comparable layouts. Only add SIMD/alignment complexity when repeatable results demonstrate a useful improvement and a correct route for edge cases remains.
 
-## Layout, alineación y concurrencia
+## Layout, alignment and concurrency
 
-- Usar el layout y la alineación garantizados por los tipos y contenedores estándar. No inferir layout estable de tipos `repr(Rust)` ni serializar su representación en memoria.
-- Estructuras contiguas y layouts orientados a datos se elegirán por acceso y carga de trabajo medidos, no por preferencia estética.
-- Layouts SIMD-friendly deben respetar alineación y requisitos del hardware sin asumir que todo vector está alineado a una frontera especial.
-- Los recursos compartidos deben cumplir los contratos `Send`/`Sync` aplicables y documentar quién sincroniza cada mutación. Un pool no es seguro para compartir por el mero hecho de estar envuelto en un puntero compartido.
-- Evitar bloqueos globales como valor por defecto. Comparar alternativas con benchmarks y pruebas de concurrencia antes de optimizar.
+- Use the layout and alignment guaranteed by standard types and containers. Do not infer stable layout from `repr(Rust)` types or serialize their in-memory representation.
+- Contiguous structures and data-oriented layouts will be chosen by measured access and workload, not aesthetic preference.
+- SIMD-friendly layouts must respect hardware alignment and requirements without assuming every vector is aligned to a special boundary.
+- Shared resources must satisfy the applicable `Send`/`Sync` contracts and document who synchronizes each mutation. A pool is not safe to share merely by being wrapped in a shared pointer.
+- Avoid global locks as a default. Compare alternatives with benchmarks and concurrency tests before optimizing.
 
-## Pruebas de seguridad de memoria (punto 072)
+## Memory safety tests (point 072)
 
-Las pruebas de Memory deben verificar el contrato observable sin usar `unsafe` ni depender de detalles internos del allocator:
+Memory tests must verify the observable contract without using `unsafe` or depending on internal allocator details:
 
-- **Propiedad y destrucción:** los valores extraídos por `pop` pasan al llamador; `clear` destruye los elementos restantes una sola vez y permite reutilizar la reserva; la destrucción del contenedor destruye todos los valores que aún posee. `SoaBuffer` aplica estas reglas a ambas columnas y conserva la alineación lógica de filas.
-- **Límites:** capacidad cero, capacidad llena, inserciones rechazadas y extensiones que no caben no deben producir longitudes superiores a la capacidad ni perder valores aceptados/rechazados.
-- **Tipos especiales:** los tipos de tamaño cero siguen sujetos a la capacidad lógica; los tipos sobrealineados conservan la alineación garantizada por Rust. No se infiere una alineación mayor que la del tipo.
-- **Accesos:** las vistas contienen únicamente elementos inicializados y los préstamos de Rust impiden mutaciones incompatibles mientras una vista siga viva. El ejemplo `compile_fail` de `Buffer` valida esta restricción en la documentación.
-- **Implementación:** `#![forbid(unsafe_code)]` en la raíz del crate impide introducir bloques `unsafe` en el código del proyecto. Estas pruebas refuerzan el contrato, pero no sustituyen Miri, fuzzing o una auditoría cuando se incorporen abstracciones más complejas.
+- **Ownership and destruction:** values extracted via `pop` pass to the caller; `clear` destroys the remaining elements exactly once and allows reusing the reservation; destroying the container destroys all values it still owns. `SoaBuffer` applies these rules to both columns and keeps the logical row alignment.
+- **Limits:** zero capacity, full capacity, rejected insertions and extensions that do not fit must not produce lengths above capacity nor lose accepted/rejected values.
+- **Special types:** zero-sized types remain subject to logical capacity; over-aligned types keep the alignment Rust guarantees. No greater-than-type alignment is inferred.
+- **Accesses:** views contain only initialized elements and Rust's borrows prevent incompatible mutations while a view is alive. The `compile_fail` example of `Buffer` validates this restriction in the documentation.
+- **Implementation:** `#![forbid(unsafe_code)]` at the crate root prevents introducing `unsafe` blocks in project code. These tests reinforce the contract but do not replace Miri, fuzzing or an audit when more complex abstractions are incorporated.
 
-## Sincronización explícita de Memory (punto 071)
+## Explicit Memory synchronization (point 071)
 
-Los tipos de `dinah::memory` siguen siendo propietarios y no incorporan bloqueos implícitos. Cuando varios hilos necesiten mutar la misma estructura, se puede envolver en `dinah::runtime::Shared<T>`, la primitiva existente basada en `Arc<Mutex<T>>`. Clonar `Shared<T>` comparte el mismo valor; no copia el buffer ni sus elementos.
+The types of `dinah::memory` remain owners and include no implicit locks. When several threads need to mutate the same structure, it can be wrapped in `dinah::runtime::Shared<T>`, the existing primitive based on `Arc<Mutex<T>>`. Cloning `Shared<T>` shares the same value; it does not copy the buffer or its elements.
 
-- `Shared::lock()` devuelve un guard de mutex y comunica el envenenamiento mediante `SynchronizationError::Poisoned`; el llamador debe gestionar ese error de forma explícita. No se recupera silenciosamente un estado potencialmente inconsistente.
-- Mantener los guards lo más breves posible. No ejecutar callbacks externos ni esperar trabajo asíncrono mientras se mantiene un bloqueo; definir un orden consistente si se necesitan varios locks para evitar interbloqueos.
-- Las operaciones de una estructura compuesta —por ejemplo, insertar una fila en ambas columnas de `SoaBuffer`— deben ejecutarse bajo el mismo guard para conservar invariantes. No repartir las columnas entre locks independientes.
-- El wrapper no hace que cualquier `T` sea seguro para cualquier uso: las restricciones `Send`/`Sync` siguen dependiendo de los tipos de Rust y de la API utilizada. El wrapper no sustituye la validación de invariantes ni las pruebas de concurrencia.
-- La sincronización es opt-in. Para datos inmutables, preferir compartir referencias/valores inmutables; para acceso local a un solo hilo, usar directamente el buffer y evitar el coste del mutex. No se afirma que `Mutex` sea la estrategia más rápida para todas las cargas.
+- `Shared::lock()` returns a mutex guard and communicates poisoning through `SynchronizationError::Poisoned`; the caller must handle that error explicitly. A potentially inconsistent state is not silently recovered.
+- Keep guards as short as possible. Do not run external callbacks or wait for asynchronous work while holding a lock; define a consistent order if several locks are needed to avoid deadlocks.
+- Operations of a composite structure —for example, inserting a row into both `SoaBuffer` columns— must run under the same guard to preserve invariants. Do not split the columns across independent locks.
+- The wrapper does not make any `T` safe for any use: the `Send`/`Sync` restrictions still depend on Rust's types and the API used. The wrapper does not replace invariant validation or concurrency tests.
+- Synchronization is opt-in. For immutable data, prefer sharing immutable references/values; for single-thread local access, use the buffer directly and avoid the mutex cost. It is not claimed that `Mutex` is the fastest strategy for every workload.
 
-Las pruebas de concurrencia comprueban también que 16 hilos que empiezan mediante una barrera no pierden ninguna de sus 32.000 actualizaciones, y que un segundo hilo no puede adquirir el mutex mientras otro conserva el guard: tras liberar el guard, la adquisición termina. El test usa un timeout solo para detectar que el bloqueo sigue retenido y no presupone un orden de planificación entre hilos.
+The concurrency tests also check that 16 threads starting through a barrier lose none of their 32,000 updates, and that a second thread cannot acquire the mutex while another holds the guard: after releasing the guard, acquisition completes. The test uses a timeout only to detect that the lock is still held and does not presume a thread scheduling order.
 
-La prueba `shared_soa_serializes_concurrent_row_insertions` comprueba que varios hilos pueden insertar filas completas mediante un `Shared<SoaBuffer<_, _>>` sin desalinear las columnas. Estas pruebas validan la exclusión mutua y las invariantes observables, pero no demuestran ausencia de interbloqueos en cualquier programa, fairness, ausencia de starvation ni rendimiento escalable. Los benchmarks completos siguen perteneciendo a los puntos 074–075.
+The `shared_soa_serializes_concurrent_row_insertions` test checks that several threads can insert complete rows through a `Shared<SoaBuffer<_, _>>` without misaligning the columns. These tests validate mutual exclusion and observable invariants, but do not demonstrate absence of deadlocks in any program, fairness, absence of starvation or scalable performance. Full benchmarks still belong to points 074–075.
 
-## Buffer inicial (punto 062)
+## Initial buffer (point 062)
 
-`dinah::memory::Buffer<T>` es un contenedor propietario y contiguo de capacidad lógica fija. `try_with_capacity` reserva de forma fallible la capacidad máxima antes de devolver el buffer; por tanto, una reserva fallida no deja una instancia parcialmente inicializada y los `try_push` posteriores no necesitan aumentar la reserva mientras se respete el límite. La reserva real del allocator puede ser mayor que la solicitada.
+`dinah::memory::Buffer<T>` is an owning, contiguous container with fixed logical capacity. `try_with_capacity` fallibly reserves the maximum capacity before returning the buffer; therefore, a failed reservation leaves no partially initialized instance and later `try_push` calls need not grow the reservation while the limit is respected. The allocator's actual reservation may be larger than requested.
 
-- La capacidad es el máximo de elementos, no un límite de bytes; `T` puede tener tamaños distintos.
-- Capacidad cero es válida. `is_full()` es verdadero cuando longitud y capacidad son cero.
-- `try_push` devuelve el elemento original en `BufferPushError::Full(T)` si está lleno; nunca sobrescribe ni descarta silenciosamente datos.
-- `as_slice` presta únicamente los elementos inicializados; la propiedad permanece en el buffer y el compilador impide mutaciones incompatibles mientras la vista siga viva.
-- `Buffer<T>` no implementa `Clone`: evita una duplicación implícita de almacenamiento cuya reserva podría no cubrir el límite lógico. La propiedad se transfiere mediante movimientos; duplicar elementos requiere una decisión explícita del consumidor.
-- `pop` transfiere al llamador la propiedad del último elemento y `clear` destruye los elementos actuales conservando la reserva. Al destruir el buffer se destruyen todos los elementos que aún posee.
-- No se expone el `Vec<T>` interno: el consumidor no puede eludir el límite lógico mediante una mutación externa del almacenamiento.
-- No hay sincronización interna: el acceso mutable requiere `&mut self`.
-- La API no promete un límite de memoria en bytes ni que la reserva física permanezca residente.
+- Capacity is the maximum number of elements, not a byte limit; `T` may have different sizes.
+- Zero capacity is valid. `is_full()` is true when length and capacity are both zero.
+- `try_push` returns the original element in `BufferPushError::Full(T)` when full; it never overwrites or silently discards data.
+- `as_slice` lends only the initialized elements; ownership remains in the buffer and the compiler prevents incompatible mutations while the view is alive.
+- `Buffer<T>` does not implement `Clone`: it avoids implicit storage duplication whose reservation might not cover the logical limit. Ownership transfers through moves; duplicating elements requires an explicit consumer decision.
+- `pop` transfers ownership of the last element to the caller and `clear` destroys the current elements while keeping the reservation. Destroying the buffer destroys all elements it still owns.
+- The internal `Vec<T>` is not exposed: the consumer cannot bypass the logical limit through external mutation of the storage.
+- There is no internal synchronization: mutable access requires `&mut self`.
+- The API promises no byte memory limit and no guarantee that the physical reservation stays resident.
 
-La implementación y sus pruebas viven en `src/memory/buffer.rs`. No se expone acceso mutable al almacenamiento interno ni una API de crecimiento dinámico en este punto.
+The implementation and its tests live in `src/memory/buffer.rs`. No mutable access to the internal storage or dynamic-growth API is exposed at this point.
 
-## Estructuras contiguas iniciales (punto 069)
+## Initial contiguous structures (point 069)
 
-La primera estructura contigua implementada es `Buffer<T>`: posee una secuencia contigua de elementos inicializados con una capacidad lógica máxima fija. El punto 069 amplía su utilidad para cargas por lotes sin duplicar el almacenamiento ni exponer el `Vec<T>` interno:
+The first implemented contiguous structure is `Buffer<T>`: it owns a contiguous sequence of initialized elements with a fixed maximum logical capacity. Point 069 extends its usefulness for batch workloads without duplicating storage or exposing the internal `Vec<T>`:
 
-- `as_slice()` presta acceso de solo lectura a los elementos inicializados; `as_mut_slice()` permite modificar esos elementos in situ, pero no cambiar la longitud, la capacidad ni la asignación.
-- `try_extend_from_slice()` permite añadir una secuencia de elementos `Clone` en una sola operación lógica. Comprueba la capacidad restante antes de modificar el buffer; si no caben todos, devuelve `BufferExtendError { requested, remaining }` y conserva el contenido original.
-- La capacidad sigue siendo un máximo de elementos, no un presupuesto de bytes. La reserva del constructor y el límite lógico evitan crecimiento por encima del límite en operaciones exitosas, pero no prometen tamaño físico exacto ni residencia de memoria.
-- La API permanece segura, sin punteros crudos ni `unsafe`, y no añade sincronización implícita. Los préstamos siguen gobernando cuándo puede mutarse el buffer.
-- `try_extend_from_slice` necesita `T: Clone`; la clonación de elementos puede ejecutar código del usuario y entrar en pánico. La garantía de no modificación aplica al error normal de capacidad, no a una garantía transaccional frente a pánicos de `Clone`.
+- `as_slice()` lends read-only access to the initialized elements; `as_mut_slice()` allows modifying those elements in place, but not changing the length, capacity or allocation.
+- `try_extend_from_slice()` allows adding a sequence of `Clone` elements in a single logical operation. It checks the remaining capacity before modifying the buffer; if they do not all fit, it returns `BufferExtendError { requested, remaining }` and keeps the original content.
+- Capacity remains a maximum of elements, not a byte budget. The constructor's reservation and the logical limit prevent growth beyond the limit in successful operations, but promise no exact physical size or memory residency.
+- The API remains safe, with no raw pointers or `unsafe`, and adds no implicit synchronization. Borrows still govern when the buffer may be mutated.
+- `try_extend_from_slice` needs `T: Clone`; cloning elements may run user code and panic. The no-modification guarantee applies to the normal capacity error, not to a transactional guarantee against `Clone` panics.
 
-No se crea una segunda envoltura sobre `Vec<T>` ni una abstracción genérica adicional: primero se aprovecha y refuerza la estructura existente. Una matriz contigua, SoA u otra representación se añadirá cuando el punto 070 o una carga concreta defina dimensiones, ownership y patrón de acceso que justifiquen su API.
+No second wrapper over `Vec<T>` or additional generic abstraction is created: first the existing structure is leveraged and reinforced. A contiguous matrix, SoA or another representation will be added when point 070 or a concrete workload defines dimensions, ownership and an access pattern that justify its API.
 
-## Estructura data-oriented inicial (punto 070)
+## Initial data-oriented structure (point 070)
 
-`SoaBuffer<A, B>` implementa una estructura de dos columnas (Structure of Arrays, SoA) encima de los `Buffer<T>` acotados existentes. Cada columna mantiene sus elementos contiguos; una fila lógica es el par de valores en el mismo índice. Ambas columnas comparten capacidad y longitud por construcción, y el tipo no expone acceso mutable a los buffers internos.
+`SoaBuffer<A, B>` implements a two-column (Structure of Arrays, SoA) structure on top of the existing bounded `Buffer<T>`s. Each column keeps its elements contiguous; a logical row is the pair of values at the same index. Both columns share capacity and length by construction, and the type exposes no mutable access to the internal buffers.
 
-- `try_with_capacity` reserva ambas columnas mediante operaciones fallibles. Si falla cualquiera, no devuelve una estructura parcial y Rust libera la reserva ya creada.
-- `try_push` añade ambos valores como una fila lógica o devuelve ambos valores sin insertarlos cuando se alcanza la capacidad. Las capacidades iguales y el control privado de las columnas mantienen alineadas sus longitudes.
-- `as_slices` y `as_mut_slices` permiten procesar un campo a la vez sin reconstruir filas ni modificar la longitud. `pop` y `clear` operan sobre ambas columnas para preservar la correspondencia por índice.
-- `try_extend_from_slices` añade dos slices como un lote: valida que tengan la misma longitud y que todo el lote quepa antes de mutar cualquiera de las columnas. Reutiliza las reservas y evita ejecutar la comprobación de capacidad por cada fila. Requiere `Clone` para ambos tipos y no promete rollback si una clonación entra en pánico.
-- Capacidad cero es válida; la estructura no crece automáticamente, no sincroniza internamente y no usa `unsafe`. La API no promete alineación SIMD especial ni una mejora de rendimiento sin benchmarks.
-- SoA conviene cuando se procesa repetidamente un campo de muchas filas. Para cargas que consumen casi todos los campos de una fila, AoS puede ser más simple o eficiente; AoSoA queda aplazado hasta tener una carga y mediciones que lo justifiquen.
+- `try_with_capacity` reserves both columns through fallible operations. If either fails, no partial structure is returned and Rust frees the already-created reservation.
+- `try_push` adds both values as a logical row or returns both values without inserting them when capacity is reached. Equal capacities and private column control keep their lengths aligned.
+- `as_slices` and `as_mut_slices` allow processing one field at a time without reconstructing rows or modifying the length. `pop` and `clear` operate on both columns to preserve index correspondence.
+- `try_extend_from_slices` adds two slices as a batch: it validates that they have the same length and that the whole batch fits before mutating either column. It reuses the reservations and avoids running the capacity check per row. It requires `Clone` for both types and promises no rollback if a clone panics.
+- Zero capacity is valid; the structure does not grow automatically, synchronizes internally or use `unsafe`. The API promises no special SIMD alignment or performance improvement without benchmarks.
+- SoA is convenient when one field of many rows is processed repeatedly. For workloads consuming almost all fields of a row, AoS may be simpler or more efficient; AoSoA is deferred until a workload and measurements justify it.
 
-La implementación y las pruebas viven en `src/memory/soa.rs`. Es una primitiva genérica limitada a dos columnas, no una API ECS ni una afirmación de layout universalmente óptimo.
+The implementation and tests live in `src/memory/soa.rs`. It is a generic primitive limited to two columns, not an ECS API or a claim of universally optimal layout.
 
-## Contratos que deben resolver los siguientes puntos
+## Contracts the following points must resolve
 
-| Punto | Decisión pendiente |
+| Point | Pending decision |
 |---|---|
-| 062 | Completado: primer buffer contiguo y acotado; quedan otros tipos de buffer sujetos a necesidades futuras |
-| 063 | Completado: propiedad única de `Buffer<T>`, préstamos con lifetimes del compilador, transferencia por movimiento, sin clonación implícita ni acceso mutable al contenedor interno |
-| 064 | Completado: usar contenedores estándar y reservas fallibles; aplazar un trait propio hasta disponer de un segundo backend real |
-| 065 | Completado: contrato de pool acotado, agotamiento explícito, leases exclusivos y sincronización local por defecto |
-| 066 | Completado: separar reserva de almacenamiento y vida de valores; `clear` destruye, `pop` transfiere propiedad y reset debe ser explícito |
-| 067 | Completado: usar garantías de alineación del tipo/contenedor; alineación especial solo con contrato explícito, errores recuperables y pruebas |
-| 068 | Completado: documentados AoS, SoA, AoSoA y slices contiguos; implementación SIMD y benchmarks quedan separados |
-| 069 | Completado: `Buffer<T>` contiguo con acceso por slices y extensión por lotes acotada; sin crecimiento implícito |
-| 070 | Completado: `SoaBuffer<A, B>` con dos columnas contiguas, filas coordinadas y límites explícitos |
-| 071–073 | Sincronización, invariantes y pruebas de seguridad/concurrencia |
-| 074 | Completado: benchmark reproducible `benches/memory.rs` para push preasignado, extensión por lotes, inserción/escaneo SoA y coste de `Shared` con mediana de 7 muestras; resultados de cada ejecución se guardan como artifact de CI |
-| 075 | Completado: `SoaBuffer::try_extend_from_slices` valida el lote y evita checks por fila; comparación con entradas precomputadas en CI (7 muestras): 2.031 vs 6.109 ns/fila (64), 0.548 vs 2.495 (1.024) y 5.837 vs 8.118 (16.384). Raw: `artifacts/benchmarks/memory-soa-batch-2026-10-11.txt`; resultados específicos del runner, no garantía universal |
-| 076 | Documentación integrada y criterios de salida del subsistema |
+| 062 | Completed: first contiguous, bounded buffer; other buffer types remain subject to future needs |
+| 063 | Completed: single ownership of `Buffer<T>`, borrows with compiler lifetimes, transfer by move, no implicit cloning or mutable access to the internal container |
+| 064 | Completed: use standard containers and fallible reservations; defer a custom trait until a real second backend exists |
+| 065 | Completed: bounded pool contract, explicit exhaustion, exclusive leases and local synchronization by default |
+| 066 | Completed: separate storage reservation from value lifetime; `clear` destroys, `pop` transfers ownership and reset must be explicit |
+| 067 | Completed: use type/container alignment guarantees; special alignment only with an explicit contract, recoverable errors and tests |
+| 068 | Completed: AoS, SoA, AoSoA and contiguous slices documented; SIMD implementation and benchmarks remain separate |
+| 069 | Completed: contiguous `Buffer<T>` with slice access and bounded batch extension; no implicit growth |
+| 070 | Completed: `SoaBuffer<A, B>` with two contiguous columns, coordinated rows and explicit limits |
+| 071–073 | Synchronization, invariants and safety/concurrency tests |
+| 074 | Completed: reproducible benchmark `benches/memory.rs` for preallocated push, batch extension, SoA insertion/scan and `Shared` cost with a median of 7 samples; each run's results are saved as a CI artifact |
+| 075 | Completed: `SoaBuffer::try_extend_from_slices` validates the batch and avoids per-row checks; comparison with precomputed entries in CI (7 samples): 2,031 vs 6,109 ns/row (64), 0.548 vs 2.495 (1,024) and 5.837 vs 8.118 (16,384). Raw: `artifacts/benchmarks/memory-soa-batch-2026-10-11.txt`; runner-specific results, no universal guarantee |
+| 076 | Integrated documentation and subsystem exit criteria |
 
-## Criterios para aceptar una implementación
+## Criteria for accepting an implementation
 
-- API documentada con propiedad, lifetimes, límites, errores y garantías de concurrencia claros.
-- Pruebas de límites, buffers vacíos, fallos, reutilización, destrucción y accesos compartidos.
-- Sin `unsafe` en el alcance inicial salvo una propuesta separada, motivada, revisada y probada.
-- CI remota verde para formato, tests, Clippy y documentación.
-- Cualquier afirmación de mejora de rendimiento respaldada por un benchmark repetible y una comparación antes/después.
+- Documented API with clear ownership, lifetimes, limits, errors and concurrency guarantees.
+- Tests for limits, empty buffers, failures, reuse, destruction and shared accesses.
+- No `unsafe` in the initial scope except a separate, motivated, reviewed and tested proposal.
+- Remote CI green for formatting, tests, Clippy and documentation.
+- Any performance-improvement claim backed by a repeatable benchmark and a before/after comparison.
 
-## Fuera de alcance por ahora
+## Out of scope for now
 
-No se implementan aquí allocators personalizados, arenas, pools, SIMD, FFI ni garantías de tiempo real. El `Buffer<T>` inicial es una primitiva mínima experimental, no un subsistema Memory completo. Los puntos siguientes deben justificar y probar cada abstracción antes de incorporarla.
+Custom allocators, arenas, pools, SIMD, FFI and real-time guarantees are not implemented here. The initial `Buffer<T>` is a minimal experimental primitive, not a complete Memory subsystem. The following points must justify and test each abstraction before incorporating it.
 
-## Guía práctica
+## Practical guide
 
-Para ejemplos de uso de `Buffer<T>` y `SoaBuffer<A, B>`, errores públicos, capacidad, lotes, ownership y enlaces a los resultados archivados, consulta la [guía práctica de Memory](memory.md). Este documento mantiene las decisiones de diseño e invariantes; la guía práctica describe la API disponible.
+For usage examples of `Buffer<T>` and `SoaBuffer<A, B>`, public errors, capacity, batches, ownership and links to archived results, see the [Memory practical guide](memory.md). This document keeps the design decisions and invariants; the practical guide describes the available API.

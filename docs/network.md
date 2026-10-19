@@ -1,58 +1,58 @@
-# dinah Networking — diseño de API y límites de v0.1
+# dinah Networking — API design and v0.1 limits
 
-Estado: implementación incremental (puntos 120–140). Los contratos de transporte, mensaje y wire format están documentados; existen una conexión TCP bloqueante, un endpoint TCP de escucha/aceptación y seguimiento local del ciclo de vida de conexión. El encoder/decoder de wire sigue sin implementarse. La predicción cliente y reconciliación genéricas están implementadas en `src/network/prediction.rs`; el diseño, los límites y el alcance están en `docs/client-side-prediction.md`. Se añadieron primitivas explícitas de reintentos a nivel de aplicación, estimación de RTT, seguimiento lógico de liveness/backoff, despacho acotado mediante Runtime y simulación de entregas por tick conectada a Simulation. No se integran automáticamente con el transporte TCP ni con un modelo de dominio concreto.
+Status: incremental implementation (points 120–140). The transport, message and wire format contracts are documented; a blocking TCP connection, a listening/accepting TCP endpoint and local connection-lifecycle tracking exist. The wire encoder/decoder remains unimplemented. Generic client prediction and reconciliation are implemented in `src/network/prediction.rs`; the design, limits and scope are in `docs/client-side-prediction.md`. Explicit application-level retry primitives, RTT estimation, logical liveness/backoff tracking, bounded dispatch through Runtime and tick-based delivery simulation connected to Simulation were added. They are not automatically integrated with the TCP transport or with a concrete domain model.
 
-## Ejemplo ejecutable
+## Runnable example
 
-`examples/network_basics.rs` levanta un `Endpoint` en loopback con puerto efímero, acepta una conexión, intercambia `ping`/`pong` y observa el EOF después del cierre de escritura del servidor. Se ejecuta con `cargo run --example network_basics`. La demostración usa TCP bloqueante y un mensaje de longitud fija solo para ilustrar lecturas/escrituras; DINAH no añade framing, TLS, autenticación, reintentos ni sandbox. No expongas este ejemplo como servicio de red público.
+`examples/network_basics.rs` starts an `Endpoint` on loopback with an ephemeral port, accepts a connection, exchanges `ping`/`pong` and observes EOF after the server's write shutdown. Run it with `cargo run --example network_basics`. The demonstration uses blocking TCP and a fixed-length message only to illustrate reads/writes; DINAH adds no framing, TLS, authentication, retries or sandbox. Do not expose this example as a public network service.
 
-## Primitivas implementadas — puntos 132–139
+## Implemented primitives — points 132–139
 
-### Reintentos de mensajes a nivel de aplicación — punto 132
+### Application-level message retries — point 132
 
-`network::reliability::ReliableOutbox<T>` mantiene un número finito de mensajes con secuencias monotónicas, tick del último envío y contador de intentos. `acknowledge(through)` retira los mensajes hasta un ACK acumulativo; `due_retries(now_tick, retry_interval, max_attempts)` devuelve las secuencias que el llamador debe volver a enviar. La cola rechaza capacidad cero, saturación e intervalos de reintento cero; no descarta silenciosamente mensajes pendientes.
+`network::reliability::ReliableOutbox<T>` keeps a finite number of messages with monotonic sequences, last-send tick and attempt counter. `acknowledge(through)` removes messages up to a cumulative ACK; `due_retries(now_tick, retry_interval, max_attempts)` returns the sequences the caller must resend. The queue rejects zero capacity, saturation and zero retry intervals; it does not silently discard pending messages.
 
-Esta es contabilidad de reintentos **sobre un protocolo de aplicación**. TCP ya gestiona la retransmisión de segmentos de su propio stream; esta API no observa la pérdida de paquetes IP, no implementa UDP y no garantiza entrega exactamente una vez. El llamador debe definir el formato del ACK, ejecutar los envíos y decidir qué hacer al agotar intentos.
+This is retry bookkeeping **over an application protocol**. TCP already manages retransmission of its own stream's segments; this API does not observe IP packet loss, does not implement UDP and does not guarantee exactly-once delivery. The caller must define the ACK format, execute the sends and decide what to do when attempts are exhausted.
 
-### Latencia — punto 133
+### Latency — point 133
 
-`network::latency::LatencyEstimator` recibe muestras RTT explícitas y expone cantidad de muestras, mínimo, máximo y suavizado exponencial entero (primer sample inicializa; después se usa 7/8 del valor anterior y 1/8 de la nueva muestra). No consulta el reloj ni mide la red por sí mismo; el consumidor mide el intervalo y aporta la duración.
+`network::latency::LatencyEstimator` takes explicit RTT samples and exposes the sample count, minimum, maximum and an integer exponential smoothing (the first sample initializes; afterwards 7/8 of the previous value and 1/8 of the new sample). It reads no clock and does not measure the network by itself; the consumer measures the interval and provides the duration.
 
-### Desconexiones y backoff — punto 134
+### Disconnects and backoff — point 134
 
-`network::disconnect::ConnectionMonitor` compara un tiempo lógico suministrado por el consumidor con el último instante de actividad y un timeout configurado. `ReconnectBackoff` calcula retardos exponenciales limitados. Ninguno crea temporizadores, detecta un cierre remoto sin actividad del llamador, abre sockets ni reconecta automáticamente. La decisión de declarar un peer inactivo y volver a conectar sigue perteneciendo a la aplicación.
+`network::disconnect::ConnectionMonitor` compares a consumer-supplied logical time with the last activity instant and a configured timeout. `ReconnectBackoff` computes bounded exponential delays. Neither creates timers, detects a remote close without caller activity, opens sockets or reconnects automatically. The decision to declare a peer dead and reconnect still belongs to the application.
 
-### Runtime — punto 135
+### Runtime — point 135
 
-`network::runtime::NetworkWorkQueue<E>` almacena trabajo one-shot en una cola de capacidad fija y lo despacha explícitamente mediante `runtime::Scheduler`. El despacho es síncrono; no se crea un hilo de red, loop de polling ni tarea en segundo plano. Si está llena, `enqueue` devuelve el trabajo rechazado al llamador.
+`network::runtime::NetworkWorkQueue<E>` stores one-shot work in a fixed-capacity queue and dispatches it explicitly through `runtime::Scheduler`. Dispatch is synchronous; no network thread, polling loop or background task is created. If full, `enqueue` returns the rejected work to the caller.
 
-### Simulation y simulador determinista — puntos 136 y 138
+### Simulation and the deterministic simulator — points 136 and 138
 
-`network::simulator::NetworkSimulator<T>` agenda payloads por tick de entrega. `send(now_tick, latency_ticks, payload, drop)` recibe una decisión de pérdida explícita para que las pruebas sean reproducibles; los mensajes entregados se ordenan por tick de llegada y orden de envío. Los contadores de pérdidas y entregas son observacionales, no métricas de una conexión real.
+`network::simulator::NetworkSimulator<T>` schedules payloads by delivery tick. `send(now_tick, latency_ticks, payload, drop)` takes an explicit loss decision so tests are reproducible; delivered messages are ordered by arrival tick and send order. The loss and delivery counters are observational, not metrics of a real connection.
 
-`receive_due_for_simulation(&Simulation<S>)` usa el tick lógico actual para obtener los payloads vencidos, pero no modifica el estado de `Simulation`: el consumidor decide cómo validar y aplicar cada mensaje. La cola simulada no modela congestión, jitter, duplicación, reordenamiento configurable ni un generador aleatorio. Es una herramienta de prueba inicial, no un emulador completo de red.
+`receive_due_for_simulation(&Simulation<S>)` uses the current logical tick to obtain the due payloads, but does not modify `Simulation`'s state: the consumer decides how to validate and apply each message. The simulated queue does not model congestion, jitter, duplication, configurable reordering or a random generator. It is an initial testing tool, not a complete network emulator.
 
-### Pruebas y benchmarks — puntos 137 y 139
+### Tests and benchmarks — points 137 and 139
 
-`tests/network_advanced.rs` cubre límites y secuencias de ACK/reintento, estimación RTT, timeout lógico, backoff, despacho Runtime, pérdida scripted, latencia por ticks y orden de entrega. `benches/network.rs` mide el coste local de registrar muestras RTT y de encolar/reconocer 64 mensajes. El runner de benchmarks ejecuta esta suite en cinco plataformas; hay salidas archivadas, por ejemplo para el commit [`735ee2c`](../artifacts/benchmarks/735ee2cdc221fcf3c6f3a6036d33c1033264f986/run-39171110759/). Las cifras son observaciones específicas del runner y de esta carga sintética, no garantías de rendimiento ni comparaciones absolutas entre plataformas.
+`tests/network_advanced.rs` covers limits and ACK/retry sequences, RTT estimation, logical timeout, backoff, Runtime dispatch, scripted loss, tick latency and delivery order. `benches/network.rs` measures the local cost of recording RTT samples and of enqueueing/acknowledging 64 messages. The benchmark runner runs this suite on five platforms; archived outputs exist, for example for commit [`735ee2c`](../artifacts/benchmarks/735ee2cdc221fcf3c6f3a6036d33c1033264f986/run-39171110759/). The figures are observations specific to that runner and this synthetic workload, not performance guarantees or absolute cross-platform comparisons.
 
-## Objetivo y estado actual
+## Goal and current state
 
-Networking separa el transporte de bytes, el formato de wire y la lógica de aplicación. Ya existen TCP bloqueante, auxiliares explícitos de fiabilidad/liveness, un simulador de entrega por ticks y predicción/reconciliación genéricas. Estos componentes no forman todavía un protocolo integrado: el encoder/decoder y framing del wire, la autenticación y los adaptadores de dominio siguen pendientes.
+Networking separates byte transport, wire format and application logic. Blocking TCP, explicit reliability/liveness helpers, a tick-delivery simulator and generic prediction/reconciliation already exist. These components do not yet form an integrated protocol: the wire encoder/decoder and framing, authentication and domain adapters remain pending.
 
-## Responsabilidades y fronteras
+## Responsibilities and boundaries
 
-- **Core:** tipos y errores verdaderamente compartidos. No depende de Networking ni contiene política de transporte.
-- **Runtime:** ejecuta trabajo explícito. Networking no debe crear un scheduler oculto, pool persistente ni tareas de fondo implícitas.
-- **Simulation:** aporta estado y pasos de simulación; Networking no modifica el estado de Simulation de forma implícita.
-- **Networking:** define endpoints, conexiones, mensajes, contratos de transporte y serialización, además de errores de red.
-- **Aplicación:** decide autenticación/autorización, protocolo de juego o negocio, límites de confianza y cómo tratar mensajes válidos pero no autorizados.
+- **Core:** truly shared types and errors. It does not depend on Networking and contains no transport policy.
+- **Runtime:** executes explicit work. Networking must not create a hidden scheduler, persistent pool or implicit background tasks.
+- **Simulation:** provides state and simulation steps; Networking does not modify Simulation's state implicitly.
+- **Networking:** defines endpoints, connections, messages, transport and serialization contracts, plus network errors.
+- **Application:** decides authentication/authorization, the game or business protocol, trust limits and how to treat valid but unauthorized messages.
 
-La primera implementación debe usar Rust seguro, sin `unsafe` ni dependencias externas hasta que un requisito concreto y una revisión de licencia/seguridad justifiquen una excepción.
+The first implementation must use safe Rust, with no `unsafe` or external dependencies until a concrete requirement and a license/security review justify an exception.
 
-## Borrador conceptual de API por capas
+## Conceptual layered API draft
 
-El siguiente bloque conserva el diseño inicial como referencia arquitectónica; no es una lista fiable de tipos actualmente disponibles ni debe usarse como ejemplo de API compilable. Para el estado real, consulta «Primitivas implementadas» y «Estado y alcance actual». Las únicas afirmaciones de implementación son las descritas en esas secciones y en las firmas del código fuente.
+The following block keeps the initial design as an architectural reference; it is not a reliable list of currently available types and must not be used as a compilable API example. For the real state, see "Implemented primitives" and "Current state and scope". The only implementation claims are those described in those sections and in the source code's signatures.
 
 ```rust
 pub trait Transport {
@@ -69,47 +69,47 @@ pub trait Transport {
 }
 ```
 
-Esta firma es un punto de discusión, no una promesa de API final. El punto 121 ya fija el primer transporte como byte stream bloqueante, con lectura parcial y EOF explícito; las firmas definitivas deberán reflejar ese contrato y no tratar una llamada de escritura como si delimitara un mensaje completo. Los tipos de error y el proveedor concreto se decidirán al implementar conexiones.
+This signature is a discussion point, not a final API promise. Point 121 already fixes the first transport as a blocking byte stream, with partial reads and explicit EOF; the definitive signatures must reflect that contract and must not treat one write call as if it delimited a complete message. The error types and the concrete provider will be decided when implementing connections.
 
-Capas previstas:
+Planned layers:
 
-1. **Mensaje lógico:** tipo/versión de mensaje y payload, sin acoplarlo a TCP, UDP ni a una estructura Rust en memoria.
-2. **Serialización:** codifica/decodifica bytes con límites explícitos, validación de longitud y errores tipados. Nunca confiar en tamaños proporcionados por el peer.
-3. **Transporte:** entrega bytes y declara semántica de stream/datagrama, bloqueo, orden, errores y cierre.
-4. **Conexión y endpoint:** identidad local/remota y estado de conexión observado localmente, sin confundir dirección, sesión autenticada y autorización.
-5. **Integración:** adaptadores explícitos hacia Runtime y Simulation; ninguna mutación oculta ni callback de fondo implícito.
+1. **Logical message:** message type/version and payload, without coupling it to TCP, UDP or an in-memory Rust structure.
+2. **Serialization:** encodes/decodes bytes with explicit limits, length validation and typed errors. Never trust sizes provided by the peer.
+3. **Transport:** delivers bytes and declares stream/datagram semantics, blocking, ordering, errors and close.
+4. **Connection and endpoint:** local/remote identity and locally observed connection state, without confusing address, authenticated session and authorization.
+5. **Integration:** explicit adapters toward Runtime and Simulation; no hidden mutation or implicit background callback.
 
-## Decisión de transporte — punto 121
+## Transport decision — point 121
 
-Para la primera versión se define un **transporte de byte stream bloqueante y explícito**, con operaciones de lectura y escritura que pueden completar una cantidad parcial de bytes. El contrato es independiente del proveedor concreto: la primera implementación con sockets queda para el punto de conexiones y no forma parte de este punto de diseño. No se añade UDP ni una abstracción común stream/datagrama todavía; esos modelos tienen semánticas distintas y no deben esconderse tras la misma API.
+For the first version, a **blocking, explicit byte-stream transport** is defined, with read and write operations that may complete a partial amount of bytes. The contract is independent of the concrete provider: the first socket implementation belongs to the connections point and is not part of this design point. No UDP or common stream/datagram abstraction is added yet; those models have distinct semantics and must not be hidden behind the same API.
 
-Contrato elegido:
+Chosen contract:
 
-- **Escritura completa:** la operación de alto nivel `write_all(bytes)` solo devuelve éxito cuando todos los bytes solicitados se han aceptado. Una implementación interna puede hacer varias escrituras parciales. Si ocurre un error después de escribir un prefijo, devuelve el error y no reintenta de forma oculta desde cero: el llamador debe tratar el estado del stream como potencialmente desincronizado y normalmente cerrar la conexión.
-- **Lectura:** `read(buffer)` devuelve el número de bytes realmente leídos, que puede ser menor que el tamaño del buffer. `0` significa EOF/cierre ordenado del peer, no “todavía no hay datos”. La lectura parcial no delimita mensajes; el framing pertenece a una capa posterior.
-- **Bloqueo:** las operaciones esperan a que haya progreso o un error del sistema. La primera API no expone `WouldBlock` como flujo normal ni promete operaciones no bloqueantes; una evolución asíncrona requerirá otro contrato explícito.
-- **Timeouts:** no se oculta ningún reloj ni deadline global. Si el proveedor permite configurar timeout, se establece explícitamente en su configuración y el timeout se devuelve como error tipado. No se promete una latencia máxima portátil.
-- **Cierre:** EOF indica cierre remoto de lectura. Los errores de escritura/lectura se conservan como errores; no se convierten en buffer vacío. El cierre local debe ser una operación explícita del proveedor de conexión, especificada al implementar conexiones.
-- **Propiedad y concurrencia:** los bytes se prestan solo durante la llamada y no se retienen. El objeto de conexión es mutable y no se comparte concurrentemente sin sincronización externa. El orden de bytes se conserva por la semántica del stream, pero una llamada de lectura no corresponde necesariamente a una escritura.
-- **Límites:** el transporte mueve bytes y no asigna memoria según longitudes remotas. La capa de framing/serialización define y valida los máximos antes de reservar payloads.
-- **Fallos parciales:** tras un fallo de escritura parcial, el estado del protocolo se considera incierto; no se reintenta automáticamente la trama completa. La recuperación o reconexión queda fuera del contrato base.
+- **Complete write:** the high-level `write_all(bytes)` operation only returns success when all requested bytes have been accepted. An internal implementation may make several partial writes. If an error occurs after writing a prefix, it returns the error and does not secretly retry from scratch: the caller must treat the stream state as potentially desynchronized and usually close the connection.
+- **Read:** `read(buffer)` returns the number of bytes actually read, which may be smaller than the buffer size. `0` means EOF/ordered close by the peer, not "no data yet". Partial reads do not delimit messages; framing belongs to a later layer.
+- **Blocking:** operations wait for progress or a system error. The first API does not expose `WouldBlock` as a normal flow and promises no non-blocking operations; an async evolution will require another explicit contract.
+- **Timeouts:** no clock or global deadline is hidden. If the provider allows configuring a timeout, it is set explicitly in its configuration and the timeout is returned as a typed error. No portable maximum latency is promised.
+- **Close:** EOF indicates a remote read-side close. Write/read errors are preserved as errors; they are not converted into an empty buffer. Local close must be an explicit operation of the connection provider, specified when implementing connections.
+- **Ownership and concurrency:** bytes are borrowed only during the call and are not retained. The connection object is mutable and not shared concurrently without external synchronization. Byte order is preserved by the stream's semantics, but one read call does not necessarily correspond to one write.
+- **Limits:** the transport moves bytes and allocates no memory based on remote lengths. The framing/serialization layer defines and validates maxima before reserving payloads.
+- **Partial failures:** after a partial write failure, the protocol state is considered uncertain; the complete frame is not automatically retried. Recovery or reconnection is outside the base contract.
 
-Este punto cierra una decisión de diseño, no una implementación de red. Las pruebas del contrato pueden usar un proveedor falso; las pruebas de sockets locales pertenecen al punto 137 y no deben depender de tiempos exactos ni de servicios externos.
+This point closes a design decision, not a network implementation. Contract tests may use a fake provider; local socket tests belong to point 137 and must not depend on exact timings or external services.
 
-## Contrato de mensaje lógico — punto 122
+## Logical message contract — point 122
 
-Un mensaje lógico es una unidad de protocolo independiente del transporte concreto y del layout de bytes. La lectura del stream no crea mensajes: el framing que permitirá reconstruirlos se especifica en el punto 123. Este punto define la semántica y la identidad del mensaje, no su codificación binaria.
+A logical message is a protocol unit independent of the concrete transport and byte layout. Reading the stream does not create messages: the framing that will allow reconstructing them is specified in point 123. This point defines the message's semantics and identity, not its binary encoding.
 
-### Envelope conceptual
+### Conceptual envelope
 
-Cada mensaje debe tener estos elementos semánticos:
+Every message must have these semantic elements:
 
-- **Versión de protocolo:** identifica la versión del contrato común de Networking que interpreta el envelope. No equivale a la versión de un tipo de mensaje.
-- **Identificador de tipo:** identificador numérico estable asignado a una clase de mensaje dentro del protocolo. El valor cero queda reservado como inválido; un identificador publicado no se reutiliza para otro significado.
-- **Versión de mensaje:** versión del esquema semántico del tipo identificado, separada de la versión global del protocolo.
-- **Payload opaco:** contenido específico del tipo. La capa de mensajes no interpreta structs Rust en memoria ni presupone que el payload tenga una representación portable sin serialización explícita.
+- **Protocol version:** identifies the version of the common Networking contract that interprets the envelope. It is not the version of a message type.
+- **Type identifier:** a stable numeric identifier assigned to a message class within the protocol. The zero value is reserved as invalid; a published identifier is not reused for another meaning.
+- **Message version:** the semantic schema version of the identified type, separate from the global protocol version.
+- **Opaque payload:** type-specific content. The message layer interprets no in-memory Rust structs and does not assume the payload has a portable representation without explicit serialization.
 
-Como notación de diseño, no como API ya implementada:
+As design notation, not an already-implemented API:
 
 ```rust
 struct MessageEnvelope<'a> {
@@ -120,154 +120,154 @@ struct MessageEnvelope<'a> {
 }
 ```
 
-Estos nombres ilustran el contrato conceptual; no existen aún como tipos públicos de Rust. La representación y el orden exactos de los campos, el endianness, la codificación de enteros y el framing se fijan en el punto 123.
+These names illustrate the conceptual contract; they do not yet exist as public Rust types. The exact field representation and order, endianness, integer encoding and framing are fixed in point 123.
 
-### Reglas de validación y evolución
+### Validation and evolution rules
 
-- El receptor valida la versión de protocolo, el identificador de tipo, la versión del mensaje y el tamaño del payload antes de entregar el mensaje a la lógica de aplicación.
-- Un tipo desconocido o una versión de mensaje no admitida produce un error tipado por defecto; ignorarlo solo se permitirá mediante una política de compatibilidad explícita del protocolo, nunca por descarte silencioso implícito.
-- Una versión incompatible del protocolo se rechaza antes de despachar el payload. Las reglas de compatibilidad hacia delante/atrás deben declararse por versión; no se infieren del hecho de que el payload pueda decodificarse.
-- Los identificadores publicados son estables y no se reasignan. Una modificación incompatible del significado requiere un nuevo identificador o una nueva versión de mensaje, conforme a las reglas de compatibilidad documentadas.
-- El tamaño máximo de payload y del mensaje completo debe ser finito y comprobarse antes de reservar memoria basada en datos remotos. El valor concreto y la representación de longitud se fijan en el punto 123; este punto no inventa todavía un límite numérico.
-- Los errores de mensaje distinguen, como mínimo, versión de protocolo no admitida, tipo desconocido, versión de mensaje no admitida y límite excedido. Los errores de framing y de decodificación se detallan en serialización.
-- El orden solo es el que garantice el transporte seleccionado. Este envelope no añade secuencias, confirmaciones, entrega exactamente-una-vez ni deduplicación.
-- Un mensaje válido no implica autenticación, autorización, confianza en el emisor ni cifrado. La aplicación decide la política de seguridad y valida los datos del dominio.
-- La identidad de conexión, el estado de sesión, los mensajes de control de ciclo de vida, los ACK/reintentos y la reconexión quedan fuera del envelope base y se deciden en los puntos de conexiones/estado o en un protocolo de aplicación explícito.
+- The receiver validates the protocol version, type identifier, message version and payload size before delivering the message to application logic.
+- An unknown type or unsupported message version produces a typed error by default; ignoring it will only be allowed through an explicit protocol compatibility policy, never by implicit silent discard.
+- An incompatible protocol version is rejected before dispatching the payload. Forward/backward compatibility rules must be declared per version; they are not inferred from the fact that the payload can be decoded.
+- Published identifiers are stable and are not reassigned. An incompatible modification of meaning requires a new identifier or a new message version, according to the documented compatibility rules.
+- The maximum payload and complete message size must be finite and checked before reserving memory based on remote data. The concrete value and length representation are fixed in point 123; this point does not yet invent a numeric limit.
+- Message errors distinguish, at minimum, unsupported protocol version, unknown type, unsupported message version and exceeded limit. Framing and decoding errors are detailed in serialization.
+- Ordering is only what the selected transport guarantees. This envelope adds no sequences, acknowledgements, exactly-once delivery or deduplication.
+- A valid message implies no authentication, authorization, trust in the sender or encryption. The application decides the security policy and validates the domain data.
+- Connection identity, session state, lifecycle control messages, ACKs/retries and reconnection are outside the base envelope and are decided in the connections/state points or in an explicit application protocol.
 
-### Criterios de aceptación del punto 122
+### Acceptance criteria for point 122
 
-- Se definen los campos semánticos del envelope y se separan versión de protocolo y versión de mensaje.
-- Se fijan reglas para identificadores estables, tipos/versiones desconocidos, compatibilidad y límites sin decidir prematuramente la codificación binaria.
-- Se distinguen los errores de mensaje de los errores de framing/serialización y no se prometen garantías de entrega que el transporte no proporciona.
-- Se declara expresamente que el ejemplo de Rust es conceptual y que no hay tipos de mensaje implementados todavía.
+- The envelope's semantic fields are defined and protocol version and message version are separated.
+- Rules are fixed for stable identifiers, unknown types/versions, compatibility and limits without prematurely deciding the binary encoding.
+- Message errors are distinguished from framing/serialization errors and no delivery guarantees the transport does not provide are promised.
+- It is expressly declared that the Rust example is conceptual and that no message types are implemented yet.
 
-## Endpoint TCP — punto 125
+## TCP endpoint — point 125
 
-`dinah::network::Endpoint` envuelve un `std::net::TcpListener` y permite crear un socket de escucha, consultar la dirección local, configurar explícitamente el modo no bloqueante y aceptar conexiones entrantes como `Connection`. No inicia tareas en segundo plano ni mantiene un registro de las conexiones aceptadas.
+`dinah::network::Endpoint` wraps a `std::net::TcpListener` and allows creating a listening socket, querying the local address, explicitly configuring non-blocking mode and accepting incoming connections as `Connection`. It starts no background tasks and keeps no registry of accepted connections.
 
-- `Endpoint::bind(SocketAddr)` enlaza la dirección solicitada; el puerto `0` permite solicitar un puerto disponible al sistema operativo.
-- `local_addr()` informa la dirección local efectiva, incluido el puerto asignado.
-- `accept()` devuelve una `Connection` propietaria del `TcpStream` aceptado y la dirección del peer. Por defecto bloquea hasta una conexión o error del sistema operativo.
-- `set_nonblocking(true)` hace explícito el modo no bloqueante; `accept()` puede entonces devolver `WouldBlock` si no hay conexiones pendientes. No se añade polling ni scheduler.
-- El endpoint no añade framing, serialización, autenticación, cifrado, reconexión ni gestión de estado.
+- `Endpoint::bind(SocketAddr)` binds the requested address; port `0` lets the operating system assign an available port.
+- `local_addr()` reports the effective local address, including the assigned port.
+- `accept()` returns an owning `Connection` for the accepted `TcpStream` and the peer address. By default it blocks until a connection or operating-system error.
+- `set_nonblocking(true)` makes non-blocking mode explicit; `accept()` may then return `WouldBlock` if there are no pending connections. No polling or scheduler is added.
+- The endpoint adds no framing, serialization, authentication, encryption, reconnection or state management.
 
-### Criterios de aceptación del punto 125
+### Acceptance criteria for point 125
 
-- API pública para bind, dirección local, aceptación y modo no bloqueante explícito.
-- Las conexiones aceptadas reutilizan el wrapper `Connection` ya implementado.
-- Pruebas loopback cubren bind/accept/intercambio de bytes y el comportamiento `WouldBlock` explícito.
-- No se crean tareas de fondo ni se afirma que exista gestión de estado de conexión.
+- Public API for bind, local address, accept and explicit non-blocking mode.
+- Accepted connections reuse the already-implemented `Connection` wrapper.
+- Loopback tests cover bind/accept/byte exchange and the explicit `WouldBlock` behavior.
+- No background tasks are created and no claim is made that connection-state management exists.
 
-## Conexiones TCP — punto 124
+## TCP connections — point 124
 
-La primera implementación concreta es `dinah::network::Connection`, un wrapper propietario de `std::net::TcpStream`. Solo proporciona operaciones de byte stream; no convierte escrituras en mensajes ni incorpora todavía el framing v1 del punto 123.
+The first concrete implementation is `dinah::network::Connection`, an owning wrapper of `std::net::TcpStream`. It only provides byte-stream operations; it does not turn writes into messages and does not yet incorporate point 123's v1 framing.
 
-- `Connection::connect(SocketAddr)` conecta usando el comportamiento de timeout predeterminado del sistema operativo.
-- `Connection::connect_timeout(SocketAddr, Duration)` permite solicitar un timeout explícito de conexión y rechaza una duración cero como entrada inválida.
-- `Connection::from_tcp_stream(TcpStream)` toma ownership de un stream ya establecido, como uno aceptado por un listener.
-- `read(&mut [u8])` conserva la semántica de lectura parcial y EOF; los errores, incluidos los timeouts configurados, se devuelven como `ConnectionError::Io`.
-- `write_all(&[u8])` solo devuelve éxito si todos los bytes fueron escritos. Ante error parcial, el estado del stream puede ser incierto; no hay reintento automático de la trama completa.
-- `set_read_timeout` y `set_write_timeout` configuran explícitamente los timeouts de operaciones. `None` desactiva el timeout, sujeto al comportamiento de la plataforma.
-- `local_addr`, `peer_addr` y `shutdown` exponen las direcciones del socket y el cierre explícito. No hay reconexión automática, tareas de fondo, autenticación, cifrado ni sincronización interna.
+- `Connection::connect(SocketAddr)` connects using the operating system's default timeout behavior.
+- `Connection::connect_timeout(SocketAddr, Duration)` allows requesting an explicit connection timeout and rejects a zero duration as invalid input.
+- `Connection::from_tcp_stream(TcpStream)` takes ownership of an already-established stream, such as one accepted by a listener.
+- `read(&mut [u8])` preserves partial-read and EOF semantics; errors, including configured timeouts, are returned as `ConnectionError::Io`.
+- `write_all(&[u8])` only returns success if all bytes were written. On a partial error, the stream state may be uncertain; there is no automatic retry of the complete frame.
+- `set_read_timeout` and `set_write_timeout` explicitly configure operation timeouts. `None` disables the timeout, subject to platform behavior.
+- `local_addr`, `peer_addr` and `shutdown` expose the socket addresses and explicit close. There is no automatic reconnection, background tasks, authentication, encryption or internal synchronization.
 
-Los métodos requieren acceso mutable para leer/escribir. El wrapper no implementa `Clone` ni duplica sockets implícitamente. Las pruebas usan loopback y un listener local, sin servicios externos ni aserciones de latencia exacta. Esta API TCP inicial no implica soporte UDP ni estabilidad de API.
+The methods require mutable access to read/write. The wrapper implements neither `Clone` nor implicit socket duplication. The tests use loopback and a local listener, with no external services or exact-latency assertions. This initial TCP API implies no UDP support or API stability.
 
-### Criterios de aceptación del punto 124
+### Acceptance criteria for point 124
 
-- Wrapper público propietario de `TcpStream` con conexión normal y conexión con timeout explícito.
-- Operaciones de bytes, EOF, errores, direcciones y cierre explícitas y documentadas.
-- Pruebas loopback para ida/vuelta de bytes, EOF, stream preexistente y rechazo de timeout cero.
-- Sin afirmar framing, serialización, autenticación, reconexión o endpoints como capacidades ya implementadas.
+- Public owning wrapper of `TcpStream` with normal connection and explicit-timeout connection.
+- Byte operations, EOF, errors, addresses and close explicit and documented.
+- Loopback tests for byte round-trips, EOF, a preexisting stream and zero-timeout rejection.
+- Without claiming framing, serialization, authentication, reconnection or endpoints as already-implemented capabilities.
 
-## Contratos obligatorios
+## Mandatory contracts
 
-- **Ownership:** buffers prestados durante la llamada, salvo que una API futura documente explícitamente una transferencia de propiedad. No retener referencias a buffers del llamador.
-- **Framing:** el stream necesita delimitación propia (longitud prefijada u otro framing definido); las fronteras de lectura no son fronteras de mensajes. Datagramas conservan los límites del datagrama, sujetos al máximo configurado.
-- **Límites:** longitud máxima de frame y de mensaje configurable/constante documentada; rechazar overflow y entradas truncadas antes de asignar memoria en función de datos remotos.
-- **Errores:** distinguir configuración inválida, fallo de transporte, cierre/EOF, frame inválido, serialización inválida y límite excedido. No convertir errores en payloads vacíos ni reintentar silenciosamente.
-- **Tiempo:** los timeouts y deadlines deben ser explícitos. La primera API no debe consultar un reloj global oculto ni prometer latencia máxima.
-- **Concurrencia:** no compartir una conexión mutable entre hilos sin sincronización explícita. El orden solo se garantiza donde lo prometa el transporte seleccionado.
-- **Seguridad:** el framing no es autenticación ni cifrado. No confiar en el peer; no exponer claves/tokens en logs; no habilitar deserialización de tipos arbitrarios.
-- **Cierre:** definir cuándo una conexión está abierta/cerrada y cómo se propagan EOF, cierre local y cierre remoto antes de prometer recuperación automática.
-- **Determinismo:** los tests de protocolo usan buffers y transporte falso; los tests con sockets no deben depender de timings exactos ni de disponibilidad externa.
-- **Portabilidad:** la API de alto nivel no debe filtrar tipos de socket específicos del sistema operativo si puede expresar el contrato de forma portable.
+- **Ownership:** buffers borrowed during the call, unless a future API explicitly documents an ownership transfer. Do not retain references to caller buffers.
+- **Framing:** the stream needs its own delimitation (prefixed length or other defined framing); read boundaries are not message boundaries. Datagrams keep the datagram's limits, subject to the configured maximum.
+- **Limits:** documented configurable/constant maximum frame and message length; reject overflow and truncated input before allocating memory based on remote data.
+- **Errors:** distinguish invalid configuration, transport failure, close/EOF, invalid frame, invalid serialization and exceeded limit. Do not convert errors into empty payloads or retry silently.
+- **Time:** timeouts and deadlines must be explicit. The first API must not query a hidden global clock or promise maximum latency.
+- **Concurrency:** do not share a mutable connection across threads without explicit synchronization. Ordering is only guaranteed where the selected transport promises it.
+- **Security:** framing is not authentication or encryption. Do not trust the peer; do not expose keys/tokens in logs; do not enable deserialization of arbitrary types.
+- **Close:** define when a connection is open/closed and how EOF, local close and remote close propagate before promising automatic recovery.
+- **Determinism:** protocol tests use buffers and a fake transport; socket tests must not depend on exact timings or external availability.
+- **Portability:** the high-level API must not leak operating-system-specific socket types if it can express the contract portably.
 
-## Decisiones aplazadas y orden de implementación
+## Deferred decisions and implementation order
 
-- **121 Transporte (decisión tomada):** stream de bytes bloqueante; lecturas parciales permitidas, EOF definido, escritura completa con errores de progreso parcial, timeout explícito del proveedor y sin reintento automático. No se mezcla stream con datagramas ni se afirma que existan sockets implementados.
-- **122 Mensajes (decisión tomada):** envelope conceptual con versión de protocolo, identificador estable de tipo, versión de mensaje y payload opaco; codificación binaria y framing quedan para 123.
-- **123 Serialización (decisión tomada):** framing por longitud prefijada de 32 bits big-endian; cabecera de 6 bytes con versión de protocolo, tipo y versión de mensaje como enteros de 16 bits big-endian; frame máximo de 1 MiB incluido el encabezado; rechazos explícitos de longitud inválida, truncamiento y versiones/tipos inválidos. Formato propio mínimo, sin dependencia externa ni serialización de structs Rust.
-- **124 Conexiones (implementado inicialmente):** `dinah::network::Connection` envuelve `TcpStream` con lectura/escritura bloqueante, timeout explícito, direcciones y shutdown; sin framing integrado ni reconexión automática. **125 Endpoints (implementado inicialmente):** `dinah::network::Endpoint` envuelve `TcpListener` con bind, dirección local, accept y modo no bloqueante explícito. **126 Gestión de estado (implementado inicialmente):** `ConnectionState` registra el estado local observable (`Open`, `ReadClosed`, `WriteClosed`, `Closed`); no detecta inmediatamente un cierre remoto ni gestiona reconexión. **127 Prediction (investigación completada):** modelo y límites en `docs/client-side-prediction.md`. **128–131 Prediction/reconciliation/history/resimulation (implementación genérica inicial):** `network::prediction::PredictionBuffer` mantiene historial acotado, aplica inputs localmente y reconcilia snapshots autoritativos reproduciendo inputs pendientes. La transición de estado la aporta el consumidor; no hay adaptador de dominio ni garantía de determinismo multiplataforma.
-- **132–134 Pérdida/latencia/desconexión (primitivas iniciales implementadas):** outbox de reintentos a nivel de aplicación, estimador RTT y monitor lógico/backoff. No hay reconexión automática ni control de retransmisión TCP.
-- **135–136 Integración Runtime/Simulation (adaptadores explícitos implementados):** cola de trabajo acotada con despacho síncrono y entrega simulada por tick; el consumidor aplica los mensajes.
-- **137–139 Tests/latencia/benchmarks (suite inicial implementada):** pruebas deterministas de políticas y simulador, benchmark de estimador/outbox integrado en el runner; las mediciones multiplataforma dependen de CI.
-- **140 Documentación:** documentar exclusivamente comportamiento implementado y límites medidos.
+- **121 Transport (decision taken):** blocking byte stream; partial reads allowed, EOF defined, complete write with partial-progress errors, explicit provider timeout and no automatic retry. Stream is not mixed with datagrams and no claim is made that sockets are implemented.
+- **122 Messages (decision taken):** conceptual envelope with protocol version, stable type identifier, message version and opaque payload; binary encoding and framing remain for 123.
+- **123 Serialization (decision taken):** framing by 32-bit big-endian prefixed length; 6-byte header with protocol version, type and message version as 16-bit big-endian integers; maximum frame of 1 MiB including the header; explicit rejections of invalid length, truncation and invalid versions/types. Minimal custom format, with no external dependency or Rust-struct serialization.
+- **124 Connections (initially implemented):** `dinah::network::Connection` wraps `TcpStream` with blocking read/write, explicit timeout, addresses and shutdown; no integrated framing or automatic reconnection. **125 Endpoints (initially implemented):** `dinah::network::Endpoint` wraps `TcpListener` with bind, local address, accept and explicit non-blocking mode. **126 State management (initially implemented):** `ConnectionState` records the locally observable state (`Open`, `ReadClosed`, `WriteClosed`, `Closed`); it does not immediately detect a remote close and manages no reconnection. **127 Prediction (research completed):** model and limits in `docs/client-side-prediction.md`. **128–131 Prediction/reconciliation/history/resimulation (initial generic implementation):** `network::prediction::PredictionBuffer` keeps a bounded history, applies inputs locally and reconciles authoritative snapshots by replaying pending inputs. The state transition is provided by the consumer; there is no domain adapter or cross-platform determinism guarantee.
+- **132–134 Loss/latency/disconnect (initial primitives implemented):** application-level retry outbox, RTT estimator and logical monitor/backoff. No automatic reconnection or TCP retransmission control.
+- **135–136 Runtime/Simulation integration (explicit adapters implemented):** bounded work queue with synchronous dispatch and tick-based simulated delivery; the consumer applies the messages.
+- **137–139 Tests/latency/benchmarks (initial suite implemented):** deterministic tests of policies and simulator, estimator/outbox benchmark integrated in the runner; cross-platform measurements depend on CI.
+- **140 Documentation:** document only implemented behavior and measured limits.
 
-## Criterios de aceptación del punto 120
+## Acceptance criteria for point 120
 
-El punto 121 queda definido cuando el contrato de transporte fija semántica de stream, lectura parcial/EOF, escritura parcial, bloqueo, timeout, cierre, ownership, límites y recuperación tras error, sin presentarlo como implementación.
+Point 121 is defined when the transport contract fixes stream semantics, partial read/EOF, partial write, blocking, timeout, close, ownership, limits and recovery after error, without presenting it as an implementation.
 
-- Responsabilidades separadas de Core, Runtime, Simulation y Networking.
-- Capas lógicas de mensaje, serialización, transporte, conexión e integración identificadas.
-- Contratos iniciales de ownership, framing, límites, errores, tiempo, concurrencia, cierre, seguridad y determinismo definidos.
-- Decisiones no resueltas etiquetadas como propuestas, no como APIs existentes.
-- Ningún transporte, socket, serializador o característica de predicción se considera implementado por este documento.
+- Separated responsibilities of Core, Runtime, Simulation and Networking.
+- Logical layers of message, serialization, transport, connection and integration identified.
+- Initial contracts of ownership, framing, limits, errors, time, concurrency, close, security and determinism defined.
+- Unresolved decisions labeled as proposals, not existing APIs.
+- No transport, socket, serializer or prediction feature is considered implemented by this document.
 
-## Criterios de aceptación del punto 121
+## Acceptance criteria for point 121
 
-El punto 121 queda definido cuando el contrato de transporte fija semántica de stream, lectura parcial/EOF, escritura parcial, bloqueo, timeout, cierre, ownership, límites y recuperación tras error.
+Point 121 is defined when the transport contract fixes stream semantics, partial read/EOF, partial write, blocking, timeout, close, ownership, limits and recovery after error.
 
-## Serialización y wire format — punto 123
+## Serialization and wire format — point 123
 
-Este contrato fija una codificación de wire pequeña y explícita para el envelope definido en el punto 122. Sigue siendo una decisión de diseño: no hay encoder/decoder ni API pública de framing implementados.
+This contract fixes a small, explicit wire encoding for the envelope defined in point 122. It remains a design decision: no encoder/decoder or public framing API is implemented.
 
-### Formato binario v1
+### v1 binary format
 
-Todos los enteros se codifican en **big-endian**. No se transmiten structs Rust en memoria, padding, discriminantes implícitos, `usize`, ni representaciones dependientes de la plataforma.
+All integers are encoded in **big-endian**. No in-memory Rust structs, padding, implicit discriminants, `usize` or platform-dependent representations are transmitted.
 
-Cada frame en el byte stream tiene esta forma:
+Every frame in the byte stream has this shape:
 
-| Campo | Tamaño | Significado |
+| Field | Size | Meaning |
 |---|---:|---|
-| `frame_length` | 4 bytes | Longitud big-endian de todo lo que sigue, sin incluir este prefijo |
-| `protocol_version` | 2 bytes | Versión del protocolo; `1` es la versión inicial definida por este formato |
-| `message_type` | 2 bytes | Identificador estable de tipo; `0` es inválido/reservado |
-| `message_version` | 2 bytes | Versión del esquema del mensaje; `0` es inválido/reservado |
-| `payload` | 0 o más bytes | Bytes opacos del mensaje, definidos por el tipo y la versión |
+| `frame_length` | 4 bytes | Big-endian length of everything that follows, not including this prefix |
+| `protocol_version` | 2 bytes | Protocol version; `1` is the initial version defined by this format |
+| `message_type` | 2 bytes | Stable type identifier; `0` is invalid/reserved |
+| `message_version` | 2 bytes | Message schema version; `0` is invalid/reserved |
+| `payload` | 0 or more bytes | Opaque message bytes, defined by the type and version |
 
-`frame_length` cuenta los seis bytes de cabecera y el payload, pero no sus propios cuatro bytes. El mínimo válido es 6 bytes. El máximo de frame es **1 MiB (1.048.576 bytes)**, incluyendo la cabecera pero excluyendo el prefijo de longitud; por tanto, el payload máximo es 1.048.570 bytes. El tamaño total máximo en el stream es 1.048.580 bytes contando el prefijo. Estos límites son constantes del formato v1, no datos confiables enviados por el peer.
+`frame_length` counts the six header bytes and the payload, but not its own four bytes. The valid minimum is 6 bytes. The maximum frame is **1 MiB (1,048,576 bytes)**, including the header but excluding the length prefix; therefore the maximum payload is 1,048,570 bytes. The maximum total size on the stream is 1,048,580 bytes counting the prefix. These limits are constants of the v1 format, not trustworthy data sent by the peer.
 
-### Decodificación y framing
+### Decoding and framing
 
-- El decoder lee exactamente los cuatro bytes del prefijo, aceptando lecturas parciales del stream mediante acumulación explícita.
-- Valida `frame_length` contra el mínimo y máximo antes de reservar o acumular el cuerpo. Una longitud fuera de rango se rechaza; no se trunca, satura ni intenta una asignación basada en ella.
-- Después lee exactamente el cuerpo declarado. EOF antes de completar prefijo o cuerpo se informa como frame truncado; no se entrega un mensaje parcial.
-- El decoder valida la versión de protocolo, el tipo y la versión de mensaje antes de despachar el payload. La versión de protocolo no admitida, el tipo cero/desconocido y la versión de mensaje cero/no admitida se rechazan mediante errores diferenciados.
-- Un frame válido consume exactamente el prefijo y el cuerpo declarados. Los bytes siguientes pertenecen al próximo frame; no se acepta que una longitud incluya bytes de un frame posterior.
-- El encoder calcula la longitud con comprobación de overflow, rechaza mensajes que excedan el máximo y emite el prefijo y la cabecera en el orden definido. No puede depender del endianess nativo.
-- El payload permanece opaco en la capa de wire. La decodificación de campos propios de cada mensaje se hará con reglas específicas y límites propios; no se habilita deserialización de tipos arbitrarios ni se interpreta memoria Rust directamente.
-- No se define checksum, compresión, cifrado, autenticación, ACK, secuencias ni recuperación tras pérdida. Esas funciones requieren contratos separados y no deben inferirse de este formato.
+- The decoder reads exactly the four prefix bytes, accepting partial stream reads through explicit accumulation.
+- It validates `frame_length` against the minimum and maximum before reserving or accumulating the body. An out-of-range length is rejected; it is not truncated, saturated or used to attempt an allocation.
+- It then reads exactly the declared body. EOF before completing prefix or body is reported as a truncated frame; no partial message is delivered.
+- The decoder validates the protocol version, type and message version before dispatching the payload. Unsupported protocol version, zero/unknown type and zero/unsupported message version are rejected through differentiated errors.
+- A valid frame consumes exactly the declared prefix and body. The following bytes belong to the next frame; a length must not include bytes of a later frame.
+- The encoder computes the length with overflow checking, rejects messages exceeding the maximum and emits the prefix and header in the defined order. It cannot depend on native endianness.
+- The payload stays opaque at the wire layer. Decoding of each message's own fields will use specific rules and limits; deserialization of arbitrary types is not enabled and Rust memory is not interpreted directly.
+- No checksum, compression, encryption, authentication, ACK, sequences or recovery after loss is defined. Those functions require separate contracts and must not be inferred from this format.
 
-### Errores mínimos de serialización
+### Minimal serialization errors
 
-La futura API debe distinguir al menos: longitud de frame demasiado pequeña, longitud de frame excedida, overflow al calcular longitud, prefijo/cuerpo truncado, versión de protocolo no admitida, tipo inválido o desconocido y versión de mensaje inválida o no admitida. Los fallos de transporte subyacentes se conservan como fallos de transporte, no se disfrazan de errores de payload.
+The future API must distinguish at least: frame length too small, frame length exceeded, overflow while computing length, truncated prefix/body, unsupported protocol version, invalid or unknown type, and invalid or unsupported message version. Underlying transport failures are preserved as transport failures, not disguised as payload errors.
 
-### Compatibilidad y evolución
+### Compatibility and evolution
 
-El layout descrito es el wire format v1. Cambiar tamaño, orden, endianness o semántica de los campos de cabecera es un cambio incompatible y requiere una nueva versión de protocolo o una decisión explícita de migración. Los nuevos tipos usan identificadores no reutilizados; cambios incompatibles en un esquema de payload incrementan su versión de mensaje o reciben un nuevo identificador según la política del protocolo. No se permite adivinar versiones ni ignorar campos de cabecera desconocidos.
+The described layout is wire format v1. Changing the size, order, endianness or semantics of the header fields is an incompatible change and requires a new protocol version or an explicit migration decision. New types use non-reused identifiers; incompatible changes in a payload schema increment its message version or receive a new identifier according to the protocol's policy. Guessing versions or ignoring unknown header fields is not allowed.
 
-### Criterios de aceptación del punto 123
+### Acceptance criteria for point 123
 
-- Formato binario, orden de bytes, framing y significado de longitud definidos sin ambigüedad.
-- Límites mínimo/máximo validados antes de asignaciones basadas en datos remotos.
-- Lecturas parciales, EOF/truncamiento, overflow y errores de versión/tipo tienen comportamiento explícito.
-- Se prohíbe depender de layout Rust nativo o añadir dependencias sin necesidad justificada.
-- Se declara que este punto solo decide el contrato: la implementación del encoder/decoder y las pruebas de código se harán en puntos posteriores de implementación/testing.
+- Binary format, byte order, framing and length meaning defined without ambiguity.
+- Minimum/maximum limits validated before allocations based on remote data.
+- Partial reads, EOF/truncation, overflow and version/type errors have explicit behavior.
+- Depending on native Rust layout or adding dependencies without justified need is prohibited.
+- It is declared that this point only decides the contract: the encoder/decoder implementation and code tests will be done in later implementation/testing points.
 
-## Estado y alcance actual — punto 140
+## Current state and scope — point 140
 
-Los puntos 120–139 tienen decisiones y primitivas incrementales documentadas arriba; el punto 140 cierra esta documentación de Networking sin afirmar que exista un stack completo. Hoy hay wrappers TCP bloqueantes (`Connection`, `Endpoint`), estado local de conexión, cola de trabajo explícita hacia Runtime, estimación de RTT, monitor de liveness/backoff, outbox de reintentos de aplicación, predicción/reconciliación genéricas y un simulador determinista por ticks.
+Points 120–139 have decisions and incremental primitives documented above; point 140 closes this Networking documentation without claiming a complete stack exists. Today there are blocking TCP wrappers (`Connection`, `Endpoint`), local connection state, an explicit work queue toward Runtime, RTT estimation, a liveness/backoff monitor, an application retry outbox, generic prediction/reconciliation and a deterministic tick simulator.
 
-Siguen pendientes el framing/encoder/decoder del wire format, la autenticación, el cifrado, una política de protocolo completa, UDP, operaciones asíncronas, gestión automática de conexiones y garantías de entrega extremo a extremo. La API TCP mueve bytes y no delimita mensajes; los auxiliares de fiabilidad y simulación no se conectan automáticamente al socket. El simulador usa decisiones de pérdida suministradas por el consumidor y no modela congestión ni aleatoriedad implícita.
+Still pending are the wire format's framing/encoder/decoder, authentication, encryption, a complete protocol policy, UDP, async operations, automatic connection management and end-to-end delivery guarantees. The TCP API moves bytes and does not delimit messages; the reliability and simulation helpers are not automatically connected to the socket. The simulator uses loss decisions supplied by the consumer and models no congestion or implicit randomness.
 
-El código de Networking evita dependencias externas y `unsafe`. Los timeouts, relojes, reintentos y el despacho se activan explícitamente desde el llamador. Esta separación permite probar cada contrato por separado y evita presentar funciones futuras como capacidades ya disponibles.
+The Networking code avoids external dependencies and `unsafe`. Timeouts, clocks, retries and dispatch are activated explicitly from the caller. This separation allows testing each contract separately and avoids presenting future functions as already-available capabilities.

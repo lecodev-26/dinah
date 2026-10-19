@@ -1,26 +1,26 @@
-# DINAH Observability — puntos 183–190
+# DINAH Observability — points 183–190
 
-`dinah::observability` ofrece una primera capa opt-in y sin dependencias para registrar señales explícitas. No instala un collector global ni instrumenta automáticamente Runtime, Memory, Compute, Network o Storage.
+`dinah::observability` provides a first opt-in, dependency-free layer to record explicit signals. It installs no global collector and does not automatically instrument Runtime, Memory, Compute, Network or Storage.
 
 ## Tracing
 
-`Observability` posee un `TraceBuffer` de capacidad fija y usa los eventos de ciclo de vida ya definidos por Runtime. `trace` devuelve un error si el buffer está lleno o bloqueado; no sobrescribe eventos antiguos. El llamador decide cuándo registrar cada evento. `trace_snapshot` devuelve los eventos en orden de registro.
+`Observability` owns a fixed-capacity `TraceBuffer` and uses the lifecycle events already defined by Runtime. `trace` returns an error if the buffer is full or locked; it does not overwrite old events. The caller decides when to record each event. `trace_snapshot` returns the events in registration order.
 
-## Métricas por subsistema
+## Per-subsystem metrics
 
-`MetricsRegistry` registra nombres de métricas por subsistema (`Runtime`, `Memory`, `Compute`, `Network`, `Storage`). `increment` mantiene contadores saturados para evitar overflow; `set_gauge` reemplaza un valor instantáneo. `snapshot` devuelve una vista ordenada y copiada. Las métricas reflejan únicamente llamadas explícitas de la aplicación: la biblioteca no infiere uso de memoria, bytes de red, duración de tareas ni operaciones de compute/storage por sí sola.
+`MetricsRegistry` records metric names per subsystem (`Runtime`, `Memory`, `Compute`, `Network`, `Storage`). `increment` keeps saturating counters to avoid overflow; `set_gauge` replaces an instantaneous value. `snapshot` returns an ordered, copied view. Metrics reflect only explicit application calls: the library does not by itself infer memory usage, network bytes, task durations or compute/storage operations.
 
-Los nombres vacíos y el poisoning del mutex producen errores. Los nombres son etiquetas locales, no un esquema de telemetría versionado. No se definen cardinalidad máxima de etiquetas, agregaciones ni ventanas temporales. `MetricsRegistry::export_json` exporta una instantánea ordenada como un array JSON con `subsystem`, `name`, `kind` y `value`; escapa comillas, barras y caracteres de control. Devuelve un `String` para que el llamador decida dónde escribirlo; no abre sockets ni envía datos a servicios externos.
+Empty names and mutex poisoning produce errors. Names are local labels, not a versioned telemetry schema. No maximum label cardinality, aggregations or time windows are defined. `MetricsRegistry::export_json` exports an ordered snapshot as a JSON array with `subsystem`, `name`, `kind` and `value`; it escapes quotes, slashes and control characters. It returns a `String` so the caller decides where to write it; it does not open sockets or send data to external services.
 
 ## Profiler hooks
 
-`profile(name, operation)` mide el tiempo transcurrido de una operación síncrona y guarda una muestra mientras quede capacidad. Las muestras posteriores no desplazan las antiguas al llenarse el buffer. `profile_with_hook` entrega la muestra al `ProfilerHook` suministrado por el llamador. Si la operación entra en pánico, el pánico se propaga y no se genera una muestra final. Esto no es un profiler de CPU, asignaciones ni stack sampling.
+`profile(name, operation)` measures the elapsed time of a synchronous operation and stores one sample while capacity remains. Later samples do not displace old ones when the buffer fills. `profile_with_hook` delivers the sample to the caller-supplied `ProfilerHook`. If the operation panics, the panic propagates and no final sample is produced. This is not a CPU, allocation or stack-sampling profiler.
 
-## Diagnóstico
+## Diagnostics
 
-`diagnose` informa del número de métricas, número/capacidad de muestras de profiling, capacidad del buffer de tracing y cantidad de nombres de métricas por subsistema. No realiza comprobaciones del host, de permisos, de seguridad, de salud de conexiones ni de integridad de datos.
+`diagnose` reports the number of metrics, the profiling sample count/capacity, the tracing buffer capacity and the number of metric names per subsystem. It performs no host, permission, security, connection-health or data-integrity checks.
 
-## Ejemplo
+## Example
 
 ```rust
 use dinah::observability::{Observability, Subsystem};
@@ -38,4 +38,4 @@ assert_eq!(report.metric_count, 1);
 # Ok::<(), Box<dyn std::error::Error>>(())
 ```
 
-La implementación es local, explícita y síncrona. La exportación JSON es una representación de instantánea, no un protocolo remoto ni una garantía de compatibilidad de esquema entre versiones. Los perfiles de compilación debug/release son los de Cargo; los benchmarks reproducibles del repositorio usan `cargo bench` en release y guardan metadatos de entorno, pero los resultados siguen dependiendo del host y de la carga.
+The implementation is local, explicit and synchronous. The JSON export is a snapshot representation, not a remote protocol or a cross-version schema-compatibility guarantee. Build profiles are Cargo's debug/release profiles; the repository's reproducible benchmarks use `cargo bench` in release and record environment metadata, but results still depend on host and load.

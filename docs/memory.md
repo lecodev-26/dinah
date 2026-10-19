@@ -1,62 +1,62 @@
-# dinah Memory — guía práctica
+# dinah Memory — practical guide
 
-El módulo `dinah::memory` ofrece buffers contiguos con capacidad lógica fija. El subsistema sigue siendo experimental: su API no se considera estable. Esta guía describe las primitivas existentes, no capacidades planeadas.
+The `dinah::memory` module offers contiguous buffers with a fixed logical capacity. The subsystem remains experimental: its API is not considered stable. This guide describes existing primitives, not planned capabilities.
 
-## Elegir una estructura
+## Choosing a structure
 
-| Necesidad | Opción inicial |
+| Need | Initial option |
 |---|---|
-| Secuencia homogénea con límite fijo de elementos | `Buffer<T>` |
-| Dos campos contiguos que se recorren por separado | `SoaBuffer<A, B>` |
-| Compartir estado mutable entre hilos | Envolver explícitamente en `dinah::runtime::Shared<T>` |
-| Crecimiento automático o límite estricto en bytes | No está cubierto por estos buffers |
+| Homogeneous sequence with a fixed element limit | `Buffer<T>` |
+| Two contiguous fields traversed separately | `SoaBuffer<A, B>` |
+| Sharing mutable state across threads | Wrap explicitly in `dinah::runtime::Shared<T>` |
+| Automatic growth or a strict byte limit | Not covered by these buffers |
 
-Si casi siempre se consumen todos los campos de una entidad a la vez, un `Vec<MyStruct>` o una estructura AoS puede resultar más simple. SoA es un candidato para recorrer un campo de muchas filas, no una optimización universal. Mide con una carga representativa.
+If almost all fields of an entity are consumed at once, a `Vec<MyStruct>` or an AoS structure can be simpler. SoA is a candidate for traversing one field of many rows, not a universal optimization. Measure with a representative workload.
 
 ## `Buffer<T>`
 
-`Buffer<T>` posee sus elementos y reserva capacidad mediante `try_with_capacity`. La capacidad es un máximo lógico de elementos, no un presupuesto exacto de bytes ni una garantía de memoria residente. El buffer no crece automáticamente.
+`Buffer<T>` owns its elements and reserves capacity through `try_with_capacity`. The capacity is a logical maximum of elements, not an exact byte budget or a resident-memory guarantee. The buffer does not grow automatically.
 
 ```rust
 use dinah::memory::{Buffer, BufferCreateError, BufferPushError};
 
 fn main() -> Result<(), BufferCreateError> {
     let mut values = Buffer::try_with_capacity(3)?;
-    values.try_push(10).expect("hay espacio");
-    values.try_extend_from_slice(&[20, 30]).expect("el lote cabe");
+    values.try_push(10).expect("there is room");
+    values.try_extend_from_slice(&[20, 30]).expect("the batch fits");
     assert_eq!(values.as_slice(), &[10, 20, 30]);
 
-    let rejected = values.try_push(40).expect_err("el buffer está lleno");
+    let rejected = values.try_push(40).expect_err("the buffer is full");
     assert_eq!(rejected, BufferPushError::Full(40));
 
-    values.clear(); // destruye los elementos, conserva la reserva
-    values.try_push(50).expect("la reserva se reutiliza");
+    values.clear(); // destroys the elements, keeps the reservation
+    values.try_push(50).expect("the reservation is reused");
     Ok(())
 }
 ```
 
-- `try_with_capacity(n)` devuelve `BufferCreateError::AllocationFailed` si no puede reservar la capacidad solicitada.
-- `try_push(value)` inserta un elemento o devuelve `BufferPushError::Full(value)`, conservando el valor rechazado.
-- `try_extend_from_slice(slice)` requiere `T: Clone`. Si el lote no cabe, devuelve `BufferExtendError { requested, remaining }` sin modificar el contenido por ese error de capacidad.
-- `as_slice()` y `as_mut_slice()` prestan los elementos inicializados. La vista mutable permite cambiar valores, no longitud ni capacidad.
-- `len()`, `is_empty()`, `capacity()` e `is_full()` describen el estado lógico.
-- `pop()` transfiere al llamador el último elemento; `clear()` destruye todos los elementos actuales y conserva la reserva.
+- `try_with_capacity(n)` returns `BufferCreateError::AllocationFailed` if it cannot reserve the requested capacity.
+- `try_push(value)` inserts one element or returns `BufferPushError::Full(value)`, keeping the rejected value.
+- `try_extend_from_slice(slice)` requires `T: Clone`. If the batch does not fit, it returns `BufferExtendError { requested, remaining }` without modifying the contents due to that capacity error.
+- `as_slice()` and `as_mut_slice()` lend the initialized elements. The mutable view allows changing values, not length or capacity.
+- `len()`, `is_empty()`, `capacity()` and `is_full()` describe the logical state.
+- `pop()` transfers the last element to the caller; `clear()` destroys all current elements and keeps the reservation.
 
-La capacidad cero es válida: el buffer está vacío y lleno a la vez, y no acepta inserciones. El tipo no implementa `Clone`; moverlo transfiere su propiedad. Los préstamos de Rust impiden modificar el buffer mientras siga viva una vista incompatible.
+Zero capacity is valid: the buffer is empty and full at the same time, and accepts no insertions. The type does not implement `Clone`; moving it transfers ownership. Rust's borrows prevent modifying the buffer while an incompatible view is still alive.
 
 ## `SoaBuffer<A, B>`
 
-`SoaBuffer` guarda dos columnas contiguas. La fila lógica `i` corresponde al par `(first[i], second[i])`; ambas columnas mantienen la misma longitud y capacidad.
+`SoaBuffer` stores two contiguous columns. Logical row `i` corresponds to the pair `(first[i], second[i])`; both columns keep the same length and capacity.
 
 ```rust
 use dinah::memory::{SoaBuffer, SoaCreateError};
 
 fn main() -> Result<(), SoaCreateError> {
     let mut entities = SoaBuffer::try_with_capacity(3)?;
-    entities.try_push(100_u32, 1.5_f32).expect("hay espacio");
+    entities.try_push(100_u32, 1.5_f32).expect("there is room");
     entities
         .try_extend_from_slices(&[200, 300], &[2.5, 3.5])
-        .expect("las columnas coinciden y el lote cabe");
+        .expect("columns match and the batch fits");
 
     let (ids, positions) = entities.as_slices();
     assert_eq!(ids, &[100, 200, 300]);
@@ -65,28 +65,28 @@ fn main() -> Result<(), SoaCreateError> {
 }
 ```
 
-- `try_with_capacity(n)` reserva ambas columnas; si falla una reserva, no se devuelve un objeto parcialmente construido.
-- `try_push(a, b)` inserta una fila completa o devuelve ambos valores en `SoaPushError { first, second }`.
-- `try_extend_from_slices(a, b)` requiere `A: Clone` y `B: Clone`. Rechaza longitudes distintas (`SoaExtendError::LengthMismatch`) o un lote que no cabe (`CapacityExceeded`) antes de modificar las columnas.
-- `as_slices()` y `as_mut_slices()` prestan ambas columnas sin permitir cambiar sus longitudes.
-- `len()`, `is_empty()`, `capacity()` e `is_full()` describen el número lógico de filas; `pop()` extrae el último par y `clear()` elimina las filas conservando la reserva.
+- `try_with_capacity(n)` reserves both columns; if one reservation fails, no partially constructed object is returned.
+- `try_push(a, b)` inserts a complete row or returns both values in `SoaPushError { first, second }`.
+- `try_extend_from_slices(a, b)` requires `A: Clone` and `B: Clone`. It rejects mismatched lengths (`SoaExtendError::LengthMismatch`) or a batch that does not fit (`CapacityExceeded`) before modifying the columns.
+- `as_slices()` and `as_mut_slices()` lend both columns without allowing their lengths to change.
+- `len()`, `is_empty()`, `capacity()` and `is_full()` describe the logical number of rows; `pop()` extracts the last pair and `clear()` removes the rows while keeping the reservation.
 
-Las garantías de no modificación aplican a los errores normales de longitud/capacidad. `Clone` puede ejecutar código del usuario y entrar en pánico; estas operaciones no prometen rollback frente a un pánico durante la clonación.
+The no-modification guarantees apply to normal length/capacity errors. `Clone` may run user code and panic; these operations promise no rollback against a panic during cloning.
 
-## Cobertura de determinismo observable (punto 089)
+## Observable determinism coverage (point 089)
 
-`tests/memory_determinism.rs` repite secuencias sobre la API pública de `Buffer` y `SoaBuffer`: inserción hasta el límite, rechazo sin pérdida de contenido, extracción del último elemento, `clear`, reutilización de la capacidad y alineación de columnas al insertar por lotes y extraer filas. También repite errores de extensión por capacidad/longitud comprobando que el estado no cambia, y los contratos de buffer de capacidad cero (vacío y lleno simultáneamente). Las comprobaciones validan estados observables deterministas para una misma secuencia de operaciones; no implican sincronización interna ni una garantía de orden entre hilos.
+`tests/memory_determinism.rs` repeats sequences over the public API of `Buffer` and `SoaBuffer`: insertion up to the limit, rejection without content loss, last-element extraction, `clear`, capacity reuse and column alignment when inserting in batches and extracting rows. It also repeats extension errors by capacity/length, checking that the state does not change, and the zero-capacity buffer contracts (empty and full simultaneously). The checks validate deterministic observable states for the same operation sequence; they do not imply internal synchronization or a thread-order guarantee.
 
-## Ownership, reserva y concurrencia
+## Ownership, reservation and concurrency
 
-Los buffers son propietarios y no incorporan sincronización interna. Las reservas usan contenedores estándar y operaciones fallibles de reserva; no hay allocator personalizado, crecimiento automático ni acceso a punteros crudos. La capacidad solicitada no representa un límite exacto de bytes.
+The buffers are owners and include no internal synchronization. Reservations use standard containers and fallible allocation operations; there is no custom allocator, automatic growth or raw pointer access. The requested capacity does not represent an exact byte limit.
 
-En un solo hilo, usa el buffer directamente. Si varios hilos deben modificar el mismo estado, usa explícitamente `dinah::runtime::Shared<T>` y su `lock()`, tratando el error de sincronización como parte del flujo de control. Mantén el guard del mutex solo durante el acceso necesario. Las operaciones compuestas, como insertar una fila SoA, deben ejecutarse bajo el mismo guard para conservar las invariantes. Un mutex no garantiza fairness, ausencia de starvation ni mejor rendimiento.
+On a single thread, use the buffer directly. If several threads must modify the same state, use `dinah::runtime::Shared<T>` and its `lock()` explicitly, treating the synchronization error as part of the control flow. Keep the mutex guard only during the necessary access. Composite operations, such as inserting a SoA row, must run under the same guard to preserve invariants. A mutex guarantees no fairness, absence of starvation or better performance.
 
-`clear()` destruye valores; no es un reset genérico ni garantiza borrar físicamente bytes sensibles. Los slices solo cubren valores inicializados y no pueden sobrevivir al propietario. La implementación evita `unsafe` y sigue las reglas de ownership de Rust.
+`clear()` destroys values; it is not a generic reset and does not guarantee physically erasing sensitive bytes. The slices only cover initialized values and cannot outlive the owner. The implementation avoids `unsafe` and follows Rust's ownership rules.
 
-## Benchmarks y alcance
+## Benchmarks and scope
 
-El benchmark reproducible está en `benches/memory.rs`. Los resultados históricos y sus notas se conservan en [`artifacts/benchmarks/`](../artifacts/benchmarks/): [línea base de Memory](../artifacts/benchmarks/memory-baseline-2026-10-10.txt) y [comparación de inserción SoA por lotes](../artifacts/benchmarks/memory-soa-batch-2026-10-11.txt). Las mediciones describen runners y condiciones concretos; no son garantías universales ni deben sustituir mediciones de la carga real.
+The reproducible benchmark is in `benches/memory.rs`. Historical results and their notes are kept in [`artifacts/benchmarks/`](../artifacts/benchmarks/): [Memory baseline](../artifacts/benchmarks/memory-baseline-2026-10-10.txt) and [SoA batch insertion comparison](../artifacts/benchmarks/memory-soa-batch-2026-10-11.txt). The measurements describe concrete runners and conditions; they are not universal guarantees and must not replace measurements of the real workload.
 
-Pools, arenas, crecimiento dinámico, límites estrictos en bytes, allocators personalizados, SIMD y ECS no forman parte de esta API inicial. Consulta el [modelo de diseño de Memory](memory-model.md) para las invariantes y decisiones aplazadas, y [`puntos.md`](../puntos.md) para el estado del roadmap.
+Pools, arenas, dynamic growth, strict byte limits, custom allocators, SIMD and ECS are not part of this initial API. See the [Memory design model](memory-model.md) for invariants and deferred decisions, and [`puntos.md`](../puntos.md) for the roadmap status.

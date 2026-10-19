@@ -27,15 +27,15 @@ dinah --verbose doctor [PATH]
 
 The manifest reader intentionally supports only the documented starter subset; it is not a general TOML parser. It validates section-header syntax, rejects duplicate `[project]`/`[tasks]` tables and duplicate keys, requires quoted project metadata and task descriptions, rejects malformed assignments and invalid basic-string escapes, and reports manifest line numbers for syntax errors. Quoted strings decode the basic escapes `\"`, `\\`, `\b`, `\t`, `\n`, `\f`, `\r`, `\uXXXX`, and `\UXXXXXXXX`; Unicode escapes must represent valid Unicode scalar values. Whitespace inside the quotes is preserved exactly, including whitespace produced by escapes. Unknown sections are ignored after basic assignment syntax is checked. Unknown options, invalid formats and malformed project names produce actionable errors and a non-zero process exit. CLI tests cover argument parsing and invalid option combinations, manifest creation/no-overwrite, metadata/task extraction, malformed/adversarial manifests, duplicate declarations, JSON control escaping, selected task lookup, captured task output, propagated exit status, and end-to-end task, run, doctor, and benchmark output. The repository CI remains responsible for running the test suite.
 
-## Perfiles de compilación y límites de entrada
+## Build profiles and input limits
 
-Usa `cargo build` para el perfil de desarrollo (debug) y `cargo build --release` para el perfil optimizado. `cargo bench --bench <suite>` compila y ejecuta en modo release; `python3 scripts/run_benchmarks.py` ejecuta las siete suites y registra el sistema operativo, arquitectura, versiones de Rust/Cargo, commit y marca temporal en `benchmark-results/`. El CLI no cambia el perfil de compilación en tiempo de ejecución.
+Use `cargo build` for the development (debug) profile and `cargo build --release` for the optimized profile. `cargo bench --bench <suite>` compiles and runs in release mode; `python3 scripts/run_benchmarks.py` runs all seven suites and records the operating system, architecture, Rust/Cargo versions, commit and timestamp in `benchmark-results/`. The CLI does not change the build profile at runtime.
 
-El lector de `DINAH.toml` acepta únicamente el subconjunto documentado y rechaza archivos mayores de 1 MiB antes de leerlos. Los comentarios se reconocen fuera de valores entrecomillados y la salida JSON escapa todos los controles como secuencias válidas. Esto no convierte el parser en un parser TOML completo ni sustituye una auditoría de seguridad.
+The `DINAH.toml` reader accepts only the documented subset and rejects files larger than 1 MiB before reading them. Comments are recognized outside quoted values and JSON output escapes all control characters as valid sequences. This does not turn the parser into a complete TOML parser or replace a security audit.
 
-## Seguridad de ejecución de tareas
+## Task execution security
 
-Las cadenas declaradas en `[tasks]` son comandos de shell y pueden ejecutar programas, modificar archivos o acceder a la red con los permisos del usuario. `dinah run` no los ejecuta de forma implícita: hay que seleccionar explícitamente una tarea con `--task NAME`. Revisa el manifiesto antes de ejecutar tareas de un proyecto ajeno; DINAH no proporciona sandbox, aislamiento de procesos ni confirmación interactiva. En modo JSON, la salida de la tarea se captura y se codifica como campos JSON; en modo texto se imprime tras finalizar el proceso.
+Strings declared in `[tasks]` are shell commands and may run programs, modify files or access the network with the user's permissions. `dinah run` does not execute them implicitly: a task must be explicitly selected with `--task NAME`. Review the manifest before running tasks from someone else's project; DINAH provides no sandbox, process isolation or interactive confirmation. In JSON mode, task output is captured and encoded as JSON fields; in text mode it is printed after the process finishes.
 
 
 ## Release status

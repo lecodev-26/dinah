@@ -568,8 +568,8 @@ with provenance in `artifacts/benchmarks/README.md`. Future important generated
 reports should be archived in `artifacts/` with dated filenames and source-run
 metadata so they remain available after CI artifact retention expires.
 
-## Cobertura concurrente de determinismo (punto 089)
+## Concurrent determinism coverage (point 089)
 
-`tests/runtime_determinism.rs` repite actualizaciones concurrentes a través de clones de `Shared<T>` y confirma el total final y la liberación de clones. También verifica los totales de métricas y la capacidad, drenaje y vaciado del `TraceBuffer` con productores concurrentes. No se afirma un orden determinista entre eventos de hilos distintos.
+`tests/runtime_determinism.rs` repeats concurrent updates through `Shared<T>` clones and confirms the final total and clone release. It also verifies metric totals and the `TraceBuffer`'s capacity, draining and clearing with concurrent producers. No deterministic order between events from distinct threads is claimed.
 
-La misma suite comprueba también la API pública de `TaskQueue`: rechazo con devolución del elemento original cuando está llena, ausencia de mutación tras el rechazo, orden FIFO y reutilización tras extraer elementos. `TaskFailure` conserva la clasificación `ReturnedError` al consultar, transformar y consumir el error original.
+The same suite also checks `TaskQueue`'s public API: rejection returning the original element when full, absence of mutation after rejection, FIFO order and reuse after extracting elements. `TaskFailure` preserves the `ReturnedError` classification when querying, transforming and consuming the original error.

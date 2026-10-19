@@ -1,134 +1,134 @@
-# DINAH — Modelo y revisión de seguridad (puntos 195–203, 205–206, 210)
+# DINAH — security model and review (points 195–203, 205–206, 210)
 
-Fecha de revisión: 2026-10-19. Alcance: superficie actual del crate, memoria, concurrencia, permisos, filesystem, networking, entrada del CLI, journal de Storage, salida JSON y ABI C escalar. Se añadieron pruebas unitarias de transiciones de Connection, replay de Storage, regresión del ABI y una carga paralela acotada sobre journals independientes. Se amplió el corpus determinista de entradas adversarias para replay y manifiestos; no se presenta como fuzzing coverage-guided. Esta revisión estática no es una auditoría externa ni demuestra ausencia de vulnerabilidades.
+Review date: 2026-10-19. Scope: current crate surface, memory, concurrency, permissions, filesystem, networking, CLI input, Storage journal, JSON output and the scalar C ABI. Unit tests were added for Connection transitions, Storage replay, ABI regression and a bounded parallel load over independent journals. The deterministic corpus of adversarial inputs for replay and manifests was expanded; it is not presented as coverage-guided fuzzing. This static review is not an external audit and does not demonstrate the absence of vulnerabilities.
 
-## 195 — Superficie de ataque
+## 195 — Attack surface
 
-- El crate no declara dependencias de runtime en `[dependencies]`; la dependencia `wide` se usa solo como dependencia de desarrollo. Esto reduce la superficie de dependencias, pero no sustituye la auditoría periódica de lockfile/toolchain.
-- `dinah init` usa `create_new(true)` y no reemplaza un manifiesto existente.
-- `dinah run` valida el manifiesto si no se indica `--task`. Con `--task NAME`, ejecuta explícitamente la cadena de shell declarada para esa tarea, en el directorio del proyecto y con los permisos efectivos del usuario. No hay sandbox ni aislamiento de procesos; revisa los manifiestos antes de ejecutar proyectos no confiables. `dinah task` solo enumera claves y no ejecuta nada.
-- La entrada del manifiesto queda limitada a 1 MiB. No se afirma protección general frente a enlaces simbólicos, carreras del filesystem o paths maliciosos en todos los sistemas operativos.
+- The crate declares no runtime dependencies in `[dependencies]`; the `wide` dependency is used only as a development dependency. This reduces the dependency surface but does not replace periodic lockfile/toolchain auditing.
+- `dinah init` uses `create_new(true)` and does not replace an existing manifest.
+- `dinah run` validates the manifest when `--task` is not given. With `--task NAME`, it explicitly executes the shell string declared for that task, in the project directory and with the user's effective permissions. There is no sandbox or process isolation; review manifests before running untrusted projects. `dinah task` only lists keys and executes nothing.
+- Manifest input is limited to 1 MiB. No general protection against symbolic links, filesystem races or malicious paths on all operating systems is claimed.
 
-## 196 — Entradas externas
+## 196 — External inputs
 
-- `DINAH.toml` se lee como UTF-8; errores de lectura se devuelven como errores de E/S. El parser soporta una sintaxis deliberadamente reducida y no es compatible con TOML completo.
-- Se aplica un límite de 1 MiB antes de cargar el contenido completo. Los nombres de proyecto vacíos o no entrecomillados se rechazan. El subconjunto actual rechaza cabeceras de sección malformadas, tablas conocidas duplicadas, claves duplicadas, asignaciones sin `=` y cadenas básicas con escapes no admitidos; los errores sintácticos incluyen la línea. Las pruebas cubren estas rutas.
-- Las opciones desconocidas, formatos desconocidos y argumentos posicionales sobrantes se rechazan con salida no cero.
-- Riesgo residual: el parser básico no valida todas las reglas TOML, no implementa todas las reglas de escape/unicode de TOML ni normaliza rutas; no debe usarse como validador de seguridad de configuraciones complejas. Las pruebas de corpus son deterministas y acotadas, no sustituyen fuzzing coverage-guided.
+- `DINAH.toml` is read as UTF-8; read errors are returned as I/O errors. The parser supports a deliberately reduced syntax and is not compatible with full TOML.
+- A 1 MiB limit is applied before loading the whole content. Empty or unquoted project names are rejected. The current subset rejects malformed section headers, duplicated known tables, duplicate keys, assignments without `=`, and basic strings with unsupported escapes; syntax errors include the line. Tests cover these paths.
+- Unknown options, unknown formats and surplus positional arguments are rejected with a non-zero exit.
+- Residual risk: the basic parser does not validate all TOML rules, does not implement all TOML escape/unicode rules and does not normalize paths; it must not be used as a security validator for complex configurations. The corpus tests are deterministic and bounded; they do not replace coverage-guided fuzzing.
 
-## 197 — Serialización
+## 197 — Serialization
 
-- La salida JSON del CLI escapa comillas, barras inversas, saltos de línea, tabuladores y el resto de caracteres de control mediante escapes JSON. Las pruebas cubren estos casos. El parser ignora comentarios solo fuera de valores entrecomillados y mantiene un corpus determinista acotado de entradas adversarias; no equivale a fuzzing coverage-guided. La nueva exportación de métricas produce un array JSON determinista desde el snapshot ordenado y escapa nombres arbitrarios de métricas.
-- No hay deserializador JSON ni decoder de wire format de networking declarado como implementado en esta revisión. No se debe asumir que un formato documentado ya tiene encoder/decoder.
-- Riesgo residual: la exportación de métricas no fija un esquema de compatibilidad versionado; los consumidores deben tratarla como formato de diagnóstico local de esta versión.
+- The CLI's JSON output escapes quotes, backslashes, newlines, tabs and the remaining control characters through JSON escapes. Tests cover these cases. The parser ignores comments only outside quoted values and keeps a bounded deterministic corpus of adversarial inputs; this is not equivalent to coverage-guided fuzzing. The new metrics export produces a deterministic JSON array from the ordered snapshot and escapes arbitrary metric names.
+- There is no JSON deserializer or networking wire-format decoder declared as implemented in this review. A documented format must not be assumed to already have an encoder/decoder.
+- Residual risk: the metrics export does not fix a versioned compatibility schema; consumers must treat it as a local diagnostic format for this version.
 
 ## 198 — FFI
 
-- `include/dinah.h` y `dinah::native::ffi` exponen solo consultas escalares de enteros de ancho fijo: versión ABI, flags y familia de plataforma. No aceptan punteros, buffers, callbacks ni ownership transferido.
-- El crate mantiene `#![deny(unsafe_code)]`; el módulo FFI solo permite nombres de símbolos y no contiene bloques unsafe.
-- El consumidor debe comprobar `dinah_abi_version()` antes de usar otras funciones. Los bits no definidos en `dinah_abi_features()` están reservados.
-- Evidencia de integración: el workflow `quality-security.yml` compila `tests/ffi_smoke.c` con un compilador C, lo enlaza contra `target/release/libdinah.a` y ejecuta el binario; el job pasó en CI del commit `fcde532`. Esto valida solo las consultas escalares presentes en ese smoke test y no demuestra compatibilidad ABI general, cobertura de todos los targets ni estabilidad de release.
+- `include/dinah.h` and `dinah::native::ffi` expose only fixed-width integer scalar queries: ABI version, flags and platform family. They accept no pointers, buffers, callbacks or transferred ownership.
+- The crate keeps `#![deny(unsafe_code)]`; the FFI module only allows C symbol names and contains no unsafe blocks.
+- The consumer must check `dinah_abi_version()` before using the other functions. Bits not defined in `dinah_abi_features()` are reserved.
+- Integration evidence: the `quality-security.yml` workflow compiles `tests/ffi_smoke.c` with a C compiler, links it against `target/release/libdinah.a` and runs the binary; the job passed in CI on commit `fcde532`. This validates only the scalar queries present in that smoke test and does not demonstrate general ABI compatibility, coverage of all targets or release stability.
 
-## Acciones pendientes
+## Pending actions
 
-- Ejecutar fuzzing coverage-guided (libFuzzer) para parser de manifiesto y replay del journal; el corpus determinista actual solo es una primera barrera de regresión.
-- Fuzzing y auditoría formal de dependencias siguen pendientes. Las pruebas de estrés/concurrencia actuales son acotadas; no incluyen model checking, escritores concurrentes sobre el mismo journal ni cargas prolongadas.
-- Mantener el smoke test C/link en CI y ampliarlo solo cuando se añadan nuevas funciones ABI; antes de declarar estable el ABI, revisar compatibilidad, versionado y targets soportados.
-- La ejecución de tareas se ha añadido con selección explícita; evaluar aislamiento de procesos y controles de recursos antes de considerar proyectos no confiables. Repetir esta revisión al introducir deserialización de red, acceso a archivos externos o APIs FFI basadas en punteros.
-
-
-## 199 — Revisión de memoria
-
-- `#![deny(unsafe_code)]` está habilitado a nivel de crate; el único `allow(unsafe_code)` se limita al módulo de nombres de símbolos C, que no contiene bloques unsafe ni punteros.
-- `Buffer<T>` y `SoaBuffer<A, B>` exponen solo elementos inicializados a través de referencias de Rust. Sus capacidades son límites de elementos, no límites de bytes ni garantía de memoria residente.
-- La mayoría de las reservas de `Buffer` son fallibles; otros contenedores estándar y clones de claves/valores pueden abortar o entrar en rutas de asignación infalibles según el allocator. No se afirma resistencia total a agotamiento de memoria.
-- Riesgo residual: no existe fuzzing ni Miri en CI; las pruebas de invariantes y el sistema de tipos no sustituyen esas herramientas.
-
-## 200 — Revisión de concurrencia
-
-- Las APIs mutables de Storage, Connection y buffers requieren `&mut self`; no prometen uso concurrente de la misma instancia sin sincronización externa.
-- `MetricsRegistry` usa `Mutex`; el poisoning se convierte en error. `TaskQueue` es deliberadamente local y no sincronizado. Los tests de Storage con threads abren journals independientes, no el mismo archivo.
-- El scheduler usa threads acotados por la llamada, pero un panic de worker puede propagarse por los puntos de unión. No hay promesa de cancelación de tareas de sistema operativo ni aislamiento de procesos.
-- Riesgo residual: faltan pruebas de estrés prolongadas, loom/model checking y una política para múltiples escritores que abran simultáneamente el mismo journal.
-
-## 201 — Revisión de permisos
-
-- DINAH no eleva privilegios, cambia permisos de archivos ni crea servicios privilegiados. El CLI usa los permisos efectivos del proceso y devuelve errores de E/S cuando el sistema operativo deniega una operación.
-- El manifiesto nuevo se crea con `create_new(true)`, lo que evita reemplazar un archivo existente; los permisos finales dependen del sistema operativo y su umask.
-- Las conexiones TCP pueden enlazar o conectar direcciones elegidas por el llamador. No existe autenticación, autorización, cifrado ni control de peers integrado.
-- Recomendación operativa: ejecutar con privilegios mínimos, limitar los paths de salida y no exponer endpoints a redes no confiables sin controles en la aplicación.
-
-## 202 — Revisión del filesystem
-
-- El CLI acepta un path proporcionado por el usuario y usa `DINAH.toml` dentro de ese directorio. El límite de 1 MiB reduce entradas excesivas, pero `metadata` seguido de lectura no elimina carreras TOCTOU ni garantiza el comportamiento de symlinks en todos los sistemas.
-- `DiskStore` abre el path indicado con lectura, append y create. No canonicaliza ni confina el path a un sandbox, no coordina instancias que abran el mismo journal y no llama a `sync_all`.
-- El journal se lee completo a memoria al abrirlo; aunque cada campo está limitado a 16 MiB, el tamaño total del archivo no tiene un límite global en esta versión. Los journals deben proceder de una ubicación confiable.
-- Riesgo residual: añadir límite global configurable, pruebas de permisos/symlinks por plataforma y política explícita para apertura de journal ya existente.
-
-## 203 — Revisión de networking
-
-- La capa actual es TCP bloqueante de bajo nivel. No añade framing, decoder de mensajes, autenticación, TLS, rate limiting, reconexión automática ni tareas de fondo.
-- Los métodos de lectura pueden devolver datos parciales y el llamador debe definir límites de mensajes. `set_read_timeout` y `set_write_timeout` están disponibles, pero no se aplican por defecto.
-- No aceptar bytes recibidos como objetos confiables ni exponer un listener a redes no confiables sin límites de tamaño, tiempo, identidad y frecuencia implementados por la aplicación.
-
-## 205 — Pruebas de corrupción
-
-- `tests/storage.rs` comprueba magic inválido, checksum v2 incorrecto, sufijos incompletos, checksum truncado y compatibilidad con v1. Se añade cobertura para longitudes declaradas por encima del límite y para valores de versión/opcode inválidos.
-- CRC-32 sirve para detectar corrupción accidental de registros completos, no alteraciones deliberadas. Una corrupción completa debe fallar; solo el sufijo final incompleto se recupera como escritura interrumpida.
-
-## 206 — Pruebas de estrés
-
-- La suite añadida a `src/observability.rs` estresa incrementos concurrentes en el registro compartido con varios hilos y verifica el resultado agregado.
-- Es una prueba de estrés acotada y determinista, no un benchmark de rendimiento ni una prueba de agotamiento de recursos. Las pruebas prolongadas, fuzzing y model checking siguen pendientes.
-
-## 210 — Modelo de seguridad
-
-### Activos
-
-Integridad de memoria, archivos de configuración y journals, comportamiento determinista de las APIs, disponibilidad del proceso y límites de confianza entre la aplicación y conexiones externas.
-
-### Límites de confianza
-
-- Los archivos del usuario, datos de red y archivos de journal existentes se consideran entradas no confiables.
-- El sistema operativo controla permisos, sockets y semántica del filesystem; DINAH no evita por sí solo rutas fuera de un directorio permitido.
-- Las aplicaciones consumidoras validan payloads, definen framing y autenticación de red y gestionan copias de seguridad de Storage.
-
-### Garantías actuales y no-garantías
-
-Se priorizan APIs Rust seguras, límites de campo, escape JSON, detección de corrupción accidental y errores explícitos. No se garantiza seguridad frente a denegación de servicio, pérdida de energía, escritores concurrentes al mismo journal, pares de red maliciosos, vulnerabilidades de dependencias o errores del sistema operativo.
-
-### Controles pendientes
-
-- Fuzzing de parser de manifiesto, replay del journal y futuros codecs de red.
-- Auditoría de dependencias/toolchain y revisión periódica de avisos de seguridad.
-- Pruebas de estrés de larga duración, permisos y symlinks en las plataformas soportadas.
-- Smoke test real de compilación y enlace C en CI antes de declarar estable la ABI.
+- Run coverage-guided fuzzing (libFuzzer) for the manifest parser and journal replay; the current deterministic corpus is only a first regression barrier.
+- Fuzzing and formal dependency auditing remain pending. The current stress/concurrency tests are bounded; they include no model checking, concurrent writers on the same journal or prolonged loads.
+- Keep the C/link smoke test in CI and extend it only when new ABI functions are added; before declaring the ABI stable, review compatibility, versioning and supported targets.
+- Task execution was added with explicit selection; evaluate process isolation and resource controls before considering untrusted projects. Repeat this review when introducing network deserialization, external file access or pointer-based FFI APIs.
 
 
-## Cobertura adicional de pruebas (puntos 207–208, 217–219, 221–222 y 224)
+## 199 — Memory review
 
-- `src/network.rs` comprueba transiciones de estado Open/ReadClosed/WriteClosed/Closed sin crear sockets.
-- `src/storage.rs` repite replay del mismo journal y valida el rechazo de un DELETE con payload.
-- `src/native.rs` conserva tests unitarios para HostPlatform, PosixPlatform (en Unix) y los símbolos ABI escalares.
-- `tests/robustness_regression.rs` comprueba invariantes ABI, orden y overwrite repetibles, y seis workers sobre archivos de journal separados con 128 actualizaciones cada uno y reapertura posterior.
-- Estas pruebas mejoran regresión y concurrencia acotada; no sustituyen fuzzing, model checking, pruebas de múltiples escritores sobre el mismo archivo ni un smoke test de compilador/linker C.
+- `#![deny(unsafe_code)]` is enabled at the crate level; the only `allow(unsafe_code)` is limited to the C symbol-names module, which contains no unsafe blocks or pointers.
+- `Buffer<T>` and `SoaBuffer<A, B>` expose only initialized elements through Rust references. Their capacities are element limits, not byte limits or resident-memory guarantees.
+- Most `Buffer` allocations are fallible; other standard containers and key/value clones may abort or enter infallible allocation paths depending on the allocator. No total resistance to memory exhaustion is claimed.
+- Residual risk: there is no fuzzing or Miri in CI; invariant tests and the type system do not replace those tools.
+
+## 200 — Concurrency review
+
+- The mutable APIs of Storage, Connection and buffers require `&mut self`; they do not promise concurrent use of the same instance without external synchronization.
+- `MetricsRegistry` uses a `Mutex`; poisoning becomes an error. `TaskQueue` is deliberately local and unsynchronized. The threaded Storage tests open independent journals, not the same file.
+- The scheduler uses call-bounded threads, but a worker panic can propagate through the join points. There is no promise of operating-system task cancellation or process isolation.
+- Residual risk: prolonged stress tests, loom/model checking and a policy for multiple writers simultaneously opening the same journal are missing.
+
+## 201 — Permissions review
+
+- DINAH does not elevate privileges, change file permissions or create privileged services. The CLI uses the process's effective permissions and returns I/O errors when the operating system denies an operation.
+- The new manifest is created with `create_new(true)`, which avoids replacing an existing file; final permissions depend on the operating system and its umask.
+- TCP connections may bind or connect addresses chosen by the caller. There is no built-in authentication, authorization, encryption or peer control.
+- Operational recommendation: run with minimal privileges, restrict output paths and do not expose endpoints to untrusted networks without application-level controls.
+
+## 202 — Filesystem review
+
+- The CLI accepts a user-provided path and uses `DINAH.toml` inside that directory. The 1 MiB limit reduces excessive input, but `metadata` followed by a read does not eliminate TOCTOU races or guarantee symlink behavior on all systems.
+- `DiskStore` opens the given path with read, append and create. It does not canonicalize or confine the path to a sandbox, does not coordinate instances opening the same journal and does not call `sync_all`.
+- The journal is read fully into memory on open; although each field is limited to 16 MiB, the total file size has no global limit in this version. Journals must come from a trusted location.
+- Residual risk: add a configurable global limit, per-platform permission/symlink tests and an explicit policy for opening an already-existing journal.
+
+## 203 — Networking review
+
+- The current layer is low-level blocking TCP. It adds no framing, message decoder, authentication, TLS, rate limiting, automatic reconnection or background tasks.
+- Read methods may return partial data and the caller must define message limits. `set_read_timeout` and `set_write_timeout` are available but not applied by default.
+- Do not treat received bytes as trusted objects or expose a listener to untrusted networks without size, time, identity and rate limits implemented by the application.
+
+## 205 — Corruption tests
+
+- `tests/storage.rs` checks invalid magic, a wrong v2 checksum, incomplete suffixes, a truncated checksum and v1 compatibility. Coverage is added for declared lengths above the limit and for invalid version/opcode values.
+- CRC-32 serves to detect accidental corruption of complete records, not deliberate alteration. Complete corruption must fail; only the incomplete final suffix is recovered as an interrupted write.
+
+## 206 — Stress tests
+
+- The suite added to `src/observability.rs` stresses concurrent increments on the shared registry with several threads and verifies the aggregated result.
+- It is a bounded, deterministic stress test, not a performance benchmark or a resource-exhaustion test. Prolonged tests, fuzzing and model checking remain pending.
+
+## 210 — Security model
+
+### Assets
+
+Memory integrity, configuration files and journals, deterministic API behavior, process availability and trust limits between the application and external connections.
+
+### Trust boundaries
+
+- User files, network data and existing journal files are considered untrusted input.
+- The operating system controls permissions, sockets and filesystem semantics; DINAH by itself does not prevent paths outside an allowed directory.
+- Consuming applications validate payloads, define network framing and authentication, and manage Storage backups.
+
+### Current guarantees and non-guarantees
+
+Safe Rust APIs, field limits, JSON escaping, accidental-corruption detection and explicit errors are prioritized. No security is guaranteed against denial of service, power loss, concurrent writers to the same journal, malicious network peers, dependency vulnerabilities or operating-system errors.
+
+### Pending controls
+
+- Fuzzing of the manifest parser, journal replay and future network codecs.
+- Dependency/toolchain auditing and periodic review of security advisories.
+- Long-duration stress tests, permissions and symlinks on the supported platforms.
+- A real C compile/link smoke test in CI before declaring the ABI stable.
 
 
-## Trabajo de robustez del corpus (punto 204, en progreso)
+## Additional test coverage (points 207–208, 217–219, 221–222 and 224)
 
-- Storage ahora comprueba entradas binarias pseudoaleatorias deterministas de hasta 512 bytes, todas las truncaciones de un registro válido, mutaciones de cada byte y sufijos truncados tras registros concatenados. Los tests comprueban ausencia de panic, no que cada entrada deba ser aceptada.
-- El CLI cubre nombre vacío/no entrecomillado, campos y tablas duplicados, cabeceras malformadas, asignaciones inválidas, descripciones de tarea no entrecomilladas, escapes de cadena no admitidos, asignaciones fuera de secciones conocidas, comentarios junto a valores entrecomillados, límite de tamaño, escapes JSON y corpus determinista de entradas adversarias. Las pruebas de integración invocan task, run, doctor y benchmark en JSON, incluida la ejecución seleccionada de comandos, captura de salida y propagación del código de salida. La semántica sigue siendo el subconjunto documentado, no TOML completo. La ejecución de comandos es opt-in, pero no está aislada.
-- Limitación explícita: estas pruebas son corpus determinista y no reemplazan libFuzzer, cobertura guiada, sanitizadores ni sesiones de larga duración.
-
-## Controles automatizados de CI (2026-10-18)
-
-- `.github/workflows/quality-security.yml` ejecuta `cargo audit` sobre el lockfile, genera un artefacto LCOV con `cargo llvm-cov` y compila/enlaza/ejecuta un consumidor C mínimo contra `libdinah.a`. La ejecución del commit `fcde532` pasó.
-- `tests/ffi_smoke.c` comprueba los tres símbolos escalares públicos y las condiciones básicas de ABI; la compilación, el enlace y la ejecución pasaron en CI.
-- El artefacto LCOV de `9debb1b` se revisó: 4.814/5.297 líneas (90,88 %) y 670/763 funciones (87,81 %). CI aplica un umbral inicial del 85 % de líneas mediante `cargo llvm-cov --fail-under-lines 85`. El informe no contiene cobertura de ramas; el porcentaje agregado no garantiza rutas críticas cubiertas y no sustituye una revisión manual de licencias ni una auditoría de seguridad externa.
+- `src/network.rs` checks Open/ReadClosed/WriteClosed/Closed state transitions without creating sockets.
+- `src/storage.rs` repeats replay of the same journal and validates the rejection of a DELETE with payload.
+- `src/native.rs` keeps unit tests for HostPlatform, PosixPlatform (on Unix) and the scalar ABI symbols.
+- `tests/robustness_regression.rs` checks repeatable ABI invariants, ordering and overwrite, and six workers on separate journal files with 128 updates each and subsequent reopening.
+- These tests improve regression and bounded concurrency; they do not replace fuzzing, model checking, tests of multiple writers on the same file, or a C compiler/linker smoke test.
 
 
-## Matriz de CI validada (2026-10-18)
+## Corpus robustness work (point 204, in progress)
 
-- El workflow `.github/workflows/ci.yml` incluye una matriz explícita de Linux x86-64 y Linux ARM64. Para ambos runners, CI confirmó formato, tests de librería/integración, Clippy con warnings como errores y generación de rustdoc sin warnings en el commit `7a5e076`.
-- El workflow de calidad/seguridad de `9debb1b` confirma auditoría de dependencias, compilación/enlace/ejecución del consumidor C y generación/subida de LCOV con umbral mínimo de líneas del 85 %. Windows/macOS siguen fuera de la matriz de tests/Clippy/rustdoc descrita aquí.
-- La matriz de pruebas no debe confundirse con la matriz de benchmarks: Windows y macOS se incluyen en benchmarks, pero no están cubiertos por este job de tests/Clippy/rustdoc.
+- Storage now checks deterministic pseudo-random binary inputs of up to 512 bytes, every truncation of a valid record, per-byte mutations and truncated suffixes after concatenated records. The tests check the absence of panics, not that every input must be accepted.
+- The CLI covers empty/unquoted names, duplicated fields and tables, malformed headers, invalid assignments, unquoted task descriptions, unsupported string escapes, assignments outside known sections, comments next to quoted values, the size limit, JSON escapes and a deterministic corpus of adversarial inputs. The integration tests invoke task, run, doctor and benchmark in JSON, including selected command execution, output capture and exit-code propagation. The semantics remain the documented subset, not full TOML. Command execution is opt-in but not isolated.
+- Explicit limitation: these tests are a deterministic corpus and do not replace libFuzzer, guided coverage, sanitizers or long-duration sessions.
+
+## Automated CI controls (2026-10-18)
+
+- `.github/workflows/quality-security.yml` runs `cargo audit` over the lockfile, generates an LCOV artifact with `cargo llvm-cov` and compiles/links/runs a minimal C consumer against `libdinah.a`. The run on commit `fcde532` passed.
+- `tests/ffi_smoke.c` checks the three public scalar symbols and basic ABI conditions; compilation, linking and execution passed in CI.
+- The LCOV artifact from `9debb1b` was reviewed: 4,814/5,297 lines (90.88 %) and 670/763 functions (87.81 %). CI enforces an initial 85 % line threshold via `cargo llvm-cov --fail-under-lines 85`. The report contains no branch coverage; the aggregate percentage does not guarantee that critical paths are covered and does not replace a manual license review or an external security audit.
+
+
+## Validated CI matrix (2026-10-18)
+
+- The `.github/workflows/ci.yml` workflow includes an explicit matrix of Linux x86-64 and Linux ARM64. For both runners, CI confirmed formatting, library/integration tests, Clippy with warnings as errors and rustdoc generation without warnings on commit `7a5e076`.
+- The quality/security workflow on `9debb1b` confirms dependency auditing, compile/link/run of the C consumer and LCOV generation/upload with the 85 % minimum line threshold. Windows/macOS remain outside the tests/Clippy/rustdoc matrix described here.
+- The test matrix must not be confused with the benchmark matrix: Windows and macOS are included in benchmarks but are not covered by this tests/Clippy/rustdoc job.

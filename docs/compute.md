@@ -1,23 +1,23 @@
-# dinah Compute — API secuencial y diseño evolutivo
+# dinah Compute — sequential API and evolutionary design
 
-Estado: las primitivas secuenciales, los lotes, la iteración y reducción paralelas, y la primera API de pipelines están implementados y documentados. Las optimizaciones y etapas posteriores siguen siendo trabajo futuro; no se deben interpretar como APIs disponibles.
+Status: the sequential primitives, batches, parallel iteration and reduction, and the first pipeline API are implemented and documented. Later optimizations and stages remain future work; they must not be interpreted as available APIs.
 
-## Objetivo y límites
+## Goal and limits
 
-Compute ofrecerá operaciones de procesamiento de datos que puedan ejecutarse primero de forma secuencial y, cuando haya una necesidad medida, de forma paralela. Debe reutilizar los contratos de Core y las primitivas de Runtime y Memory sin fusionar sus responsabilidades.
+Compute will offer data-processing operations that can run first sequentially and, when a measured need exists, in parallel. It must reuse Core's contracts and Runtime's and Memory's primitives without merging their responsibilities.
 
-- **Core** valida tipos y contratos compartidos; no ejecuta kernels.
-- **Memory** posee almacenamiento contiguo y fija sus límites de capacidad; no decide cómo procesar los datos.
-- **Runtime** ejecuta y coordina trabajo; Compute define la semántica de las operaciones de datos.
-- **Compute** ofrece operaciones puras o explícitamente mutables sobre datos prestados, con límites claros de errores, orden y concurrencia.
+- **Core** validates shared types and contracts; it runs no kernels.
+- **Memory** owns contiguous storage and fixes its capacity limits; it does not decide how data is processed.
+- **Runtime** executes and coordinates work; Compute defines the semantics of data operations.
+- **Compute** offers pure or explicitly mutable operations over borrowed data, with clear error, ordering and concurrency limits.
 
-La primera versión será pequeña, genérica y sin dependencias externas. No habrá DSL, grafo de tareas, compilador JIT, allocator propio ni garantías de tiempo real.
+The first version will be small, generic and free of external dependencies. There will be no DSL, task graph, JIT compiler, custom allocator or real-time guarantees.
 
-## Diseño de API por etapas
+## Staged API design
 
-### Etapa A — primitivas secuenciales
+### Stage A — sequential primitives
 
-La API inicial usa funciones genéricas sobre slices prestados, sin estado global. `for_each` y `try_reduce` no asignan memoria propia; `map` asigna explícitamente el `Vec` de salida.
+The initial API uses generic functions over borrowed slices, with no global state. `for_each` and `try_reduce` allocate no memory of their own; `map` explicitly allocates the output `Vec`.
 
 ```rust
 pub fn for_each<T, F>(items: &mut [T], operation: F)
@@ -37,11 +37,11 @@ where
     F: FnMut(A, &T) -> Result<A, E>;
 ```
 
-Estas funciones forman parte de la API pública `dinah::compute`. Las tres operaciones son secuenciales y conservan el orden de entrada. `try_reduce` propaga el primer error del usuario y se detiene; `for_each` no ofrece rollback si la closure entra en pánico. Una futura variante de `map` con buffer del llamador se evaluará solo si hace falta.
+These functions are part of the public `dinah::compute` API. All three operations are sequential and preserve input order. `try_reduce` propagates the user's first error and stops; `for_each` offers no rollback if the closure panics. A future `map` variant with a caller-provided buffer will be evaluated only if needed.
 
-### Etapa B — lotes explícitos
+### Stage B — explicit batches
 
-La API secuencial de lotes está implementada como `for_each_batch`. Recibe un tamaño positivo y entrega a la closure slices mutables prestados de la entrada original. No crea buffers temporales ni tareas por elemento. El último lote puede ser más pequeño que el tamaño solicitado.
+The sequential batch API is implemented as `for_each_batch`. It takes a positive size and hands the closure borrowed mutable slices of the original input. It creates no temporary buffers or per-element tasks. The last batch may be smaller than the requested size.
 
 ```rust
 pub enum BatchError {
@@ -57,11 +57,11 @@ where
     F: FnMut(&mut [T]);
 ```
 
-Un tamaño cero devuelve `BatchError::ZeroSize` antes de invocar la closure o mutar elementos. Con una entrada vacía y un tamaño válido no se invoca la closure. Los lotes y elementos conservan el orden original. No se promete rollback si la closure entra en pánico; el pánico se propaga.
+A zero size returns `BatchError::ZeroSize` before invoking the closure or mutating elements. With an empty input and a valid size, the closure is not invoked. Batches and elements preserve the original order. No rollback is promised if the closure panics; the panic propagates.
 
-### Etapa C — iteración y reducción paralelas
+### Stage C — parallel iteration and reduction
 
-La iteración paralela está implementada mediante `for_each_parallel` y utiliza explícitamente `Runtime::Scheduler::run_parallel`; no mantiene un pool oculto ni crea un sistema de ejecución independiente. Las particiones son slices mutables disjuntos y se entregan como tareas a la cola de Runtime. Los workers están acotados por `worker_count` y por el número de elementos; son scoped y se unen antes de que la llamada termine.
+Parallel iteration is implemented through `for_each_parallel` and explicitly uses `Runtime::Scheduler::run_parallel`; it keeps no hidden pool and creates no independent execution system. Partitions are disjoint mutable slices and are delivered as tasks to Runtime's queue. Workers are bounded by `worker_count` and by the number of elements; they are scoped and joined before the call returns.
 
 ```rust
 pub enum ParallelError {
@@ -78,9 +78,9 @@ where
     F: Fn(&mut T) + Sync;
 ```
 
-Un `worker_count` de cero devuelve `ParallelError::ZeroWorkers` antes de mutar la entrada. Una entrada vacía con un valor positivo no crea workers. Cada elemento se procesa exactamente una vez en una ejecución normal, pero el orden de finalización no está definido. `T: Send` permite mover particiones a workers y `F: Sync` permite compartir la operación de forma segura. Los pánicos se propagan conforme al contrato de Runtime tras unirse las tareas del lote actual; las mutaciones previas no se revierten. No se garantiza aceleración para cargas pequeñas.
+A `worker_count` of zero returns `ParallelError::ZeroWorkers` before mutating the input. An empty input with a positive value creates no workers. Each element is processed exactly once in a normal run, but completion order is undefined. `T: Send` allows moving partitions to workers and `F: Sync` allows sharing the operation safely. Panics propagate according to Runtime's contract after the current batch's tasks are joined; prior mutations are not rolled back. No speedup is guaranteed for small workloads.
 
-La reducción paralela está implementada como `try_reduce_parallel`. Cada partición empieza con una copia de `identity`; sus acumuladores parciales se combinan secuencialmente en el orden de entrada de las particiones. Para resultados independientes de la partición, `identity`, `operation` y `combine` deben respetar el contrato algebraico indicado (incluida asociatividad); las operaciones de punto flotante pueden variar por el reagrupamiento.
+Parallel reduction is implemented as `try_reduce_parallel`. Each partition starts with a copy of `identity`; its partial accumulators are combined sequentially in partition input order. For partition-independent results, `identity`, `operation` and `combine` must respect the stated algebraic contract (including associativity); floating-point operations may vary due to regrouping.
 
 ```rust
 pub enum ParallelReduceError<E> {
@@ -103,17 +103,17 @@ where
     C: Fn(A, A) -> A + Sync;
 ```
 
-Cero workers se rechaza antes de ejecutar las closures; la entrada vacía devuelve `identity`. Todas las particiones se completan antes de devolver el resultado. Si varias particiones fallan, se devuelve el error de la primera partición según el orden de entrada, no el primer error temporalmente observado. La combinación solo ocurre si todas las particiones tuvieron éxito. Los pánicos siguen el contrato de Runtime.
+Zero workers is rejected before running the closures; empty input returns `identity`. All partitions complete before the result is returned. If several partitions fail, the error of the first partition in input order is returned, not the temporally first error observed. Combination only happens if all partitions succeeded. Panics follow Runtime's contract.
 
-- La iteración paralela no promete orden de finalización; sí garantiza que cada elemento se procesa exactamente una vez en una ejecución normal.
-- La reducción paralela requiere un operador de combinación explícito y asociativo para obtener resultados independientes de la partición. No se prometerá equivalencia bit a bit para operaciones de punto flotante reordenadas.
-- Los errores de las tareas se propagarán sin convertirlos silenciosamente en valores por defecto. La política de agregación de varios errores se definirá antes de exponer la API.
-- Los pánicos seguirán la política documentada de Runtime; Compute no debe tragárselos.
-- La cancelación será cooperativa y no puede interrumpir de forma segura una closure arbitraria.
+- Parallel iteration promises no completion order; it does guarantee that each element is processed exactly once in a normal run.
+- Parallel reduction requires an explicit, associative combine operator to obtain partition-independent results. Bit-for-bit equivalence for reordered floating-point operations will not be promised.
+- Task errors propagate without being silently converted into default values. The policy for aggregating multiple errors will be defined before exposing the API.
+- Panics follow Runtime's documented policy; Compute must not swallow them.
+- Cancellation will be cooperative and cannot safely interrupt an arbitrary closure.
 
-### Etapa D — pipelines
+### Stage D — pipelines
 
-La primera versión está implementada como `ComputePipeline<'a, T>`, una cadena de etapas mutables sobre un único slice prestado. `ComputePipeline::new(&mut items)` toma un préstamo mutable exclusivo; `for_each`, `for_each_batch` y `for_each_parallel` ejecutan cada etapa inmediatamente y devuelven `Result<&mut Self, PipelineError>` para poder encadenarlas. `finish(self)` consume el pipeline y devuelve el préstamo del slice original.
+The first version is implemented as `ComputePipeline<'a, T>`, a chain of mutable stages over a single borrowed slice. `ComputePipeline::new(&mut items)` takes an exclusive mutable borrow; `for_each`, `for_each_batch` and `for_each_parallel` run each stage immediately and return `Result<&mut Self, PipelineError>` so they can be chained. `finish(self)` consumes the pipeline and returns the original slice borrow.
 
 ```rust
 use dinah::compute::ComputePipeline;
@@ -126,61 +126,61 @@ ComputePipeline::new(&mut values)
 # Ok::<(), dinah::compute::PipelineError>(())
 ```
 
-- **Ejecución:** inmediata, en el orden de las llamadas; no se almacenan closures ni se difiere el trabajo.
-- **Ownership:** el pipeline mantiene un préstamo mutable exclusivo de la entrada. No posee ni crea una colección intermedia, y no asigna memoria propia.
-- **Errores:** `PipelineError::Batch` y `PipelineError::Parallel` preservan el error de configuración de la etapa correspondiente. Una etapa fallida corta la cadena: las siguientes no se ejecutan. Las mutaciones previas no se revierten.
-- **Paralelismo:** solo ocurre en la etapa que invoca explícitamente `for_each_parallel`; usa Runtime y conserva el contrato de concurrencia de esa función.
-- **Límites:** esta primera versión transforma in-place el mismo slice. `map` y las reducciones siguen siendo funciones independientes porque producen valores de salida/acumuladores con ownership distinto. No hay planificación, cancelación diferida ni reordenación automática.
-- **Pánicos:** se propagan según el contrato de la primitiva ejecutada; no se promete rollback.
+- **Execution:** immediate, in call order; no closures are stored and work is not deferred.
+- **Ownership:** the pipeline holds an exclusive mutable borrow of the input. It owns and creates no intermediate collection and allocates no memory of its own.
+- **Errors:** `PipelineError::Batch` and `PipelineError::Parallel` preserve the corresponding stage's configuration error. A failed stage cuts the chain: the following ones do not run. Prior mutations are not rolled back.
+- **Parallelism:** it only occurs in the stage that explicitly invokes `for_each_parallel`; it uses Runtime and preserves that function's concurrency contract.
+- **Limits:** this first version transforms the same slice in place. `map` and reductions remain independent functions because they produce output values/accumulators with distinct ownership. There is no scheduling, deferred cancellation or automatic reordering.
+- **Panics:** they propagate according to the executed primitive's contract; no rollback is promised.
 
-## Contratos transversales
+## Cross-cutting contracts
 
-1. **Ownership:** preferir slices prestados; la salida solo se asigna cuando la firma lo dice explícitamente.
-2. **Mutabilidad:** operaciones de lectura reciben referencias compartidas; operaciones que escriben reciben acceso mutable exclusivo o particiones disjuntas.
-3. **Errores:** validar parámetros inválidos antes de empezar cuando sea viable; conservar los errores de usuario.
-4. **Determinismo:** documentar orden de visitas, orden de resultados y comportamiento de reducciones por separado.
-5. **Pánicos:** no ocultar pánicos ni prometer rollback de mutaciones que ya ocurrieron.
-6. **Concurrencia:** ninguna operación se paraleliza automáticamente en la primera etapa; el paralelismo explícito evita sorpresas de coste.
-7. **Rendimiento:** medir overhead, asignaciones, tamaños pequeños y grandes; no introducir SIMD ni complejidad de scheduler sin evidencia.
-8. **Seguridad:** mantener `#![forbid(unsafe_code)]` hasta que una propuesta concreta, auditada y medida justifique revisar esa política.
+1. **Ownership:** prefer borrowed slices; output is only allocated when the signature explicitly says so.
+2. **Mutability:** read operations receive shared references; write operations receive exclusive mutable access or disjoint partitions.
+3. **Errors:** validate invalid parameters before starting when feasible; preserve user errors.
+4. **Determinism:** document visit order, result order and reduction behavior separately.
+5. **Panics:** do not hide panics or promise rollback of mutations that already happened.
+6. **Concurrency:** no operation is automatically parallelized in the first stage; explicit parallelism avoids cost surprises.
+7. **Performance:** measure overhead, allocations, small and large sizes; introduce no SIMD or scheduler complexity without evidence.
+8. **Safety:** keep `#![forbid(unsafe_code)]` until a concrete, audited and measured proposal justifies revising that policy.
 
-## Secuencia de implementación y aceptación
+## Implementation and acceptance sequence
 
-- **077 — Diseñar Compute API:** responsabilidades, familias de operaciones y contratos documentados; sin declarar funciones inexistentes.
-- **078 — Definir primitivas de procesamiento:** implementado con `for_each`, `map` y `try_reduce`, pruebas unitarias y ejemplos de documentación pública.
-- **079 — Crear procesamiento por lotes:** implementado con `for_each_batch` y `BatchError`; tamaño cero validado antes de mutar, último lote parcial y slices prestados sin buffer temporal.
-- **080 — Crear parallel iteration:** implementado con `for_each_parallel`, particiones disjuntas, `Scheduler::run_parallel`, pruebas de cobertura, entrada vacía y rechazo de cero workers.
-- **081 — Crear reducción paralela:** implementado con `try_reduce_parallel` y `ParallelReduceError`; combinación en orden de partición, primer error según orden de entrada y documentación de identidad/asociatividad/determinismo.
-- **082 — Crear pipelines:** implementado como `ComputePipeline` inmediato sobre slice prestado, con etapas secuenciales, por lotes y paralelas; errores tipados, detención tras fallo, sin buffers ocultos ni ejecución diferida.
-- **083–089:** investigar SIMD, optimizar layouts, instrumentar y comparar secuencial/paralelo, y probar determinismo con resultados archivados.
-- **090 — Documentar Compute:** manual de usuario basado en APIs ya implementadas, no en propuestas.
+- **077 — Design Compute API:** responsibilities, operation families and contracts documented; no nonexistent functions are declared.
+- **078 — Define processing primitives:** implemented with `for_each`, `map` and `try_reduce`, unit tests and public documentation examples.
+- **079 — Create batch processing:** implemented with `for_each_batch` and `BatchError`; zero size validated before mutating, partial final batch and borrowed slices with no temporary buffer.
+- **080 — Create parallel iteration:** implemented with `for_each_parallel`, disjoint partitions, `Scheduler::run_parallel`, coverage tests, empty input and zero-worker rejection.
+- **081 — Create parallel reduction:** implemented with `try_reduce_parallel` and `ParallelReduceError`; combination in partition order, first error by input order and documentation of identity/associativity/determinism.
+- **082 — Create pipelines:** implemented as an immediate `ComputePipeline` over a borrowed slice, with sequential, batch and parallel stages; typed errors, stop-after-failure, no hidden buffers or deferred execution.
+- **083–089:** research SIMD, optimize layouts, instrument and compare sequential/parallel, and test determinism with archived results.
+- **090 — Document Compute:** a user manual based on already implemented APIs, not proposals.
 
-La CI remota valida formato, tests, Clippy y documentación pública. Los benchmarks pesados y comparaciones de rendimiento deben archivarse bajo `artifacts/benchmarks/` con comando, entorno y fecha; nunca se inventan cifras para cerrar un punto.
+Remote CI validates formatting, tests, Clippy and public documentation. Heavy benchmarks and performance comparisons must be archived under `artifacts/benchmarks/` with command, environment and date; numbers are never invented to close a point.
 
-## Determinismo probado (punto 089)
+## Tested determinism (point 089)
 
-`tests/compute_determinism.rs` valida el contrato público en ejecuciones repetidas: una suma entera asociativa devuelve el mismo resultado con 1, 2, 3, 7 y 64 workers; la iteración paralela produce el mismo vector indexado aunque el orden de finalización de las tareas no esté definido; y una reducción que falla en varias particiones devuelve siempre el error de la partición más temprana según el orden de entrada. También repite el orden de visita secuencial, el orden de salida de `map`, la división por lotes con lote final parcial, el rechazo de tamaño cero sin mutaciones ni callbacks, la parada de `try_reduce` en el primer error y la interrupción de `ComputePipeline` cuando falla una etapa. Los casos de entrada vacía se comprueban explícitamente. Estos tests no implican determinismo temporal, orden de finalización ni equivalencia bit a bit para reducciones de punto flotante.
+`tests/compute_determinism.rs` validates the public contract across repeated runs: an associative integer sum returns the same result with 1, 2, 3, 7 and 64 workers; parallel iteration produces the same indexed vector even though task completion order is undefined; and a reduction that fails in several partitions always returns the error of the earliest partition in input order. It also repeats the sequential visit order, `map`'s output order, batch splitting with a partial final batch, zero-size rejection without mutations or callbacks, `try_reduce` stopping at the first error, and `ComputePipeline` halting when a stage fails. Empty-input cases are checked explicitly. These tests imply no temporal determinism, completion ordering, or bit-for-bit equivalence for floating-point reductions.
 
-## Benchmarks secuencial/paralelo y SIMD (puntos 083–088)
+## Sequential/parallel and SIMD benchmarks (points 083–088)
 
-`benches/compute.rs` compara el bucle escalar directo, `compute::for_each`, `compute::for_each_parallel` con 2 y 4 workers, y el candidato seguro `wide::f32x4` sobre el mismo kernel numérico y tamaños idénticos. El setup de los buffers se realiza fuera de las muestras; cada variante transforma repetidamente su propio buffer y el benchmark verifica la igualdad de resultados escalares/paralelos antes de informar tiempos. Se registran 11 muestras por caso y se informa la mediana. La ejecución release multiplataforma (run 38208860456, código `f728dba482d00450bb06a7e7b5f994e3f82152dc`) está archivada en [`artifacts/benchmarks/f728dba482d00450bb06a7e7b5f994e3f82152dc/run-38208860456/`](../artifacts/benchmarks/f728dba482d00450bb06a7e7b5f994e3f82152dc/run-38208860456/).
+`benches/compute.rs` compares the direct scalar loop, `compute::for_each`, `compute::for_each_parallel` with 2 and 4 workers, and the safe `wide::f32x4` candidate over the same numeric kernel and identical sizes. Buffer setup happens outside the samples; each variant repeatedly transforms its own buffer and the benchmark verifies scalar/parallel result equality before reporting times. 11 samples per case are recorded and the median reported. The cross-platform release run (run 38208860456, code `f728dba482d00450bb06a7e7b5f994e3f82152dc`) is archived in [`artifacts/benchmarks/f728dba482d00450bb06a7e7b5f994e3f82152dc/run-38208860456/`](../artifacts/benchmarks/f728dba482d00450bb06a7e7b5f994e3f82152dc/run-38208860456/).
 
-### Resultado medido: kernel ligero secuencial/paralelo (punto 088)
+### Measured result: lightweight sequential/parallel kernel (point 088)
 
-En el tamaño máximo de 262.144 elementos, las medianas de `for_each_parallel` con 2 workers fueron entre 4,0× y 10,3× el tiempo de `for_each` en los cinco runners; con 4 workers, entre 6,3× y 16,6×. Con 16.384 elementos, las rutas paralelas también fueron más lentas en todos los runners. Para tamaños de 64 y 1.024, el coste de coordinación domina ampliamente. En esta carga concreta no aparece un punto de equilibrio: la ruta secuencial es la opción adecuada y la paralela no debe activarse automáticamente para operaciones ligeras.
+At the maximum size of 262,144 elements, the medians of `for_each_parallel` with 2 workers were between 4.0× and 10.3× the time of `for_each` across the five runners; with 4 workers, between 6.3× and 16.6×. At 16,384 elements, the parallel routes were also slower on all runners. For sizes of 64 and 1,024, coordination cost dominates by far. No break-even point appears for this concrete workload: the sequential route is the right choice and the parallel one must not be activated automatically for lightweight operations.
 
-| Runner | Secuencial, 262.144 elems. | 2 workers / secuencial | 4 workers / secuencial |
+| Runner | Sequential, 262,144 elems. | 2 workers / sequential | 4 workers / sequential |
 |---|---:|---:|---:|
-| Linux x86-64 | 18.131 ns | 6,7× | 10,1× |
-| Linux ARM64 | 30.056 ns | 4,1× | 6,5× |
-| macOS ARM64 | 18.545 ns | 4,0× | 6,3× |
-| macOS x86-64 | 37.095 ns | 10,3× | 16,6× |
-| Windows x86-64 | 20.780 ns | 6,2× | 11,6× |
+| Linux x86-64 | 18,131 ns | 6.7× | 10.1× |
+| Linux ARM64 | 30,056 ns | 4.1× | 6.5× |
+| macOS ARM64 | 18,545 ns | 4.0× | 6.3× |
+| macOS x86-64 | 37,095 ns | 10.3× | 16.6× |
+| Windows x86-64 | 20,780 ns | 6.2× | 11.6× |
 
-Las cifras corresponden a un microbenchmark de transformación aritmética ligera, no a una aplicación representativa ni a una estimación universal del rendimiento paralelo. El resultado cierra la tarea de comparación, pero no invalida el paralelismo para kernels con mucho más trabajo por elemento, amortización por lotes o una estrategia de coordinación distinta. Los artefactos completos incluyen los ocho tamaños y los datos de entorno.
+The figures correspond to a microbenchmark of lightweight arithmetic transformation, not a representative application or a universal estimate of parallel performance. The result closes the comparison task but does not invalidate parallelism for kernels with much more work per element, batch amortization or a different coordination strategy. The complete artifacts include the eight sizes and the environment data.
 
-La investigación de alternativas SIMD y sus restricciones está registrada en [`docs/simd-research.md`](simd-research.md). No se añade SIMD manual ni se afirma aceleración: el punto 084 sigue en progreso hasta tener un kernel de producción que justifique la complejidad y evidencia reproducible. No se prometen vectorización automática ni alineación especial.
+The research on SIMD alternatives and its restrictions is recorded in [`docs/simd-research.md`](simd-research.md). No manual SIMD is added and no speedup is claimed: point 084 remains in progress until there is a production kernel that justifies the complexity and reproducible evidence. No automatic vectorization or special alignment is promised.
 
-## Decisiones aplazadas
+## Deferred decisions
 
-Quedan abiertas hasta que un caso de uso y pruebas las justifiquen: traits de kernel, tipos de configuración, tamaño óptimo de lote, política de cancelación por operación, representación de errores paralelos, estrategia de reducción flotante, pipelines diferidos, SIMD y dependencias externas. No se deben anticipar estas abstracciones solo para ampliar la API.
+Open until a use case and tests justify them: kernel traits, configuration types, optimal batch size, per-operation cancellation policy, representation of parallel errors, floating-point reduction strategy, deferred pipelines, SIMD and external dependencies. These abstractions must not be anticipated just to expand the API.

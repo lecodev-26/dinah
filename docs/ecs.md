@@ -1,180 +1,180 @@
-# dinah ECS — diseño inicial
+# dinah ECS — initial design
 
-Estado: arquitectura inicial implementada y documentada; `Entity`, `Component`, ciclo de vida de `World`, storage tipado por `TypeId`, acceso individual a componentes y adaptadores explícitos a Runtime/Compute están disponibles. La API de queries combinadas y la ejecución paralela segura de sistemas siguen pendientes. Las decisiones de este documento son revisables y no constituyen una garantía de estabilidad pública.
+Status: initial architecture implemented and documented; `Entity`, `Component`, the `World` lifecycle, per-`TypeId` typed storage, individual component access and explicit Runtime/Compute adapters are available. The combined-query API and safe parallel system execution remain pending. The decisions in this document are revisable and do not constitute a public stability guarantee.
 
-## Objetivos
+## Goals
 
-- Representar entidades como identificadores ligeros, sin datos de dominio embebidos.
-- Guardar componentes tipados en almacenamiento contiguo, separado por tipo, con acceso seguro y sin `unsafe`.
-- Hacer explícitos ownership, errores, eliminación, reutilización de IDs y semántica de iteración.
-- Permitir queries legibles y ofrecer después integración explícita con Runtime y Compute.
-- Medir cargas reales antes de introducir archetypes, generación de código, SIMD o paralelismo automático.
+- Represent entities as lightweight identifiers, with no embedded domain data.
+- Store typed components in contiguous storage, separated by type, with safe access and no `unsafe`.
+- Make ownership, errors, deletion, ID reuse and iteration semantics explicit.
+- Allow readable queries and later offer explicit integration with Runtime and Compute.
+- Measure real workloads before introducing archetypes, code generation, SIMD or automatic parallelism.
 
-Fuera de alcance inicial: reflexión/serialización automática, relaciones jerárquicas integradas, eventos globales, scheduler de sistemas, macros de derive, plugins dinámicos y garantías de tiempo real.
+Out of initial scope: reflection/automatic serialization, integrated hierarchical relationships, global events, a system scheduler, derive macros, dynamic plugins and real-time guarantees.
 
-## Decisión inicial: sparse sets tipados
+## Initial decision: typed sparse sets
 
-La primera versión usará un almacenamiento independiente por tipo de componente, implementado con vectores contiguos y un índice disperso para localizar una entidad. No se adoptará inicialmente un diseño archetype/table: mover filas entre tablas cuando cambia la composición añade complejidad de movimiento y préstamo antes de tener benchmarks representativos. La decisión podrá revisarse si las cargas medidas favorecen consultas por composición sobre accesos por tipo.
+The first version will use independent storage per component type, implemented with contiguous vectors and a sparse index to locate an entity. An archetype/table design will not be adopted initially: moving rows between tables when composition changes adds movement and borrowing complexity before having representative benchmarks. The decision may be revisited if measured workloads favor composition queries over per-type access.
 
-Un `ComponentStorage<T>` conceptual contiene:
+A conceptual `ComponentStorage<T>` contains:
 
-- `entities: Vec<Entity>`: entidades en el mismo orden que los componentes.
-- `components: Vec<T>`: valores contiguos, alineados por índice con `entities`.
-- `sparse: Vec<Option<usize>>`: índice de fila para cada índice de entidad conocido; la entrada se valida también contra la generación.
+- `entities: Vec<Entity>`: entities in the same order as the components.
+- `components: Vec<T>`: contiguous values, aligned by index with `entities`.
+- `sparse: Vec<Option<usize>>`: row index for each known entity index; the entry is also validated against the generation.
 
-Al borrar una fila se usa `swap_remove`; la última fila se mueve a la posición vacante y su índice disperso se actualiza. Por tanto, el orden de iteración no está garantizado tras mutaciones estructurales. Los slices de un almacenamiento son contiguos, pero no se promete que los componentes de distintos tipos estén juntos.
+When a row is deleted, `swap_remove` is used; the last row moves to the vacant position and its sparse index is updated. Therefore, iteration order is not guaranteed after structural mutations. A storage's slices are contiguous, but components of different types are not promised to be together.
 
-## Identidad y ciclo de vida de Entity
+## Entity identity and lifecycle
 
-`Entity` será un valor pequeño con `index` y `generation` (ambos enteros sin signo). La generación evita que un identificador guardado por el usuario vuelva a referirse accidentalmente a otra entidad después de destruir y reutilizar su índice.
+`Entity` will be a small value with `index` and `generation` (both unsigned integers). The generation prevents a user-held identifier from accidentally referring to another entity after its index is destroyed and reused.
 
-- La creación la administra `World`; no se exige al usuario inventar índices ni se reutiliza `CoreId` como allocator.
-- `World` mantiene generaciones y una lista libre de índices reutilizables.
-- La validez requiere que el índice exista, la generación coincida y la entidad esté viva.
-- Destruir una entidad invalida el handle, elimina sus componentes de todos los storages y solo después permite reutilizar el índice con una generación nueva.
-- El overflow de generación debe tener una política explícita y probada; nunca debe permitir que un handle antiguo se valide silenciosamente. La implementación podrá retirar ese índice si no puede incrementar la generación.
-- Los handles son locales a un `World`; no implican unicidad global ni estabilidad entre procesos, serializaciones o sesiones.
+- Creation is administered by `World`; the user is not asked to invent indices and `CoreId` is not reused as an allocator.
+- `World` keeps generations and a free list of reusable indices.
+- Validity requires the index to exist, the generation to match and the entity to be alive.
+- Destroying an entity invalidates the handle, removes its components from all storages and only then allows the index to be reused with a new generation.
+- Generation overflow must have an explicit, tested policy; it must never allow an old handle to silently validate. The implementation may retire that index if it cannot increment the generation.
+- Handles are local to a `World`; they imply no global uniqueness or stability across processes, serializations or sessions.
 
 
-### Contrato implementado: `World` (punto 094)
+### Implemented contract: `World` (point 094)
 
-`dinah::ecs::World` es el propietario single-owner de la tabla de entidades y de sus storages tipados. `spawn()` devuelve `Result<Entity, WorldError>`; `despawn(entity)` invalida un handle vivo, elimina primero sus componentes de todos los storages y devuelve `EntityNotAlive` para handles inexistentes, obsoletos o ya destruidos. `contains`, `len` e `is_empty` permiten inspeccionar el estado. Los índices liberados se reutilizan con generación incrementada; si una generación llega a `u32::MAX`, el slot se retira para impedir el wraparound. La saturación del espacio de índices devuelve `EntityIndexExhausted`. Tests unitarios y de integración cubren liveness, conteos, reutilización, rechazo de handles obsoletos y retirada por overflow.
+`dinah::ecs::World` is the single owner of the entity table and its typed storages. `spawn()` returns `Result<Entity, WorldError>`; `despawn(entity)` invalidates a live handle, first removes its components from all storages and returns `EntityNotAlive` for nonexistent, stale or already-destroyed handles. `contains`, `len` and `is_empty` allow inspecting the state. Freed indices are reused with an incremented generation; if a generation reaches `u32::MAX`, the slot is retired to prevent wraparound. Index-space saturation returns `EntityIndexExhausted`. Unit and integration tests cover liveness, counts, reuse, stale-handle rejection and overflow retirement.
 
-### Adaptador explícito de sistemas a Runtime (punto 098)
+### Explicit system adapter to Runtime (point 098)
 
-`World::run_system(&mut self, &Scheduler, closure)` permite ejecutar una operación de sistema que recibe acceso exclusivo a `World` mediante el Runtime público. En Runtime v0.1, `Scheduler::schedule` ejecuta la closure inmediatamente en el hilo llamador; por tanto, el adaptador no crea hilos, no retiene el mundo ni promete ejecución en background. El resultado anidado distingue un rechazo del scheduler (`ScheduleError`) del error propio del sistema. El préstamo exclusivo impide ejecutar simultáneamente dos closures mutables sobre el mismo `World` a través de esta API. La integración es explícita y síncrona; los sistemas paralelos quedan fuera de este punto.
+`World::run_system(&mut self, &Scheduler, closure)` allows running a system operation that receives exclusive access to the `World` through the public Runtime. In Runtime v0.1, `Scheduler::schedule` executes the closure immediately on the calling thread; therefore the adapter creates no threads, holds no world and promises no background execution. The nested result distinguishes a scheduler rejection (`ScheduleError`) from the system's own error. The exclusive borrow prevents two mutable closures from running simultaneously over the same `World` through this API. The integration is explicit and synchronous; parallel systems are outside this point.
 
-### Metadatos tipados de acceso (punto 100, en progreso)
+### Typed access metadata (point 100, in progress)
 
-`SystemAccess` permite declarar `read::<T>()` y `write::<T>()` por tipo de componente y consultar el modo declarado. Las declaraciones repetidas se deduplican; si un tipo aparece como lectura y escritura, prevalece `Write`, que es la interpretación conservadora. `conflicts_with` devuelve conflicto si ambos sistemas declaran el mismo tipo y al menos uno lo escribe; lectura/lectura y tipos distintos son compatibles. El descriptor es metadata pública: no verifica que una closure respete su declaración, no presta componentes y no ejecuta sistemas. Por tanto, no debe usarse como prueba suficiente para lanzar workers todavía. Tests unitarios y de contrato público cubren lectura/lectura, lectura/escritura, escritura/escritura, tipos distintos, declaraciones repetidas y componentes `!Send`/`!Sync`.
+`SystemAccess` allows declaring `read::<T>()` and `write::<T>()` per component type and querying the declared mode. Repeated declarations are deduplicated; if a type appears as both read and write, `Write` prevails, which is the conservative interpretation. `conflicts_with` returns a conflict if both systems declare the same type and at least one writes it; read/read and distinct types are compatible. The descriptor is public metadata: it does not verify that a closure respects its declaration, does not lend components and does not execute systems. Therefore it must not yet be used as sufficient proof to launch workers. Unit and public-contract tests cover read/read, read/write, write/write, distinct types, repeated declarations and `!Send`/`!Sync` components.
 
-### Planificador determinista de metadatos (punto 100, en progreso)
+### Deterministic metadata planner (point 100, in progress)
 
-`SystemPlan::from_accesses` crea fases de índices de sistemas de forma determinista y preserva el orden de entrada. Usa una estrategia conservadora de lotes contiguos: añade un sistema a la fase actual si no entra en conflicto con ninguno de sus miembros; si hay conflicto, abre una nueva fase. Así, los sistemas conflictivos mantienen su orden relativo y los accesos compatibles pueden compartir fase. La API expone `batches()`, `len()` e `is_empty()`, y acepta entrada vacía sin crear fases. Los tests verifican agrupación, orden y repetibilidad. Este planificador opera solo sobre declaraciones: no ejecuta closures, no prueba que coincidan con sus declaraciones, no detecta operaciones estructurales ni hace que `World` sea `Send`/`Sync`; por tanto, aún no habilita ejecución paralela segura.
+`SystemPlan::from_accesses` creates phases of system indices deterministically and preserves input order. It uses a conservative contiguous-batching strategy: it adds a system to the current phase if it does not conflict with any of its members; if there is a conflict, it opens a new phase. Thus, conflicting systems keep their relative order and compatible accesses can share a phase. The API exposes `batches()`, `len()` and `is_empty()`, and accepts empty input without creating phases. The tests verify grouping, order and repeatability. This planner operates only over declarations: it does not run closures, does not prove they match their declarations, does not detect structural operations and does not make `World` `Send`/`Sync`; therefore it does not yet enable safe parallel execution.
 
-### Contrato de seguridad para sistemas paralelos (punto 100, en progreso)
+### Safety contract for parallel systems (point 100, in progress)
 
-La ejecución paralela de sistemas ECS no se habilita todavía. El scheduler de Runtime puede ejecutar closures independientes en paralelo, pero eso no convierte un `World` en un objeto seguro para compartir: `World` es single-owner, `Component` admite tipos que no son `Send`/`Sync`, y el almacenamiento de componentes aún no está conectado a `World`. Pasar el mismo `&mut World` a varios workers o capturar componentes compartidos sin análisis de préstamos sería incorrecto.
+Parallel execution of ECS systems is not enabled yet. Runtime's scheduler can run independent closures in parallel, but that does not make a `World` a safe object to share: `World` is single-owner, `Component` admits types that are not `Send`/`Sync`, and component storage is not yet connected to `World`. Passing the same `&mut World` to several workers or capturing shared components without borrow analysis would be incorrect.
 
-Antes de implementar la ejecución, cada sistema debe declarar de forma explícita los tipos de componentes que lee y escribe. Dos sistemas solo podrán pertenecer al mismo lote paralelo si sus conjuntos de acceso son compatibles: lectura/lectura del mismo tipo es compatible; escritura/lectura, lectura/escritura y escritura/escritura del mismo tipo son conflictos. Una declaración de acceso ausente, dinámica o ambigua debe bloquear la ejecución paralela, no asumir que es segura. Los componentes que crucen límites de worker tendrán que satisfacer los bounds `Send`/`Sync` necesarios en la API concurrente, sin restringir por ello el contrato general de `Component` para el uso secuencial.
+Before implementing execution, each system must explicitly declare the component types it reads and writes. Two systems may only belong to the same parallel batch if their access sets are compatible: read/read of the same type is compatible; write/read, read/write and write/write of the same type are conflicts. A missing, dynamic or ambiguous access declaration must block parallel execution, not assume safety. Components that cross worker boundaries will have to satisfy the `Send`/`Sync` bounds required by the concurrent API, without thereby restricting the general `Component` contract for sequential use.
 
-La futura implementación debe además garantizar que las operaciones estructurales (`spawn`, `despawn`, inserción/eliminación de componentes) no invaliden referencias activas. Inicialmente podrán ejecutarse en una fase exclusiva separada de las fases de lectura/escritura de componentes. Los lotes paralelos deben ser deterministas en la selección y en la presentación de resultados, aunque el orden temporal de finalización no sea estable. El número de workers será explícito y no se prometerá aceleración para cargas pequeñas.
+The future implementation must additionally guarantee that structural operations (`spawn`, `despawn`, component insertion/removal) do not invalidate active references. Initially they may run in a separate exclusive phase from the component read/write phases. Parallel batches must be deterministic in selection and result presentation, even if the temporal completion order is not stable. The worker count will be explicit and no speedup will be promised for small workloads.
 
-**Criterio de aceptación:** descriptor tipado, detector básico de conflictos y planificador determinista de lotes contiguos implementados; falta una API de ejecución que valide declaraciones y no permita compartir `World` mutablemente entre workers; tests de límites (tipos repetidos, acceso de lectura/escritura, lote vacío y worker count inválido); y CI multiplataforma antes de marcar el punto 100 como completado. Hasta entonces, `World::run_system` sigue siendo síncrono y no existe una API pública de sistemas paralelos ECS.
+**Acceptance criteria:** typed descriptor, basic conflict detector and deterministic contiguous-batch planner implemented; missing is an execution API that validates declarations and does not allow sharing `World` mutably across workers; boundary tests (repeated types, read/write access, empty batch and invalid worker count); and cross-platform CI before marking point 100 complete. Until then, `World::run_system` remains synchronous and there is no public API for parallel ECS systems.
 
-### Consistencia de slots, generaciones y storage (punto 101)
+### Slot, generation and storage consistency (point 101)
 
-Las pruebas de consistencia comprueban invariantes internas tras secuencias de mutaciones, no solo el resultado de una operación aislada. Para `World`, el contador `alive_count` debe coincidir con el número de slots vivos; cada índice de la lista libre aparece una sola vez y referencia un slot no vivo ni retirado; todo slot no vivo y no retirado debe estar en la lista libre; y los slots vivos o retirados no pueden estar libres. La generación nunca se valida si el slot no está vivo.
+The consistency tests check internal invariants after sequences of mutations, not just the result of an isolated operation. For `World`, the `alive_count` counter must match the number of live slots; every index in the free list appears exactly once and references a slot that is neither live nor retired; every slot that is not live and not retired must be in the free list; and live or retired slots cannot be free. The generation is never validated when the slot is not alive.
 
-Para `ComponentStorage<T>`, las columnas `entities` y `components` deben conservar la misma longitud. Cada entidad almacenada debe apuntar desde su índice disperso a su fila actual, y cada entrada sparse presente debe referenciar una fila válida cuyo índice de entidad coincide con la posición sparse. Las pruebas verifican estas propiedades después de inserciones, reemplazos, eliminaciones con `swap_remove` y reutilización del mismo índice con una generación distinta. `World` registra storages por `TypeId` y elimina la fila de la entidad de cada storage durante `despawn`; las pruebas públicas verifican que no sobrevivan componentes al destruir y reutilizar una entidad.
+For `ComponentStorage<T>`, the `entities` and `components` columns must keep the same length. Every stored entity must point from its sparse index to its current row, and every present sparse entry must reference a valid row whose entity index matches the sparse position. The tests verify these properties after insertions, replacements, `swap_remove` deletions and reuse of the same index with a different generation. `World` registers storages by `TypeId` and removes the entity's row from every storage during `despawn`; the public tests verify that no components survive destroying and reusing an entity.
 
-### Contrato implementado: `Component` (punto 093)
+### Implemented contract: `Component` (point 093)
 
-`dinah::ecs::Component` es un trait marcador público con `Component for T` para todo `T: 'static`. No aporta métodos ni exige derive/manual boilerplate; hace explícito el bound conceptual en las futuras APIs de storage y `World`. La implementación blanket es intencional: el contrato inicial es la duración de vida requerida por `Any`/`TypeId`, no la capacidad de enviar o compartir el valor entre hilos. Tests unitarios y de integración comprueban tipos comunes y `Rc<Cell<u32>>`, que no es `Send` ni `Sync`.
+`dinah::ecs::Component` is a public marker trait with `Component for T` for every `T: 'static`. It provides no methods and requires no derive/manual boilerplate; it makes the conceptual bound explicit in future storage and `World` APIs. The blanket implementation is intentional: the initial contract is the lifetime required by `Any`/`TypeId`, not the ability to send or share the value across threads. Unit and integration tests check common types and `Rc<Cell<u32>>`, which is neither `Send` nor `Sync`.
 
-### Primer contrato implementado: `Entity` (punto 092)
+### First implemented contract: `Entity` (point 092)
 
-`dinah::ecs::Entity` es un handle `Copy` con dos campos privados `u32`: índice y generación. Expone `index()` y `generation()` como accesores de solo lectura y una representación diagnóstica `indexvgen` mediante `Display`. Su constructor es privado para usuarios externos; el `World` será responsable de emitir handles válidos. La implementación no asigna IDs, no prueba por sí sola que un handle esté vivo y no promete unicidad fuera del mundo propietario.
+`dinah::ecs::Entity` is a `Copy` handle with two private `u32` fields: index and generation. It exposes `index()` and `generation()` as read-only accessors and a diagnostic `indexvgen` representation through `Display`. Its constructor is private to external users; the `World` will be responsible for issuing valid handles. The implementation assigns no IDs, does not by itself prove that a handle is alive and promises no uniqueness outside the owning world.
 
-Los tests verifican que igualdad y hashing distinguen generaciones distintas del mismo índice, que handles equivalentes se comparan igual, que los valores máximos se conservan y que el handle ocupa ocho bytes en la plataforma objetivo de Rust (dos `u32`). La validación de vida útil y reutilización la realiza `World`; el handle por sí solo no demuestra que la entidad siga viva.
+The tests verify that equality and hashing distinguish different generations of the same index, that equivalent handles compare equal, that maximum values are preserved and that the handle occupies eight bytes on Rust's target platform (two `u32`). Liveness validation and reuse are performed by `World`; the handle alone does not demonstrate that the entity is still alive.
 
-### Almacenamiento contiguo e iteración (puntos 096–097)
+### Contiguous storage and iteration (points 096–097)
 
-`ComponentStorage<T>` es un detalle interno del ECS con tres vectores: `entities` y `components` forman columnas contiguas alineadas por fila; `sparse` mapea el índice de entidad a una fila candidata. Antes de devolver o quitar un valor se comprueba la identidad completa de `Entity`, incluida la generación. Reemplazar el componente de la misma entidad conserva la fila; reutilizar un índice con otra generación elimina la fila antigua y añade la nueva. Al borrar una fila se usa `swap_remove` y se actualiza el índice disperso de la fila movida.
+`ComponentStorage<T>` is an internal ECS detail with three vectors: `entities` and `components` form contiguous row-aligned columns; `sparse` maps the entity index to a candidate row. Before returning or removing a value, the full `Entity` identity, including the generation, is checked. Replacing the same entity's component keeps the row; reusing an index with a different generation removes the old row and adds the new one. When a row is deleted, `swap_remove` is used and the moved row's sparse index is updated.
 
-Las inserciones reservan capacidad en todas las columnas que puedan crecer antes de modificar sus contenidos. Un error de reserva devuelve `StorageError::AllocationFailed` y no deja las columnas con longitudes diferentes. El storage no puede validar por sí solo la liveness de un handle; `World` valida índice y generación antes de delegar el acceso. La integración inicial expone `World::insert`, `get`, `get_mut`, `remove` y `has`, y `despawn` elimina los componentes asociados. Las queries combinadas siguen pendientes.
+Insertions reserve capacity in every column that might grow before modifying their contents. A reservation failure returns `StorageError::AllocationFailed` and does not leave the columns with different lengths. The storage cannot by itself validate a handle's liveness; `World` validates index and generation before delegating access. The initial integration exposes `World::insert`, `get`, `get_mut`, `remove` and `has`, and `despawn` removes the associated components. Combined queries remain pending.
 
-El punto 097 añade `iter()` e `iter_mut()`, que recorren linealmente las dos columnas alineadas y producen pares `(Entity, &T)` o `(Entity, &mut T)` sin buscar cada fila en el índice disperso. La iteración mutable solo concede préstamos mutables de filas distintas y no ofrece operaciones estructurales sobre el storage. Ambos recorridos siguen el orden físico actual de las filas, que puede cambiar después de inserciones o eliminaciones; no es un orden estable de entidades. Las pruebas comprueban pares alineados, storage vacío y actualización mutable sin alterar la forma de las columnas.
+Point 097 adds `iter()` and `iter_mut()`, which linearly walk the two aligned columns and produce `(Entity, &T)` or `(Entity, &mut T)` pairs without looking up each row in the sparse index. Mutable iteration only grants mutable borrows of distinct rows and offers no structural operations over the storage. Both traversals follow the current physical row order, which may change after insertions or deletions; it is not a stable entity order. The tests check aligned pairs, empty storage and mutable updates without altering the columns' shape.
 
-## Componentes
+## Components
 
-Un componente es cualquier tipo Rust `'static`. El punto 093 expone `dinah::ecs::Component` como trait marcador con implementación blanket para todos los tipos `'static`: los usuarios no necesitan implementar nada manualmente y la trait sirve como bound legible en APIs ECS. No se exige `Send + Sync`: `World` es inicialmente single-owner y tipos como `Rc<Cell<T>>` siguen siendo componentes válidos. Si una API concurrente futura necesita límites más estrictos, los impondrá en esa API en vez de restringir prematuramente todos los componentes.
+A component is any `'static` Rust type. Point 093 exposes `dinah::ecs::Component` as a marker trait with a blanket implementation for all `'static` types: users need not implement anything manually and the trait serves as a readable bound in ECS APIs. `Send + Sync` is not required: `World` is initially single-owner and types like `Rc<Cell<T>>` remain valid components. If a future concurrent API needs stricter bounds, it will impose them on that API instead of prematurely restricting all components.
 
-Cada `TypeId` identifica el storage del tipo en un `World`. El almacenamiento se mantendrá detrás de un registro privado type-erased (`Any`) y cada acceso tipado comprobará el downcast; un desacuerdo de tipos se tratará como un error/invariante interna, nunca mediante punteros crudos. No se expondrán referencias que sobrevivan a una mutación estructural incompatible del `World`.
+Each `TypeId` identifies the type's storage in a `World`. Storage will be kept behind a private type-erased registry (`Any`) and every typed access will check the downcast; a type disagreement is treated as an internal error/invariant, never through raw pointers. No references that outlive an incompatible structural mutation of the `World` will be exposed.
 
-## World y operaciones disponibles
+## World and available operations
 
-`World` es el propietario de entidades, generaciones, lista libre y storages. La API pública implementada incluye:
+`World` is the owner of entities, generations, the free list and storages. The implemented public API includes:
 
-- `spawn` / `despawn` para crear y destruir entidades.
-- `insert<T>` para añadir o reemplazar un componente.
-- `get<T>` / `get_mut<T>` para acceder a un componente existente.
-- `remove<T>` para retirar un componente.
-- `has<T>` para comprobar la presencia de un componente; `contains(entity)`, `len()` e `is_empty()` para la vida de las entidades.
+- `spawn` / `despawn` to create and destroy entities.
+- `insert<T>` to add or replace a component.
+- `get<T>` / `get_mut<T>` to access an existing component.
+- `remove<T>` to remove a component.
+- `has<T>` to check a component's presence; `contains(entity)`, `len()` and `is_empty()` for entity liveness.
 
-`insert` devuelve `Result<Option<T>, WorldError>`: un `Ok(Some(old))` indica que reemplazó un valor previo. Los accesos `get`, `get_mut` y `remove` devuelven `None` si el handle está muerto/obsoleto o no tiene ese componente. `WorldError` distingue `EntityNotAlive`, `EntityIndexExhausted` y `AllocationFailed`. `World` sigue siendo single-owner y no sincronizado internamente.
+`insert` returns `Result<Option<T>, WorldError>`: an `Ok(Some(old))` indicates it replaced a previous value. The `get`, `get_mut` and `remove` accesses return `None` if the handle is dead/stale or lacks that component. `WorldError` distinguishes `EntityNotAlive`, `EntityIndexExhausted` and `AllocationFailed`. `World` remains single-owner and not internally synchronized.
 
-## Contrato de queries (punto 095; API aún pendiente)
+## Query contract (point 095; API still pending)
 
-Esta sección fija la semántica prevista para una API futura de queries; no afirma que las queries combinadas estén implementadas. El acceso individual a componentes y el almacenamiento sí están implementados, pero todavía no existe una API pública para recorrer entidades que satisfacen varios tipos de componente.
+This section fixes the intended semantics for a future query API; it does not claim that combined queries are implemented. Individual component access and storage are implemented, but a public API to traverse entities satisfying several component types does not exist yet.
 
-### Selección y resultados
+### Selection and results
 
-- Una query selecciona entidades vivas que tienen todos los tipos de componente requeridos. Una entidad que carece de cualquiera de ellos no aparece en el resultado.
-- La primera versión se limita a una combinación pequeña y explícita de componentes tipados; no incluye filtros arbitrarios, expresiones dinámicas, joins generales ni generación de código.
-- El conjunto consultado pertenece a un único `World`. Los `Entity` devueltos son handles de ese mundo y deben validarse por índice, generación y liveness.
-- Las queries no crean entidades ni componentes y no realizan cambios estructurales implícitos.
-- Una query sin coincidencias es un resultado vacío válido, no un error.
+- A query selects live entities that have all required component types. An entity lacking any of them does not appear in the result.
+- The first version is limited to a small, explicit combination of typed components; it includes no arbitrary filters, dynamic expressions, general joins or code generation.
+- The queried set belongs to a single `World`. Returned `Entity` values are handles of that world and must be validated by index, generation and liveness.
+- Queries create no entities or components and perform no implicit structural changes.
+- A query with no matches is a valid empty result, not an error.
 
-### Préstamos y mutabilidad
+### Borrows and mutability
 
-- Las queries de solo lectura pueden exponer `&T` mientras se mantenga el préstamo compartido de `World`.
-- Una query con escritura debe expresar los componentes mutables en el tipo de su API y excluir aliasing mutable. No se permitirá combinar accesos incompatibles al mismo tipo mediante parámetros de query duplicados.
-- Mientras existan referencias de una query, el sistema de tipos debe impedir mutaciones estructurales del `World` que invaliden esas referencias.
-- Si la API genérica para combinar préstamos no puede implementarse de forma segura en Rust estable, se empezará con una superficie menor (incluyendo solo lectura) en lugar de introducir `unsafe` o prometer una capacidad no demostrada.
-- No se promete `Send`/`Sync` para resultados de query: los componentes y `World` iniciales son single-owner, y el paralelismo se definirá por separado.
+- Read-only queries may expose `&T` while the shared borrow of `World` is held.
+- A query with writes must express the mutable components in its API type and exclude mutable aliasing. Combining incompatible accesses to the same type via duplicated query parameters will not be allowed.
+- While references from a query exist, the type system must prevent structural mutations of the `World` that would invalidate those references.
+- If the generic API to combine borrows cannot be implemented safely in stable Rust, we will start with a smaller surface (read-only included) rather than introducing `unsafe` or promising an undemonstrated capability.
+- No `Send`/`Sync` is promised for query results: the initial components and `World` are single-owner, and parallelism will be defined separately.
 
-### Orden y complejidad
+### Order and complexity
 
-- El orden de resultados no forma parte del contrato estable y puede cambiar tras inserciones, eliminaciones o reutilización de filas.
-- La implementación inicial puede recorrer un storage conductor y comprobar los demás componentes; elegir el storage más pequeño es una optimización posterior, no una garantía observable.
-- Las queries no prometen complejidad constante por entidad ni rendimiento específico hasta que los puntos de almacenamiento, iteración y benchmarks aporten evidencia.
+- Result order is not part of the stable contract and may change after insertions, deletions or row reuse.
+- The initial implementation may walk one driving storage and check the other components; choosing the smallest storage is a later optimization, not an observable guarantee.
+- Queries promise no constant complexity per entity or specific performance until the storage, iteration and benchmark points provide evidence.
 
-### Casos que deben cubrir las pruebas
+### Cases the tests must cover
 
-1. Coincidencia completa, componente ausente y query vacía.
-2. Entidades destruidas y handles obsoletos excluidos después de reutilizar un índice.
-3. Varias entidades coincidentes y componentes alineados con su entidad, incluso tras `swap_remove`.
-4. Préstamos de lectura coexistentes y rechazo en compilación de accesos incompatibles cuando la forma de la API lo permita.
-5. Ausencia de cambios estructurales como efecto secundario de iterar.
+1. Full match, missing component and empty query.
+2. Destroyed entities and stale handles excluded after reusing an index.
+3. Several matching entities and components aligned with their entity, even after `swap_remove`.
+4. Coexisting read borrows and compile-time rejection of incompatible accesses when the API shape allows it.
+5. Absence of structural changes as a side effect of iterating.
 
-Estos casos son criterios de aceptación para la implementación futura; el punto 095 queda cerrado como contrato de diseño, no como implementación de queries.
+These cases are acceptance criteria for the future implementation; point 095 is closed as a design contract, not as a query implementation.
 
-## Límites de seguridad y errores
+## Safety limits and errors
 
-El crate mantiene `#![forbid(unsafe_code)]`. La implementación preferirá `Vec`, `HashMap<TypeId, Box<dyn Any>>` y downcasts seguros, con las restricciones de `borrow checker` visibles en la API. Las operaciones que puedan fallar por una entrada inválida deben devolver errores tipados. Un fallo de reserva de memoria no debe dejar un `World` con entidades o columnas desincronizadas; las operaciones que necesitan varias mutaciones deben validar y reservar antes de comprometer cambios cuando sea posible.
+The crate keeps `#![forbid(unsafe_code)]`. The implementation will prefer `Vec`, `HashMap<TypeId, Box<dyn Any>>` and safe downcasts, with the `borrow checker`'s restrictions visible in the API. Operations that may fail due to invalid input must return typed errors. A memory allocation failure must not leave a `World` with out-of-sync entities or columns; operations needing several mutations must validate and reserve before committing changes when possible.
 
-La destrucción de una entidad debe dejar todos los storages coherentes. Las pruebas cubrirán componentes en varios storages, filas movidas por `swap_remove`, reutilización de índice y rechazo de handles obsoletos. Los pánicos de destructores siguen la semántica de Rust y no se promete recuperación transaccional frente a un pánico.
+Destroying an entity must leave all storages coherent. Tests will cover components across several storages, rows moved by `swap_remove`, index reuse and stale-handle rejection. Destructor panics follow Rust semantics and no transactional recovery against a panic is promised.
 
-## Integración futura
+## Future integration
 
-- **Memory (096):** reutilizar las lecciones de `Buffer<T>` y `SoaBuffer<A, B>`, pero no forzar el buffer fijo actual a ser un storage de tamaño dinámico sin evidencia de que sus contratos encajen.
-- **Compute (099):** `ComponentStorage::for_each_mut` reutiliza `compute::for_each` sobre la columna contigua de componentes y empareja cada elemento con su `Entity` en el mismo índice. La operación es secuencial, no permite mutaciones estructurales desde el callback y conserva el tamaño/alineación de las columnas. La integración actual de storages con `World` permite acceso tipado individual; iteración/query pública y particiones paralelas siguen pendientes. No se promete paralelismo ni speedup.
-- **Runtime (098, 100):** `World::run_system` conecta explícitamente un sistema síncrono con `Scheduler`. El punto 100 permanece en progreso: el contrato de seguridad exige declaraciones explícitas de componentes leídos/escritos, rechazo de lotes con conflictos y aislamiento de cambios estructurales; todavía no hay ejecución paralela ECS implementada. No se introduce scheduling oculto en operaciones de `World`.
-- **Consistencia (101):** invariantes para generaciones, lista libre, alineación de columnas e índices dispersos, y ausencia de componentes en entidades muertas.
-- **Benchmarks (102–103):** comparar sparse sets con un baseline simple, registrar tamaño de entidad/componentes, composición, lecturas/escrituras, inserciones/borrados y distribución de queries. No afirmar superioridad universal ni adoptar archetypes solo por intuición.
+- **Memory (096):** reuse the lessons of `Buffer<T>` and `SoaBuffer<A, B>`, but do not force the current fixed buffer to be a dynamic-size storage without evidence that its contracts fit.
+- **Compute (099):** `ComponentStorage::for_each_mut` reuses `compute::for_each` over the contiguous component column and pairs each element with its `Entity` at the same index. The operation is sequential, does not allow structural mutations from the callback and preserves the columns' size/alignment. The current integration of storages with `World` allows typed individual access; public iteration/queries and parallel partitions remain pending. No parallelism or speedup is promised.
+- **Runtime (098, 100):** `World::run_system` explicitly connects a synchronous system with `Scheduler`. Point 100 remains in progress: the safety contract requires explicit declarations of read/written components, rejection of conflicting batches and isolation of structural changes; there is still no implemented parallel ECS execution. No hidden scheduling is introduced into `World` operations.
+- **Consistency (101):** invariants for generations, the free list, column alignment and sparse indices, and absence of components on dead entities.
+- **Benchmarks (102–103):** compare sparse sets against a simple baseline, record entity/component size, composition, reads/writes, insertions/deletions and query distribution. Do not claim universal superiority or adopt archetypes purely on intuition.
 
-## Secuencia de aceptación
+## Acceptance sequence
 
-1. **091 — Diseño ECS:** decisiones, invariantes, límites y secuencia de integración documentados aquí.
-2. **092–094 — Entity, Component, World:** handles, bound público y ciclo de vida inicial de `World` implementados.
-3. **095–097 — Queries, almacenamiento e iteración:** contrato de queries, storage contiguo e iteradores internos seguros implementados/documentados; la integración de acceso individual de storages con `World` se añadió después. Las queries públicas y la iteración pública sobre el mundo siguen pendientes.
-4. **098–101 — Integración Runtime/Compute, sistemas paralelos y consistencia:** adaptador síncrono explícito de `World` a Runtime e integración secuencial interna del storage con `compute::for_each` implementados; el punto 100 tiene contrato de seguridad, `SystemAccess`, detección básica de conflictos y `SystemPlan` determinista implementados; sigue en progreso hasta disponer de ejecución segura que valide declaraciones, aísle cambios estructurales y pase CI multiplataforma. El punto 101 añade pruebas de invariantes de slots/lista libre y del índice sparse/columnas bajo mutaciones repetidas.
-5. **102–104 — Benchmarks, acceso a memoria y documentación:** medir antes de cambiar representación o prometer rendimiento.
+1. **091 — ECS design:** decisions, invariants, limits and integration sequence documented here.
+2. **092–094 — Entity, Component, World:** handles, the public bound and `World`'s initial lifecycle implemented.
+3. **095–097 — Queries, storage and iteration:** the query contract, contiguous storage and safe internal iterators implemented/documented; the integration of individual storage access with `World` was added later. Public queries and public world iteration remain pending.
+4. **098–101 — Runtime/Compute integration, parallel systems and consistency:** the explicit synchronous adapter from `World` to Runtime and the storage's internal sequential integration with `compute::for_each` are implemented; point 100 has the safety contract, `SystemAccess`, basic conflict detection and the deterministic `SystemPlan` implemented; it remains in progress until safe execution is available that validates declarations, isolates structural changes and passes cross-platform CI. Point 101 adds invariant tests for slots/free list and the sparse index/columns under repeated mutations.
+5. **102–104 — Benchmarks, memory access and documentation:** measure before changing representation or promising performance.
 
-### Benchmark baseline (punto 102, completado)
+### Baseline benchmark (point 102, completed)
 
-`benches/ecs.rs` mide la API pública disponible hoy: creación de entidades, destrucción, reutilización de slots y recorrido de `contains`, con tamaños de 64, 1.024 y 16.384 entidades y siete muestras por caso. La metodología y los límites están documentados en `docs/ecs-benchmarks.md`. La primera ejecución de CI terminó correctamente en las cinco plataformas y sus resultados están resumidos en `docs/ecs-benchmarks.md`. No mide componentes ni queries porque este benchmark corresponde al punto 102 y se ejecutó antes de integrar el almacenamiento con `World`; sigue siendo únicamente la línea base del ciclo de vida de entidades.
+`benches/ecs.rs` measures the public API available today: entity creation, destruction, slot reuse and `contains` traversal, with sizes of 64, 1,024 and 16,384 entities and seven samples per case. The methodology and limits are documented in `docs/ecs-benchmarks.md`. The first CI run completed successfully on all five platforms and its results are summarized in `docs/ecs-benchmarks.md`. It measures no components or queries because this benchmark corresponds to point 102 and ran before integrating storage with `World`; it remains solely the entity-lifecycle baseline.
 
 
-### Integración inicial de componentes con World
+### Initial component integration with World
 
-`World` mantiene un registro privado `TypeId -> Box<dyn ErasedStorage>`; cada storage concreto sigue usando `ComponentStorage<T>` y sus columnas contiguas. La API pública actual incluye `insert<T>`, `get<T>`, `get_mut<T>`, `remove<T>` y `has<T>`. `insert` solo acepta entidades vivas, devuelve el componente reemplazado y propaga `WorldError::AllocationFailed` si las reservas de las columnas fallan. `get`/`get_mut`/`remove` no acceden a handles muertos u obsoletos. `despawn` recorre los storages registrados y retira el componente de esa entidad antes de invalidar su slot; al reutilizar el índice no quedan componentes de la generación anterior.
+`World` keeps a private `TypeId -> Box<dyn ErasedStorage>` registry; each concrete storage still uses `ComponentStorage<T>` and its contiguous columns. The current public API includes `insert<T>`, `get<T>`, `get_mut<T>`, `remove<T>` and `has<T>`. `insert` only accepts live entities, returns the replaced component and propagates `WorldError::AllocationFailed` if column reservations fail. `get`/`get_mut`/`remove` do not access dead or stale handles. `despawn` walks the registered storages and removes that entity's component before invalidating its slot; reusing the index leaves no components from the previous generation.
 
-Esta integración no implementa todavía queries de múltiples componentes, iteración pública sobre `World`, ejecución paralela de sistemas ni garantías de `Send`/`Sync`. El mapa de storages y los tipos de componentes no se exponen directamente, y la API permanece single-owner y segura sin `unsafe`.
+This integration does not yet implement multi-component queries, public iteration over `World`, parallel system execution or `Send`/`Sync` guarantees. The storage map and component types are not exposed directly, and the API remains single-owner and safe without `unsafe`.
 
 
-### Ejemplo de uso de la API pública actual
+### Example using the current public API
 
 ```rust
 use dinah::ecs::World;
@@ -189,4 +189,4 @@ world.despawn(entity)?;
 # Ok::<(), dinah::ecs::WorldError>(())
 ```
 
-El ejemplo ilustra solo operaciones ya disponibles; no depende de una API de queries todavía inexistente. En ejemplos de aplicaciones, los errores de creación/inserción deben propagarse o tratarse según la política del programa.
+The example illustrates only already-available operations; it does not depend on a not-yet-existing query API. In application examples, creation/insertion errors must be propagated or handled according to the program's policy.

@@ -1,26 +1,26 @@
-# DINAH — política de automatización y bots
+# DINAH — automation and bot policy
 
-## Autoridad sobre el repositorio
+## Repository authority
 
-- Los bots pueden analizar, proponer cambios, crear ramas y abrir Pull Requests.
-- Ningún bot puede fusionar Pull Requests ni habilitar auto-merge. El merge de cambios de código y configuración corresponde a una persona responsable del proyecto.
-- Excepción operativa: el workflow de archivado de benchmarks conserva su comportamiento existente y puede registrar automáticamente los artefactos generados en `main`, una vez validados CI y benchmarks para el mismo commit. Esta excepción no autoriza a otros bots a escribir en `main`.
-- No se conceden permisos de administración a bots. Cada integración debe usar los permisos mínimos que necesita.
-- Los cambios generados por bots deben explicar el motivo, el alcance, los riesgos y las comprobaciones ejecutadas.
-- El workflow de archivado de artefactos se mantiene automático: tras validar los workflows requeridos para el mismo SHA, guarda los artefactos bajo `artifacts/benchmarks/<commit-sha>/run-<benchmark-run-id>/` y registra los cambios en `main`.
-- Una tarea del roadmap no se marca como completada sin evidencia revisable en código, documentación, pruebas o resultados.
+- Bots may analyze, propose changes, create branches and open Pull Requests.
+- No bot may merge Pull Requests or enable auto-merge. Merging code and configuration changes is the responsibility of a person accountable for the project.
+- Operational exception: the benchmark archiving workflow keeps its existing behavior and may automatically commit the artifacts it generates to `main`, once CI and benchmarks have passed for the same commit. This exception does not authorize other bots to write to `main`.
+- Bots are not granted administration permissions. Every integration must use the minimum permissions it needs.
+- Bot-generated changes must explain the motive, scope, risks and the checks that were run.
+- The artifact archiving workflow stays automatic: after the required workflows pass for the same SHA, it saves artifacts under `artifacts/benchmarks/<commit-sha>/run-<benchmark-run-id>/` and commits the changes to `main`.
+- A roadmap task is not marked complete without reviewable evidence in code, documentation, tests or results.
 
-## Validación
+## Validation
 
-- Los cambios de código deben pasar la CI del proyecto antes del merge.
-- Las actualizaciones de dependencias deben revisarse como cambios normales; no se habilita auto-merge.
-- Si una comprobación falla o no se ha ejecutado, la PR debe indicarlo y no presentarse como lista para integrar.
-- Los bots no deben modificar credenciales, secretos, permisos de workflows ni reglas de protección como parte de una PR ordinaria.
+- Code changes must pass the project CI before merge.
+- Dependency updates must be reviewed like normal changes; auto-merge is not enabled.
+- If a check fails or was not run, the PR must say so and must not present itself as ready to integrate.
+- Bots must not modify credentials, secrets, workflow permissions or protection rules as part of an ordinary PR.
 
-## Limitación actual de GitHub
+## Current GitHub limitation
 
-El repositorio es privado y la API de GitHub informa que la protección de ramas y los rulesets requieren un plan superior o que el repositorio sea público. Hasta resolverlo, la política documentada no equivale a una barrera técnica impuesta por GitHub. Las credenciales de automatización no deben tener permiso de administración ni de escritura directa en `main`; cualquier configuración adicional se debe verificar por separado.
+The repository is private and the GitHub API reports that branch protection and rulesets require a higher plan or a public repository. Until this is resolved, the documented policy is not equivalent to a technical barrier imposed by GitHub. Automation credentials must not have administration permission or direct write access to `main`; any additional configuration must be verified separately.
 
-## Archivado de benchmarks
+## Benchmark archiving
 
-El workflow existente de archivado de resultados permanece sin cambios: espera a que CI y benchmarks hayan terminado correctamente para el mismo commit, descarga y organiza los paquetes y registra automáticamente los artefactos bajo `artifacts/benchmarks/<commit-sha>/run-<benchmark-run-id>/`. No convertir este archivado en una Pull Request ni exigir aprobación manual para cada ejecución.
+The existing result-archiving workflow remains unchanged: it waits for CI and benchmarks to have completed successfully for the same commit, downloads and organizes the bundles, and automatically commits the artifacts under `artifacts/benchmarks/<commit-sha>/run-<benchmark-run-id>/`. Do not turn this archiving into a Pull Request or require manual approval for each run.

@@ -1,51 +1,51 @@
-# DINAH Storage — guía de implementación (puntos 140–156)
+# DINAH Storage — implementation guide (points 140–156)
 
-Storage empieza con una API de clave/valor para bytes opacos, sin serializar structs Rust ni acoplar el contrato a un dominio. El módulo público `dinah::storage` contiene `Storage`, `MemoryStore`, `DiskStore` y `StorageError`. Es una base incremental, no una base de datos de producción.
+Storage starts with a key/value API for opaque bytes, without serializing Rust structs or coupling the contract to a domain. The public module `dinah::storage` contains `Storage`, `MemoryStore`, `DiskStore` and `StorageError`. It is an incremental foundation, not a production database.
 
-## API común — punto 141
+## Common API — point 141
 
-`Storage` expone `get(&self, key) -> Option<Vec<u8>>`, `put(&mut self, key, value)` y `delete(&mut self, key)`. Los valores devueltos son copias propiedad del llamador; no se devuelven referencias que dependan de la vida del store. `put` y las implementaciones concretas validan el límite actual de 16 MiB por clave y valor. Los errores de E/S y de formato se representan con `StorageError`.
+`Storage` exposes `get(&self, key) -> Option<Vec<u8>>`, `put(&mut self, key, value)` and `delete(&mut self, key)`. Returned values are copies owned by the caller; no references that depend on the store's lifetime are returned. `put` and the concrete implementations validate the current 16 MiB limit per key and value. I/O and format errors are represented with `StorageError`.
 
-La API es síncrona y requiere `&mut self` para mutaciones. No promete acceso concurrente, transacciones multi-clave, orden global entre procesos, índices secundarios, compactación, cifrado ni control de acceso. Las aplicaciones son responsables de validar y versionar sus payloads.
+The API is synchronous and requires `&mut self` for mutations. It does not promise concurrent access, multi-key transactions, global cross-process ordering, secondary indexes, compaction, encryption or access control. Applications are responsible for validating and versioning their payloads.
 
-## Memoria — punto 142
+## Memory — point 142
 
-`MemoryStore` usa `BTreeMap<Vec<u8>, Vec<u8>>`: claves binarias ordenadas lexicográficamente, reemplazo explícito al repetir `put`, lectura clonada y eliminación que informa si existía. `iter()` expone vistas prestadas de clave/valor en orden determinista, sin clonar cada entrada. Su contenido vive únicamente mientras viva la instancia y no se comparte entre procesos. `len` e `is_empty` son observacionales.
+`MemoryStore` uses `BTreeMap<Vec<u8>, Vec<u8>>`: lexicographically ordered binary keys, explicit replacement when `put` repeats, cloned reads, and deletion that reports whether the key existed. `iter()` exposes borrowed key/value views in deterministic order, without cloning each entry. Its contents live only as long as the instance and are not shared across processes. `len` and `is_empty` are observational.
 
-## Disco y formato — puntos 143–144
+## Disk and format — points 143–144
 
-`DiskStore::open(path)` crea o abre un archivo de journal local y reconstruye el mapa aplicando sus registros completos en orden. La cabecera común tiene 14 bytes: magic `DNST`, versión de formato de un byte, opcode de un byte, longitud de clave `u32` little-endian y longitud de valor `u32` little-endian; después se guardan los bytes de clave y valor. Los registros nuevos usan formato v2 e incluyen al final un CRC-32 IEEE de 4 bytes. Los registros v1 históricos, sin checksum, siguen siendo legibles. Opcode 1 es PUT; opcode 2 es DELETE con valor vacío. Las longitudes se validan antes de procesar el registro y cada campo se limita a 16 MiB.
+`DiskStore::open(path)` creates or opens a local journal file and rebuilds the map by applying its complete records in order. The common header is 14 bytes: magic `DNST`, one-byte format version, one-byte opcode, `u32` little-endian key length and `u32` little-endian value length; then the key and value bytes are stored. New records use the v2 format and include a 4-byte IEEE CRC-32 at the end. Historical v1 records, without a checksum, remain readable. Opcode 1 is PUT; opcode 2 is DELETE with an empty value. Lengths are validated before processing the record and every field is capped at 16 MiB.
 
-Este formato es interno y versionado, no una codificación portable de objetos Rust. El CRC-32 detecta corrupción accidental de registros v2 completos; no es criptográfico, no autentica el archivo y no protege frente a modificaciones deliberadas. Un checksum incorrecto en un registro completo produce error, no se salta silenciosamente. Un registro final incompleto, incluido un checksum truncado, se trata como escritura interrumpida: se conservan los registros anteriores y se trunca el sufijo antes de aceptar nuevas escrituras. Los registros v1 previos se leen sin checksum por compatibilidad.
+This format is internal and versioned, not a portable encoding of Rust objects. The CRC-32 detects accidental corruption of complete v2 records; it is not cryptographic, does not authenticate the file and does not protect against deliberate modification. A bad checksum in a complete record produces an error, it is not silently skipped. An incomplete final record, including a truncated checksum, is treated as an interrupted write: previous records are preserved and the suffix is truncated before new writes are accepted. Prior v1 records are read without a checksum for compatibility.
 
-## Persistencia y journal — puntos 145–146
+## Persistence and journal — points 145–146
 
-Cada `put` o eliminación efectiva añade un registro y llama a `flush`; las actualizaciones posteriores reemplazan la clave durante replay. `delete` de una clave ausente no añade un registro. El journal es append-only y todavía no se compacta. `flush` solo vacía buffers de usuario: no se llama a `sync_all` y no se promete durabilidad ante pérdida de energía, fallo del kernel o caché del dispositivo. No se garantiza atomicidad frente a todos los tipos de fallo ni se coordinan múltiples instancias abiertas sobre el mismo archivo.
+Every effective `put` or deletion appends a record and calls `flush`; later updates replace the key during replay. `delete` of an absent key does not append a record. The journal is append-only and not yet compacted. `flush` only flushes user-space buffers: `sync_all` is not called and no durability is promised against power loss, kernel failure or device cache. Atomicity against every failure type is not guaranteed, and multiple instances open on the same file are not coordinated.
 
-## Integridad y compatibilidad — punto 148
+## Integrity and compatibility — point 148
 
-Los registros nuevos son v2 y almacenan CRC-32 IEEE sobre versión, opcode, longitudes y payload. Un checksum incorrecto en un registro completo devuelve `StorageError::InvalidFormat`; el replay no aplica ese registro. La longitud declarada se valida antes de calcular rangos, y un registro incompleto (incluido checksum parcial) se considera un sufijo truncado. Se conservan lectores de v1 sin checksum para no invalidar journals creados por la primera implementación. CRC-32 detecta daños accidentales, pero no es MAC, firma ni defensa frente a un atacante.
+New records are v2 and store an IEEE CRC-32 over the version, opcode, lengths and payload. A bad checksum in a complete record returns `StorageError::InvalidFormat`; replay does not apply that record. The declared length is validated before computing ranges, and an incomplete record (including a partial checksum) is treated as a truncated suffix. Checksum-less v1 readers are preserved so journals created by the first implementation are not invalidated. CRC-32 detects accidental damage, but it is not a MAC, signature or defense against an attacker.
 
-## Índices y estructuras — puntos 149–150
+## Indexes and structures — points 149–150
 
-La decisión actual es un único índice primario `BTreeMap<Vec<u8>, Vec<u8>>` para lecturas O(log n), orden estable y escaneos ordenados O(n). `DiskStore` reconstruye el índice al abrir y las mutaciones actualizan el índice después de que el append y `flush` tengan éxito. `iter()` permite escanear por referencias sin clonar los valores. No se añade un índice secundario todavía: sin consultas por prefijo/campo de aplicación ni mediciones que justifiquen el coste, duplicar claves aumentaría memoria y complejidad de coherencia sin beneficio probado. No hay compactación del journal; el índice es en memoria y debe reconstruirse en cada apertura.
+The current decision is a single primary index `BTreeMap<Vec<u8>, Vec<u8>>` for O(log n) reads, stable ordering and O(n) ordered scans. `DiskStore` rebuilds the index on open and mutations update the index after the append and `flush` succeed. `iter()` allows scanning by reference without cloning values. No secondary index is added yet: without application prefix/field queries or measurements justifying the cost, duplicating keys would increase memory and coherence complexity without proven benefit. There is no journal compaction; the index is in memory and must be rebuilt on every open.
 
-## Integración con Runtime — punto 151
+## Runtime integration — point 151
 
-`storage::runtime::StorageWorkQueue` acepta comandos `Put`/`Delete` propios y tiene capacidad fija no nula. Encolar no toca el store. `dispatch_next` quita un comando FIFO y lo aplica de forma síncrona mediante `Scheduler` en el hilo llamador; si la cola está llena, devuelve el comando rechazado para que el llamador lo conserve o reintente. Los errores de almacenamiento se conservan como resultado de tarea. No crea threads, no serializa automáticamente lecturas, no comparte el store y no aporta transacciones ni ejecución en segundo plano.
+`storage::runtime::StorageWorkQueue` accepts its own `Put`/`Delete` commands and has a fixed non-zero capacity. Enqueuing does not touch the store. `dispatch_next` removes one FIFO command and applies it synchronously via `Scheduler` on the calling thread; if the queue is full, it returns the rejected command so the caller can keep or retry it. Storage errors are preserved as task outcomes. It creates no threads, does not automatically serialize reads, does not share the store and provides no transactions or background execution.
 
-## Recuperación — punto 147
+## Recovery — point 147
 
-Al abrir, el store recorre los registros desde el principio y aplica PUT/DELETE en secuencia. Rechaza magic incorrecto, versión desconocida, opcode inválido, campos fuera de límite y DELETE con payload. Si el último registro está incompleto, recupera hasta el último límite válido y trunca el sufijo. Esta recuperación inicial no sustituye checksums, copias de seguridad, migraciones ni pruebas exhaustivas de corrupción.
+On open, the store walks the records from the beginning and applies PUT/DELETE in sequence. It rejects a wrong magic, unknown version, invalid opcode, out-of-bounds fields and DELETE with payload. If the last record is incomplete, it recovers up to the last valid boundary and truncates the suffix. This initial recovery does not replace checksums, backups, migrations or exhaustive corruption testing.
 
-## Ejemplo ejecutable
+## Runnable example
 
-`examples/storage_basics.rs` demuestra el contrato común con `MemoryStore` y `DiskStore`: inserción y recorrido ordenado, reapertura del journal para recuperar valores y eliminación de una clave. Ejecútalo desde la raíz del repositorio con `cargo run --example storage_basics`. El ejemplo crea un nombre temporal único y elimina el journal al terminar. Este ejemplo es demostrativo; no cambia las garantías de durabilidad descritas arriba ni convierte el journal en una base de datos transaccional.
+`examples/storage_basics.rs` demonstrates the common contract with `MemoryStore` and `DiskStore`: insertion and ordered traversal, journal reopening to recover values, and deleting a key. Run it from the repository root with `cargo run --example storage_basics`. The example creates a unique temporary name and removes the journal when finished. This example is demonstrative; it does not change the durability guarantees described above and does not turn the journal into a transactional database.
 
-## Pruebas
+## Tests
 
-`tests/storage.rs` cubre operaciones en memoria, persistencia/replay, recuperación de sufijos truncados, rechazo de cabecera malformada, corrupción detectada por checksum, truncado del checksum y lectura de registros v1. `tests/storage_runtime.rs` comprueba despacho FIFO y rechazo por capacidad; `tests/storage_concurrency.rs` verifica operaciones paralelas sobre journals independientes. No se prueba ni se promete acceso concurrente a un mismo archivo desde varias instancias.
+`tests/storage.rs` covers in-memory operations, persistence/replay, truncated-suffix recovery, malformed-header rejection, checksum-detected corruption, checksum truncation and v1 record reads. `tests/storage_runtime.rs` checks FIFO dispatch and capacity rejection; `tests/storage_concurrency.rs` verifies parallel operations on independent journals. Concurrent access to the same file from several instances is neither tested nor promised.
 
-## Siguiente trabajo
+## Next work
 
-La suite `benches/storage.rs` mide operaciones agrupadas de MemoryStore y escaneo ordenado; CI ejecuta la suite en su matriz de cinco plataformas y archiva las mediciones por commit. Los resultados son específicos de cada máquina y no deben compararse entre plataformas como si fueran equivalentes. La implementación no se presenta como base de datos transaccional ni como garantía de persistencia fuerte. Antes de usar DiskStore para datos importantes, conserva copias de seguridad y asume que una pérdida de energía puede perder escrituras recientes. El formato del journal es interno; la lectura de v1 se conserva, pero no existe una herramienta de migración o compactación. Las garantías de concurrencia se limitan a la exclusión mutua que impone el ownership de Rust dentro de una instancia; abrir el mismo path varias veces no coordina escritores.
+The `benches/storage.rs` suite measures batched MemoryStore operations and ordered scans; CI runs the suite on its five-platform matrix and archives the measurements per commit. Results are machine-specific and must not be compared across platforms as if they were equivalent. The implementation is not presented as a transactional database or a strong-persistence guarantee. Before using DiskStore for important data, keep backups and assume a power loss may lose recent writes. The journal format is internal; v1 reading is preserved, but there is no migration or compaction tool. Concurrency guarantees are limited to the mutual exclusion that Rust ownership imposes within one instance; opening the same path multiple times does not coordinate writers.

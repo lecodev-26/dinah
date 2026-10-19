@@ -1,28 +1,28 @@
-# dinah Simulation — diseño inicial de API
+# dinah Simulation — initial API design
 
-Estado: diseño inicial completado (105), reloj fijo (111), actualización determinista (112), colección inicial de entidades simuladas (113), integración de identidades con ECS (114), recorrido mediante Compute (115) y prueba de replay determinista (116) implementados. `dinah::simulation` ofrece `SimulationClock`, `SimulationTime`, `SimulationTimeError`, `Simulation<S>`, `SimulationStepError`, `SimulationEntityId`, `SimulationEntities<T>`, `SimulationEntitiesError`, `SimulationEntityBindings` y `SimulationEntityBindingError`. `SimulationEntities::for_each_mut` utiliza el recorrido secuencial de Compute para actualizar estados en orden de inserción; la ejecución paralela desde Simulation sigue siendo explícita y no se activa automáticamente.
+Status: initial design completed (105), fixed clock (111), deterministic update (112), initial simulated-entity collection (113), identity integration with ECS (114), traversal via Compute (115) and the deterministic replay test (116) implemented. `dinah::simulation` offers `SimulationClock`, `SimulationTime`, `SimulationTimeError`, `Simulation<S>`, `SimulationStepError`, `SimulationEntityId`, `SimulationEntities<T>`, `SimulationEntitiesError`, `SimulationEntityBindings` and `SimulationEntityBindingError`. `SimulationEntities::for_each_mut` uses Compute's sequential traversal to update states in insertion order; parallel execution from Simulation remains explicit and is not activated automatically.
 
-## Objetivo y responsabilidades
+## Goal and responsibilities
 
-Simulation modelará el avance explícito de un estado de simulación a través del tiempo. Debe reutilizar Core para contratos compartidos, ECS para entidades/componentes, Compute para operaciones sobre datos y Runtime solo cuando se necesite coordinar trabajo. Simulation define el significado de un paso, el timestep, el orden de actualización y el manejo de errores; no debe convertirse en otro scheduler ni en un sistema de almacenamiento.
+Simulation will model the explicit advancement of a simulation state through time. It must reuse Core for shared contracts, ECS for entities/components, Compute for operations over data and Runtime only when work coordination is needed. Simulation defines the meaning of a step, the timestep, the update order and error handling; it must not become another scheduler or a storage system.
 
-- **Core:** tipos y errores compartidos, sin política de simulación.
-- **ECS:** ciclo de vida de entidades y estado representado mediante componentes.
-- **Compute:** procesamiento secuencial/paralelo explícito de buffers y slices.
-- **Runtime:** coordinación de tareas cuando una operación la requiera; no define la semántica temporal.
-- **Simulation:** configuración temporal, estado del paso, orden de fases y contratos de actualización reproducible.
+- **Core:** shared types and errors, no simulation policy.
+- **ECS:** entity lifecycle and state represented through components.
+- **Compute:** explicit sequential/parallel processing of buffers and slices.
+- **Runtime:** task coordination when an operation requires it; it does not define time semantics.
+- **Simulation:** time configuration, step state, phase order and reproducible-update contracts.
 
-La primera versión será Rust-first, segura y pequeña, sin dependencias externas, reloj global, I/O, asignación oculta ni ejecución paralela automática. Se mantiene `#![forbid(unsafe_code)]`.
+The first version will be Rust-first, safe and small, with no external dependencies, global clock, I/O, hidden allocation or automatic parallel execution. `#![forbid(unsafe_code)]` is kept.
 
-## Límites de la primera versión
+## Limits of the first version
 
-La primera API debe permitir construir y avanzar una simulación con tiempo explícito, validar la configuración y probar resultados reproducibles. No intentará ser un motor físico completo ni imponer una representación universal de posiciones, fluidos, celdas, rayos o agentes. Esos dominios podrán añadirse como modelos o ejemplos independientes cuando sus contratos y necesidades estén claros.
+The first API must allow building and advancing a simulation with explicit time, validating the configuration and testing reproducible results. It will not attempt to be a complete physics engine or impose a universal representation of positions, fluids, cells, rays or agents. Those domains may be added later as independent models or examples once their contracts and needs are clear.
 
-Fuera de alcance inicial: reloj de pared implícito, paso variable automático, renderizado, entrada/salida, networking, rollback, DSL de escenarios, sistema de plugins, scheduler oculto, garantía de tiempo real y determinismo bit a bit entre arquitecturas para operaciones de punto flotante.
+Out of initial scope: implicit wall clock, automatic variable step, rendering, input/output, networking, rollback, a scenario DSL, a plugin system, a hidden scheduler, real-time guarantees and bit-for-bit determinism across architectures for floating-point operations.
 
-## API implementada
+## Implemented API
 
-La API disponible en `dinah::simulation` incluye `SimulationClock`, `SimulationTime`, `SimulationTimeError`, `Simulation<S>`, `SimulationStepError`, `SimulationEntityId`, `SimulationEntities<T>`, `SimulationEntitiesError`, `SimulationEntityBindings` y `SimulationEntityBindingError`. El siguiente fragmento conserva solo el esquema conceptual inicial; no es una API adicional ni una firma que deba copiarse literalmente:
+The API available in `dinah::simulation` includes `SimulationClock`, `SimulationTime`, `SimulationTimeError`, `Simulation<S>`, `SimulationStepError`, `SimulationEntityId`, `SimulationEntities<T>`, `SimulationEntitiesError`, `SimulationEntityBindings` and `SimulationEntityBindingError`. The following snippet only preserves the initial conceptual sketch; it is not an additional API or a signature to copy literally:
 
 ```rust
 pub struct SimulationConfig {
@@ -40,7 +40,7 @@ pub enum SimulationError {
     ZeroDelta,
     StepLimitReached,
     TickOverflow,
-    Update(/* error de dominio preservado */),
+    Update(/* preserved domain error */),
 }
 
 pub trait SimulationStep {
@@ -50,100 +50,100 @@ pub trait SimulationStep {
 }
 ```
 
-El reloj ya implementado proporciona el núcleo temporal de esta propuesta: `SimulationClock::new(delta)` rechaza un delta cero y `advance()` incrementa un tick y el tiempo acumulado de forma comprobada. Si el tick o la duración se desbordan, devuelve `SimulationTimeError` y deja el reloj intacto. La política de acumulación de tiempo externo y de pasos máximos por avance queda aplazada; el reloj no consulta tiempo de pared ni ejecuta callbacks. `Simulation<S>::step` calcula el siguiente tiempo en una copia del reloj, llama una vez al callback síncrono y solo confirma el reloj tras el éxito. Si el callback devuelve error, el tick no avanza; las mutaciones de dominio previas al error no se revierten automáticamente. Si el cálculo temporal falla, el callback ni siquiera se invoca.
+The implemented clock provides the temporal core of this proposal: `SimulationClock::new(delta)` rejects a zero delta and `advance()` increments a tick and the accumulated time in a checked manner. If the tick or duration overflows, it returns `SimulationTimeError` and leaves the clock intact. The policy for external time accumulation and maximum steps per advance is deferred; the clock reads no wall-clock time and runs no callbacks. `Simulation<S>::step` computes the next time on a copy of the clock, calls the synchronous callback once and only commits the clock after success. If the callback returns an error, the tick does not advance; domain mutations made before the error are not automatically rolled back. If the time computation fails, the callback is not even invoked.
 
-## Entidades simuladas (punto 113)
+## Simulated entities (point 113)
 
-`SimulationEntities<T>` conserva estados de entidad propiedad de Simulation en un vector ordenado. `insert` devuelve un `SimulationEntityId` monotónico; `get`, `get_mut`, `remove`, `iter`, `len` e `is_empty` exponen operaciones explícitas. La iteración respeta el orden de inserción y `remove` conserva el orden relativo de las entidades restantes. Los IDs eliminados no se reutilizan, y el agotamiento del espacio de IDs se informa antes de modificar la colección. La búsqueda por ID y el borrado son lineales en esta primera versión; no se afirma rendimiento constante ni almacenamiento ECS.
+`SimulationEntities<T>` keeps entity states owned by Simulation in an ordered vector. `insert` returns a monotonic `SimulationEntityId`; `get`, `get_mut`, `remove`, `iter`, `len` and `is_empty` expose explicit operations. Iteration respects insertion order and `remove` preserves the relative order of the remaining entities. Removed IDs are not reused, and ID-space exhaustion is reported before modifying the collection. Lookup by ID and removal are linear in this first version; no constant-time performance or ECS storage is claimed.
 
-Estos IDs son deliberadamente distintos de `ecs::Entity`: esta colección permite definir primero el contrato de estado simulado sin duplicar ni asumir el ciclo de vida del `World`. El punto 114 implementa el puente explícito `SimulationEntityBindings`: `bind` solo acepta entidades vivas en el `World` suministrado y evita asignar dos IDs al mismo handle; `resolve` vuelve a comprobar la vida del handle y rechaza entidades eliminadas o generaciones obsoletas; `unbind` elimina únicamente la asociación, nunca destruye la entidad. El llamador debe suministrar consistentemente el mismo `World` propietario, porque los handles ECS son locales a cada mundo. Los IDs de este puente pertenecen a su propia secuencia y no son IDs de `SimulationEntities<T>`. La asociación no toma posesión del ciclo de vida ECS ni sincroniza automáticamente `despawn`; el llamador debe gestionar `unbind` cuando corresponda. Para procesar estados simulados, `SimulationEntities::for_each_mut` delega el recorrido mutable al primitivo secuencial `compute::for_each`, conserva el orden de inserción y no crea workers ni altera el reloj. Un pánico se propaga y las mutaciones anteriores no se revierten.
+These IDs are deliberately distinct from `ecs::Entity`: this collection allows defining the simulated-state contract first without duplicating or assuming the `World` lifecycle. Point 114 implements the explicit `SimulationEntityBindings` bridge: `bind` only accepts live entities in the supplied `World` and avoids assigning two IDs to the same handle; `resolve` re-checks the handle's liveness and rejects removed entities or stale generations; `unbind` removes only the association and never destroys the entity. The caller must consistently supply the same owning `World`, because ECS handles are local to each world. This bridge's IDs belong to their own sequence and are not `SimulationEntities<T>` IDs. The association takes no ownership of the ECS lifecycle and does not automatically synchronize `despawn`; the caller must manage `unbind` where appropriate. To process simulated states, `SimulationEntities::for_each_mut` delegates the mutable traversal to the sequential `compute::for_each` primitive, preserves insertion order and creates no workers or clock changes. A panic propagates and prior mutations are not rolled back.
 
-## Contratos que deben quedar definidos
+## Contracts that must be defined
 
-### Tiempo y avance
+### Time and advancement
 
-- El paso de simulación se expresa con duración explícita; no se lee un reloj global.
-- El timestep fijo será la ruta determinista de referencia. El paso variable, si se necesita, será una capacidad explícita posterior.
-- Cada paso recibe un índice monotónico y un delta validado; el desbordamiento del contador debe detectarse, no envolver silenciosamente.
-- Los límites de pasos por avance deben ser configurables y no pueden descartar tiempo de forma silenciosa.
-- El orden de fases y el momento en que se incrementa el tick deben documentarse y probarse.
+- The simulation step is expressed with an explicit duration; no global clock is read.
+- The fixed timestep will be the reference deterministic route. Variable stepping, if needed, will be a later explicit capability.
+- Every step receives a monotonic index and a validated delta; counter overflow must be detected, not silently wrapped.
+- Steps-per-advance limits must be configurable and must not silently discard time.
+- The phase order and the moment the tick increments must be documented and tested.
 
-### Actualización, errores y pánicos
+### Updates, errors and panics
 
-- Una actualización devuelve éxito o su error de dominio; no se reemplaza un fallo por un valor por defecto.
-- No se promete rollback del estado si una actualización falla después de mutaciones. Si la atomicidad resulta necesaria, deberá diseñarse explícitamente mediante estado temporal o transacciones.
-- Los pánicos no se convierten silenciosamente en errores ordinarios; se mantiene la política documentada de Runtime cuando se usen sus workers.
-- Una actualización fallida no avanza silenciosamente el tick. El punto 112 debe fijar la regla exacta y cubrirla con tests.
+- An update returns success or its domain error; a failure is not replaced by a default value.
+- No state rollback is promised if an update fails after mutations. If atomicity is needed, it must be designed explicitly through temporary state or transactions.
+- Panics are not silently converted into ordinary errors; Runtime's documented policy applies when its workers are used.
+- A failed update does not silently advance the tick. Point 112 must fix the exact rule and cover it with tests.
 
-### Determinismo
+### Determinism
 
-- Con la misma configuración, estado inicial y secuencia de entradas explícitas, las actualizaciones deben seguir el mismo orden lógico.
-- No se promete determinismo temporal ni igualdad bit a bit de operaciones flotantes entre arquitecturas.
-- Las iteraciones de mapas/sets no ordenados no pueden definir el orden observable del paso.
-- Las semillas aleatorias, si se incorporan, deberán ser explícitas y serializables; no habrá aleatoriedad global implícita en el núcleo.
+- With the same configuration, initial state and explicit input sequence, updates must follow the same logical order.
+- No temporal determinism or bit-for-bit equality of floating-point operations across architectures is promised.
+- Iterations over unordered maps/sets cannot define the step's observable order.
+- Random seeds, if introduced, must be explicit and serializable; there will be no implicit global randomness in the core.
 
-### Integración con ECS y Compute
+### ECS and Compute integration
 
-- La integración con ECS se hará mediante asociaciones explícitas y deberá respetar préstamos, ciclo de vida de entidades y límites de queries realmente implementados.
-- La integración con Compute es explícita: `for_each_mut` es secuencial; una operación no se vuelve paralela solo por procesar muchos elementos.
-- No se ejecutarán sistemas ECS en paralelo hasta que el punto 100 tenga validación de accesos y aislamiento estructural seguros.
-- La API no exigirá `Send + Sync` a todos los modelos si la ejecución secuencial no lo necesita.
+- ECS integration happens through explicit associations and must respect borrows, entity lifecycle and the limits of actually implemented queries.
+- Compute integration is explicit: `for_each_mut` is sequential; an operation does not become parallel just because it processes many elements.
+- ECS systems will not run in parallel until point 100 has safe access validation and structural isolation.
+- The API will not require `Send + Sync` on all models if sequential execution does not need it.
 
-## Secuencia propuesta de implementación
+## Proposed implementation sequence
 
-1. **105 — Diseño de API:** completado en este documento; firmas y límites iniciales definidos.
-2. **106–110 — Dominios acotados (implementados):** `simulation::ascii_physics`, `simulation::fluid`, `simulation::cellular`, `simulation::raycast` y `simulation::swarm` contienen modelos iniciales independientes del reloj genérico. Cada uno tiene límites explícitos y tests de dominio; no son motores de propósito general. La implementación de estos módulos sí aporta evidencia para 106–110, pero no implica capacidades físicas, CFD, raycasting 3D ni simulación de agentes sin límites. Los contratos concretos y restricciones de cada modelo se describen en la sección «Dominios acotados (puntos 106–110)» al final de esta guía.
-3. **111 — Timestep:** implementado como `SimulationClock`, con delta fijo no nulo, tick, tiempo acumulado, avance explícito y errores de overflow comprobados. Quedan para después los límites de pasos por llamada y el acumulador de tiempo externo.
-4. **112 — Actualización determinista:** completado en la primera versión mediante un callback síncrono por paso, tiempo explícito y commit del reloj solo tras éxito; el estado de dominio no tiene rollback automático.
-5. **113–115 — Entidades e integración:** 113 crea la colección de estado simulado; 114 añade el puente explícito entre IDs simulados y handles ECS; 115 integra el recorrido mutable secuencial con Compute, conservando orden y sin activar paralelismo implícito.
-6. **116–118 — Calidad de uso:** tests reproducibles (116), benchmark inicial medido y archivado en cinco plataformas (117) y ejemplo ejecutable `examples/simulation_basics.rs` (118).
-7. **119 — Documentación:** esta guía recoge la API implementada, sus límites, mediciones de referencia y un ejemplo ejecutable. La documentación seguirá evolucionando al ampliar el módulo.
+1. **105 — API design:** completed in this document; initial signatures and limits defined.
+2. **106–110 — Bounded domains (implemented):** `simulation::ascii_physics`, `simulation::fluid`, `simulation::cellular`, `simulation::raycast` and `simulation::swarm` contain initial models independent of the generic clock. Each has explicit limits and domain tests; they are not general-purpose engines. Implementing these modules does provide evidence for 106–110, but it does not imply physics capabilities, CFD, 3D raycasting or unbounded agent simulation. The concrete contracts and restrictions of each model are described in the "Bounded domains (points 106–110)" section at the end of this guide.
+3. **111 — Timestep:** implemented as `SimulationClock`, with a non-zero fixed delta, tick, accumulated time, explicit advancement and checked overflow errors. Steps-per-call limits and the external time accumulator remain for later.
+4. **112 — Deterministic update:** completed in the first version through a synchronous per-step callback, explicit time and clock commit only after success; domain state has no automatic rollback.
+5. **113–115 — Entities and integration:** 113 creates the simulated-state collection; 114 adds the explicit bridge between simulated IDs and ECS handles; 115 integrates sequential mutable traversal with Compute, preserving order and without activating implicit parallelism.
+6. **116–118 — Usage quality:** reproducible tests (116), an initial benchmark measured and archived on five platforms (117) and the runnable example `examples/simulation_basics.rs` (118).
+7. **119 — Documentation:** this guide covers the implemented API, its limits, baseline measurements and a runnable example. Documentation will keep evolving as the module grows.
 
-## Pruebas deterministas (punto 116)
+## Deterministic tests (point 116)
 
-El test `deterministic_replay_reproduces_tick_trace_and_entity_state` ejecuta dos veces el mismo escenario con delta fijo y una secuencia explícita de entradas. Cada tick actualiza entidades en orden de inserción mediante `for_each_mut`; la traza registra el tick y cada par ID/estado. Las dos trazas y los estados finales deben coincidir exactamente. El test no lee reloj de pared, no usa fuentes de aleatoriedad ni depende del orden de finalización de workers. Esto verifica reproducibilidad lógica para esta carga secuencial concreta; no constituye una garantía de determinismo bit a bit entre arquitecturas ni de ejecución paralela.
+The `deterministic_replay_reproduces_tick_trace_and_entity_state` test runs the same scenario twice with a fixed delta and an explicit input sequence. Every tick updates entities in insertion order via `for_each_mut`; the trace records the tick and each ID/state pair. The two traces and final states must match exactly. The test reads no wall clock, uses no randomness sources and does not depend on worker completion order. This verifies logical reproducibility for this concrete sequential workload; it is not a guarantee of bit-for-bit determinism across architectures or of parallel execution.
 
-## Benchmarks (punto 117)
+## Benchmarks (point 117)
 
-**Punto 117 completado con mediciones reales de CI** en el commit `83cbcc3f3a36bd38ee661ae12075a0e27b654414`, workflow [dinah benchmarks, ejecución 38484605568](https://github.com/lecodev-26/dinah/actions/runs/38484605568). Las salidas completas y los entornos están archivados en [`artifacts/benchmarks/83cbcc3f3a36bd38ee661ae12075a0e27b654414/run-38484605568/`](../artifacts/benchmarks/83cbcc3f3a36bd38ee661ae12075a0e27b654414/run-38484605568/), con resultados para Linux x86-64, Linux ARM64, Windows x86-64, macOS x86-64 y macOS ARM64.
+**Point 117 completed with real CI measurements** on commit `83cbcc3f3a36bd38ee661ae12075a0e27b654414`, workflow [dinah benchmarks, run 38484605568](https://github.com/lecodev-26/dinah/actions/runs/38484605568). The complete outputs and environments are archived in [`artifacts/benchmarks/83cbcc3f3a36bd38ee661ae12075a0e27b654414/run-38484605568/`](../artifacts/benchmarks/83cbcc3f3a36bd38ee661ae12075a0e27b654414/run-38484605568/), with results for Linux x86-64, Linux ARM64, Windows x86-64, macOS x86-64 and macOS ARM64.
 
-`benches/simulation.rs` se ejecuta en release, usa nueve muestras y reporta medianas; cada muestra repite la operación 32 veces. Incluye 256 avances de `SimulationClock` (con construcción), 256 pasos de `Simulation` con actualización pequeña (con construcción), recorrido mutable de colecciones de 64, 1.024 y 16.384 entidades y 16 búsquedas `get` distribuidas por colección. Tabla de referencia para los casos temporales y el tamaño de 16.384 entidades:
+`benches/simulation.rs` runs in release, uses nine samples and reports medians; each sample repeats the operation 32 times. It includes 256 `SimulationClock` advances (with construction), 256 `Simulation` steps with a small update (with construction), mutable traversal over collections of 64, 1,024 and 16,384 entities and 16 `get` lookups distributed over each collection. Reference table for the time cases and the 16,384-entity size:
 
-| Plataforma | Reloj (ns/avance) | Paso (ns/paso) | Recorrido mutable (ns/entidad) | 16 búsquedas lineales (ns/búsqueda) |
+| Platform | Clock (ns/advance) | Step (ns/step) | Mutable walk (ns/entity) | 16 linear searches (ns/search) |
 | --- | ---: | ---: | ---: | ---: |
-| Linux x86-64 | 7,801 | 12,547 | 0,368 | 2.437,000 |
-| Linux ARM64 | 5,855 | 8,000 | 0,438 | 1.792,938 |
-| Windows x86-64 | 7,836 | 12,242 | 0,346 | 2.446,062 |
-| macOS x86-64 | 10,488 | 10,305 | 0,823 | 4.990,062 |
-| macOS ARM64 | 2,395 | 6,012 | 0,281 | 1.533,875 |
+| Linux x86-64 | 7.801 | 12.547 | 0.368 | 2,437.000 |
+| Linux ARM64 | 5.855 | 8.000 | 0.438 | 1,792.938 |
+| Windows x86-64 | 7.836 | 12.242 | 0.346 | 2,446.062 |
+| macOS x86-64 | 10.488 | 10.305 | 0.823 | 4,990.062 |
+| macOS ARM64 | 2.395 | 6.012 | 0.281 | 1,533.875 |
 
-Son observaciones específicas de máquinas y compilaciones concretas, no garantías ni comparaciones controladas entre sistemas operativos. La construcción está incluida en los casos de reloj y paso, por lo que no deben interpretarse como coste aislado por tick en régimen estable. El caso de búsquedas mide la búsqueda lineal actual sobre 16 IDs repartidos por la colección; no es una query ECS. Estos datos establecen una línea base, no prueban una mejora frente a una versión anterior ni justifican por sí solos cambiar la representación de almacenamiento. El workflow de benchmarks ejecuta la suite y archiva la salida y el entorno de los cinco runners.
+These are observations from specific machines and builds, not guarantees or controlled comparisons between operating systems. Construction is included in the clock and step cases, so they must not be interpreted as the isolated per-tick cost in steady state. The search case measures the current linear lookup over 16 IDs spread across the collection; it is not an ECS query. This data establishes a baseline; it does not prove an improvement over a previous version or by itself justify changing the storage representation. The benchmark workflow runs the suite and archives the output and environment of the five runners.
 
-## Ejemplo ejecutable (punto 118)
+## Runnable example (point 118)
 
-`cargo run --example simulation_basics` muestra un `Simulation<Vec<Particle>>` que avanza tres pasos con delta fijo de 16 ms y actualiza posición usando el delta lógico entregado al callback. Después crea una `SimulationEntities<Particle>`, actualiza sus estados con `for_each_mut` y recorre los resultados en orden de inserción. El ejemplo no usa reloj de pared, workers implícitos ni integra entidades simuladas con ECS automáticamente.
+`cargo run --example simulation_basics` shows a `Simulation<Vec<Particle>>` advancing three steps with a fixed 16 ms delta and updating position using the logical delta delivered to the callback. It then creates a `SimulationEntities<Particle>`, updates its states with `for_each_mut` and walks the results in insertion order. The example uses no wall clock, no implicit workers and does not automatically integrate simulated entities with ECS.
 
-## Criterios y límites actuales
+## Current criteria and limits
 
-- La API publicada corresponde al código de `src/simulation.rs`; el diseño evita duplicar responsabilidades de Core, ECS o Runtime.
-- `SimulationClock` rechaza delta cero y comprueba overflow de tick y duración antes de mutar su estado.
-- `Simulation::step` invoca un callback síncrono con tiempo explícito y confirma el reloj solo tras éxito. El estado de dominio no tiene rollback automático si el callback muta y luego falla.
-- Las pruebas de replay comparan trazas y estado para una secuencia explícita, sin reloj real ni aleatoriedad implícita. No prometen determinismo bit a bit entre arquitecturas ni seguridad de ejecución paralela.
-- Los benchmarks informan tamaño, configuración, entorno y medianas. Son líneas base de microbenchmarks, no pruebas de mejora ni predicciones universales.
-- `cargo run --example simulation_basics` utiliza la API real. Los pasos máximos por avance, el acumulador de tiempo externo, la política de pausa, rollback/transacciones, serialización y modelos de dominio siguen fuera del alcance implementado.
+- The published API corresponds to the code in `src/simulation.rs`; the design avoids duplicating Core, ECS or Runtime responsibilities.
+- `SimulationClock` rejects a zero delta and checks tick and duration overflow before mutating its state.
+- `Simulation::step` invokes a synchronous callback with explicit time and commits the clock only after success. Domain state has no automatic rollback if the callback mutates and then fails.
+- The replay tests compare traces and state for an explicit sequence, with no real clock or implicit randomness. They do not promise bit-for-bit determinism across architectures or parallel-execution safety.
+- The benchmarks report size, configuration, environment and medians. They are microbenchmark baselines, not improvement proofs or universal predictions.
+- `cargo run --example simulation_basics` uses the real API. Maximum steps per advance, the external time accumulator, pause policy, rollback/transactions, serialization and domain models remain outside the implemented scope.
 
-## Decisiones aplazadas
+## Deferred decisions
 
-Quedan abiertas: si se permite acumular tiempo externo, la política de pausa, la serialización del estado, los eventos, rollback/transacciones del estado de dominio, la integración concreta con cada dominio y la estrategia paralela. Se resolverán con pruebas y necesidades reales, no añadiendo abstracciones preventivas.
+Still open: whether external time accumulation is allowed, the pause policy, state serialization, events, rollback/transactions of domain state, the concrete integration with each domain and the parallel strategy. They will be resolved with tests and real needs, not by adding preventive abstractions.
 
-## Dominios acotados (puntos 106–110)
+## Bounded domains (points 106–110)
 
-Los siguientes módulos son modelos educativos independientes del reloj genérico. No incorporan dependencias externas ni se presentan como motores de propósito general:
+The following modules are educational models independent of the generic clock. They include no external dependencies and are not presented as general-purpose engines:
 
-- **106 — `simulation::ascii_physics`:** `AsciiPhysics` crea una rejilla finita, registra obstáculos y partículas con velocidad entera, avanza cada partícula una celda por eje activo, rebota ante paredes/obstáculos y renderiza `#`, `o` y espacios. Los IDs de partículas son índices de inserción; no hay resolución de colisiones entre partículas ni conservación física continua.
-- **107 — `simulation::fluid`:** `ScalarFluid` resuelve difusión escalar 2D explícita con cuatro vecinos, buffer doble y borde sin flujo. El coeficiente debe pertenecer a `[0, 0.25]`, el límite clásico de estabilidad para esta discretización en 2D. No simula presión, velocidad ni dinámica de fluidos completa; `total()` sirve como comprobación de conservación aproximada con tolerancia de coma flotante.
-- **108 — `simulation::cellular`:** `CellularGrid` implementa Conway's Game of Life con vecindad Moore y actualización síncrona mediante buffer doble. Los bordes pueden ser `Boundary::Dead` o `Boundary::Wrap`. No hay reglas personalizadas en esta primera API.
-- **109 — `simulation::raycast`:** `Ray2` y `Aabb2` implementan intersección 2D por intervalos (slab test). `RayHit::distance` es el parámetro `t` de `origin + direction * t`, no una distancia euclídea a menos que la dirección esté normalizada. Un origen dentro del AABB devuelve `t = 0`; una ausencia de impacto devuelve `None`. Las entradas no finitas, direcciones cero y cajas invertidas se rechazan al construir los tipos.
-- **110 — `simulation::swarm`:** `Flock2D` promedia posición y velocidad de agentes dentro del radio de vecindad, aplica una dirección de steering acotada por `max_speed` y calcula todos los resultados desde la misma instantánea. Es un modelo pequeño de flocking, no una implementación completa de todas las reglas de Reynolds ni una promesa de igualdad bit a bit entre arquitecturas.
+- **106 — `simulation::ascii_physics`:** `AsciiPhysics` creates a finite grid, records obstacles and particles with integer velocity, advances each particle one cell per active axis, bounces off walls/obstacles and renders `#`, `o` and spaces. Particle IDs are insertion indices; there is no inter-particle collision resolution or continuous physical conservation.
+- **107 — `simulation::fluid`:** `ScalarFluid` solves explicit 2D scalar diffusion with four neighbors, a double buffer and a no-flow boundary. The coefficient must belong to `[0, 0.25]`, the classic stability limit for this 2D discretization. It does not simulate pressure, velocity or full fluid dynamics; `total()` serves as an approximate conservation check with floating-point tolerance.
+- **108 — `simulation::cellular`:** `CellularGrid` implements Conway's Game of Life with Moore neighborhood and synchronous update via a double buffer. Boundaries can be `Boundary::Dead` or `Boundary::Wrap`. There are no custom rules in this first API.
+- **109 — `simulation::raycast`:** `Ray2` and `Aabb2` implement 2D interval (slab test) intersection. `RayHit::distance` is the `t` parameter of `origin + direction * t`, not a Euclidean distance unless the direction is normalized. An origin inside the AABB returns `t = 0`; a miss returns `None`. Non-finite inputs, zero directions and inverted boxes are rejected when constructing the types.
+- **110 — `simulation::swarm`:** `Flock2D` averages position and velocity of agents within the neighborhood radius, applies a steering direction bounded by `max_speed` and computes all results from the same snapshot. It is a small flocking model, not a complete implementation of all Reynolds rules or a promise of bit-for-bit equality across architectures.
 
-Los módulos usan `f64` donde el modelo es continuo; los tests prueban reproducibilidad en la misma plataforma, límites, patrones y propiedades numéricas relevantes. No hay ejecución paralela implícita. Los puntos 106–110 solo se cerrarán después de que CI confirme tests, Clippy y documentación pública.
+The modules use `f64` where the model is continuous; the tests check same-platform reproducibility, limits, patterns and relevant numeric properties. There is no implicit parallel execution. Points 106–110 were only closed after CI confirmed tests, Clippy and public documentation.
