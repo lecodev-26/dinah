@@ -1,0 +1,11 @@
+[1m[93mwarning[0m: output filename collision at D:\a\dinah\dinah\target\release\deps\dinah.pdb
+  [1m[96m|[0m
+  [1m[96m= [0m[1m[97mnote[0m: the bin target `dinah` in package `dinah v0.1.0 (D:\a\dinah\dinah)` has the same output filename as the lib target `dinah` in package `dinah v0.1.0 (D:\a\dinah\dinah)`
+  [1m[96m= [0m[1m[97mnote[0m: this may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>
+  [1m[96m= [0m[1m[97mhelp[0m: consider changing their names to be unique or compiling them separately
+[1m[92m   Compiling[0m dinah v0.1.0 (D:\a\dinah\dinah)
+[1m[92m    Finished[0m `bench` profile [optimized] target(s) in 0.61s
+[1m[92m     Running[0m benches\network.rs (target\release\deps\network-0328445d7a08d89c.exe)
+dinah Network benchmark; build=release; statistic=median; architecture=x86_64; observations are machine-specific
+case=latency_estimator_128_samples iterations=1000 samples=9 min_op_ns=764 median_op_ns=766 max_op_ns=802
+case=reliable_outbox_enqueue_ack_64 iterations=1000 samples=9 min_op_ns=202 median_op_ns=204 max_op_ns=347

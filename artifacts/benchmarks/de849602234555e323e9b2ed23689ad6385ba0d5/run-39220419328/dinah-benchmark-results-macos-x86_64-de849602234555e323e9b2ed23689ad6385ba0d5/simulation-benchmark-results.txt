@@ -1,0 +1,13 @@
+[1m[92m   Compiling[0m dinah v0.1.0 (/Users/runner/work/dinah/dinah)
+[1m[92m    Finished[0m `bench` profile [optimized] target(s) in 0.86s
+[1m[92m     Running[0m benches/simulation.rs (target/release/deps/simulation-7744877de609d54d)
+dinah Simulation benchmark; build=release; statistic=median; samples=9; iterations_per_sample=32
+target=x86_64; results are machine-specific observations, not guarantees
+case=simulation_clock_256_advances_including_setup operations=256 samples=9 iterations_per_sample=32 min_op_ns=2044 median_op_ns=2166 max_op_ns=3230 ns_per_operation=8.461
+case=simulation_step_256_updates_including_setup operations=256 samples=9 iterations_per_sample=32 min_op_ns=2039 median_op_ns=2120 max_op_ns=2403 ns_per_operation=8.281
+case=simulation_entities_for_each_mut operations=64 samples=9 iterations_per_sample=32 min_op_ns=20 median_op_ns=23 max_op_ns=43 ns_per_operation=0.359
+case=simulation_entities_16_spread_get_lookups_linear_search operations=16 samples=9 iterations_per_sample=32 min_op_ns=269 median_op_ns=309 max_op_ns=391 ns_per_operation=19.312
+case=simulation_entities_for_each_mut operations=1024 samples=9 iterations_per_sample=32 min_op_ns=383 median_op_ns=425 max_op_ns=488 ns_per_operation=0.415
+case=simulation_entities_16_spread_get_lookups_linear_search operations=16 samples=9 iterations_per_sample=32 min_op_ns=2432 median_op_ns=4271 max_op_ns=10586 ns_per_operation=266.938
+case=simulation_entities_for_each_mut operations=16384 samples=9 iterations_per_sample=32 min_op_ns=9990 median_op_ns=12865 max_op_ns=22258 ns_per_operation=0.785
+case=simulation_entities_16_spread_get_lookups_linear_search operations=16 samples=9 iterations_per_sample=32 min_op_ns=36283 median_op_ns=38605 max_op_ns=73761 ns_per_operation=2412.812

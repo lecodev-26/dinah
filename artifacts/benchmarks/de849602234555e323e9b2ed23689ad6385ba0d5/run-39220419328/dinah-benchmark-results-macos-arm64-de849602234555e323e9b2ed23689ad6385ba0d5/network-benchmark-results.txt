@@ -1,0 +1,6 @@
+[1m[92m   Compiling[0m dinah v0.1.0 (/Users/runner/work/dinah/dinah)
+[1m[92m    Finished[0m `bench` profile [optimized] target(s) in 0.39s
+[1m[92m     Running[0m benches/network.rs (target/release/deps/network-8c34a33ae4ef671d)
+dinah Network benchmark; build=release; statistic=median; architecture=aarch64; observations are machine-specific
+case=latency_estimator_128_samples iterations=1000 samples=9 min_op_ns=449 median_op_ns=469 max_op_ns=512
+case=reliable_outbox_enqueue_ack_64 iterations=1000 samples=9 min_op_ns=131 median_op_ns=131 max_op_ns=133
