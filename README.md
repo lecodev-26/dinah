@@ -47,7 +47,7 @@ DINAH is **not a finished general-purpose runtime or a game engine**. The roadma
 
 <div align="center">
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="assets/dark/flow.svg"><img src="assets/light/flow.svg" alt="Core, runtime, memory, compute, ECS, simulation and networking layers" width="100%"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="assets/dark/flow.svg"><img src="assets/light/flow.svg" alt="DINAH module status at v0.1.0: 12 subsystems with checklist completion and deferred points" width="100%"></picture>
 
 </div>
 
@@ -82,7 +82,7 @@ The design separates shared contracts from runtime execution, storage and comput
 | `src/simulation` | Fixed-step clock, deterministic step contract and bounded physics/fluid/cellular/raycast/swarm models. |
 | `docs/` | Module guides, design decisions, research, benchmark notes, initial security review and engineering policies. |
 | `tests/` · `benches/` · `examples/` | Tests, performance suites and runnable examples. |
-| `scripts/` · `.github/workflows/` | Checklist/documentation checks, CI, benchmark matrix and artifact archiving. |
+| `scripts/` · `.github/workflows/` | Checklist/documentation checks, CI, benchmark matrix, artifact archiving and README status-graphic generation. |
 | `artifacts/` | Retained benchmark outputs and run metadata. |
 
 **Requirements:** Rust 1.95 or newer (verified MSRV) and Git. The crate uses Rust edition 2021 and has no runtime dependencies. Platform-specific performance measurements are collected by CI and are not universal hardware comparisons.
@@ -121,7 +121,7 @@ The design separates shared contracts from runtime execution, storage and comput
 
 </div>
 
-DINAH tracks median timings for the simulation clock, simulation step, mutable entity traversal and repeated linear searches. The recorded five-platform CI matrix below is historical evidence from workflow run [`38484605568`](https://github.com/lecodev-26/dinah/actions/runs/38484605568), commit `83cbcc3`; it is not a controlled cross-OS comparison or a performance guarantee. Lower timings are better for these measurements.
+DINAH tracks median timings for the simulation clock, simulation step, mutable entity traversal and repeated linear searches. The recorded five-platform CI matrix below is historical evidence from workflow run [`38484605568`](https://github.com/lecodev-26/dinah/actions/runs/38484605568), commit `83cbcc3`; it is not a controlled cross-OS comparison or a performance guarantee. The full suite (Runtime, Memory, Compute, ECS, Simulation, Networking, Storage) was also executed locally on the v0.1.0 release commit and archived by CI in [`artifacts/`](artifacts/README.md). Lower timings are better for these measurements.
 
 <div align="center">
 
@@ -147,7 +147,7 @@ These are medians of nine samples; construction is included in the clock and ste
 
 <div align="center">
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="assets/dark/versions.svg"><img src="assets/light/versions.svg" alt="Current and planned DINAH roadmap phases" width="100%"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="assets/dark/versions.svg"><img src="assets/light/versions.svg" alt="dinah v0.1.0 phase dashboard: 279 of 287 checklist points complete, 8 deferred by design" width="100%"></picture>
 
 </div>
 
