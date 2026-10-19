@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Announcing dinah 0.1.0 — DINAH blog</title>
+  <meta name="description" content="Zero dependencies, zero unsafe blocks, 293 tests and one rule: every claim is measured, tested, or marked as not implemented. The story of the dinah 0.1.0 release.">
+  <meta property="og:title" content="Announcing dinah 0.1.0">
+  <meta property="og:description" content="The release that took honesty seriously.">
+  <meta property="og:type" content="article">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://api.fontshare.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@500,700,800&f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+  <a class="skip-link" href="#main" data-i18n="skip">Skip to content</a>
+  <div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
+
+  <header class="site-header" id="siteHeader">
+    <div class="container header-inner">
+      <a class="wordmark" href="./" aria-label="DINAH home">
+        <span class="dot" aria-hidden="true"></span>DINAH
+      </a>
+      <nav class="site-nav" aria-label="Primary">
+        <a href="./#modules" data-i18n-nav="modules">Modules</a>
+        <a href="./#benchmarks" data-i18n-nav="benchmarks">Benchmarks</a>
+        <a href="./#limits" data-i18n-nav="limits">Limits</a>
+        <a href="./#roadmap" data-i18n-nav="roadmap">Roadmap</a>
+      </nav>
+      <div class="header-actions">
+        <div class="lang-toggle" role="group" aria-label="Language">
+          <button type="button" data-lang="en" aria-pressed="true">EN</button>
+          <button type="button" data-lang="es" aria-pressed="false">ES</button>
+        </div>
+        <button type="button" class="icon-btn" id="themeToggle" aria-label="Switch to dark mode">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+        <a class="icon-btn" href="https://github.com/lecodev-26/dinah" aria-label="GitHub repository" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.55 0-.27-.01-1.17-.02-2.12-3.2.7-3.87-1.36-3.87-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.69 1.25 3.35.96.1-.75.4-1.25.72-1.54-2.55-.29-5.23-1.28-5.23-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.15 1.18a10.9 10.9 0 0 1 5.74 0c2.18-1.49 3.14-1.18 3.14-1.18.63 1.59.23 2.76.12 3.05.74.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.66.41.36.78 1.05.78 2.12 0 1.54-.01 2.77-.01 3.15 0 .3.2.66.8.55A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"/></svg>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <article>
+      <div class="container post-hero">
+        <p class="kicker">blog · release</p>
+        <h1 data-i18n="post.title">Announcing dinah 0.1.0</h1>
+        <div class="post-meta-row">
+          <span>2026-10-19</span>
+          <span>lecodev-26</span>
+          <span data-i18n="post.readtime">4 min read</span>
+        </div>
+      </div>
+
+      <div class="container post-body">
+        <p data-i18n="post.p1">Today dinah 0.1.0 is live on crates.io. It is a Rust-first, modular runtime and high-performance compute foundation — the kind of sentence that needs unpacking, so let me unpack it the way the project itself would: with specifics.</p>
+        <p data-i18n="post.p2">DINAH is eight modules — core, runtime, memory, compute, ecs, simulation, networking and storage — plus a manifest-driven CLI. It has no runtime dependencies. It contains zero unsafe blocks, enforced at the crate root with forbid(unsafe_code). It ships 293 passing tests including doc-tests, 90.9% line coverage enforced in CI, benchmarks archived from five platforms, and a public C ABI limited to fixed-width scalar queries.</p>
+
+        <h2 data-i18n="post.h1">The rule that shaped everything</h2>
+        <p data-i18n="post.p3">Early in the project a single rule was adopted and it decided almost every design that followed:</p>
+        <div class="pull-quote" data-i18n-html="post.quote">Every claim in the documentation is <em>measured</em>, <em>tested</em>, or explicitly marked as <em>not implemented yet</em>.</div>
+        <p data-i18n="post.p4">That sounds obvious until you look at what it excludes. No performance claims without an archived, reproducible benchmark. No "coming soon" features presented as capabilities. No hiding a known limitation in the hope nobody hits it. The README literally contains a table of what DINAH is not.</p>
+        <p data-i18n="post.p5">The most visible consequence: the parallel compute paths are documented as slower for lightweight kernels. They are. We measured them — at 262,144 elements, two workers ran 4 to 10.3 times slower than the sequential loop across the five CI runners. That number is in the documentation, next to the explanation of why sequential is the default and parallelism is opt-in.</p>
+
+        <h2 data-i18n="post.h2">A checklist you can audit</h2>
+        <p data-i18n="post.p6">The release was driven by a 287-point checklist that lives in the repository. Every point links to its evidence: tests, benchmark runs with environment metadata, security review notes. The v0.1 cycle closed with 279 points complete, zero in progress, and 8 deliberately deferred — each deferred point is not a silent omission but a tracked v0.2 goal with its own ID.</p>
+        <p data-i18n="post.p7">The security review is a good example of the tone. It documents what the manifest parser does not protect against, that corruption tests are a deterministic corpus rather than coverage-guided fuzzing, and that the whole document is a static review, not an external audit. Pre-alpha software that describes its own attack surface honestly is rare, and it is the thing I am proudest of.</p>
+
+        <h2 data-i18n="post.h3">Try it</h2>
+        <pre><code>$ cargo add dinah</code></pre>
+        <pre><code>use dinah::ecs::World;
+
+fn main() -> Result<(), dinah::ecs::WorldError> {
+    let mut world = World::new();
+    let entity = world.spawn()?;
+    world.insert(entity, 42_u32)?;
+    assert_eq!(world.get::<u32>(entity), Some(&42));
+    world.despawn(entity)?;
+    Ok(())
+}</code></pre>
+        <p class="muted" data-i18n="post.p8">MSRV is Rust 1.95, verified empirically — the workspace genuinely fails to compile on 1.94. Edition 2021, MIT OR Apache-2.0, and the package was verified with cargo package and a publish dry-run before the upload.</p>
+
+        <h2 data-i18n="post.h4">What is next</h2>
+        <p data-i18n="post.p9">The v0.2 design is already written and approved. The priorities come from measured gaps in the frozen v0.1 contract: the networking wire format (v1 framing, encoder/decoder, structured versioned events), ECS component queries and safe parallel system execution, storage transactions, and a full TOML manifest parser. No dates — only design, evidence and a checklist, which is exactly how this release was built too.</p>
+        <p data-i18n="post.p10">If deterministic, honest infrastructure is your kind of thing, the repository has guides for every module, a performance baseline, a security review and the complete evidence trail. Criticism welcome — especially about the things we got wrong.</p>
+
+        <nav class="post-nav" aria-label="Post">
+          <a class="btn btn-ghost" href="./" data-i18n="post.back">← Back to the site</a>
+          <a class="btn btn-ghost" href="https://github.com/lecodev-26/dinah" target="_blank" rel="noopener" data-i18n="post.repo">Repository</a>
+        </nav>
+      </div>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-bottom" style="border-top: none; padding-top: 0;">
+        <span>© 2026 DINAH · MIT OR Apache-2.0</span>
+        <span data-i18n="footerNote">hand-crafted page — no frameworks, no build step</span>
+      </div>
+    </div>
+  </footer>
+
+  <div id="toaster" hidden></div>
+
+  <script src="assets/main.js" defer></script>
+  <script type="importmap">
+  {
+    "imports": {
+      "react": "https://esm.sh/react@18",
+      "react/jsx-runtime": "https://esm.sh/react@18/jsx-runtime",
+      "react-dom": "https://esm.sh/react-dom@18",
+      "react-dom/client": "https://esm.sh/react-dom@18/client",
+      "sonner": "https://esm.sh/sonner@2?external=react,react-dom"
+    }
+  }
+  </script>
+  <script type="module" src="assets/toaster.js"></script>
+</body>
+</html>

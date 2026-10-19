@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DINAH — Rust-first modular runtime & compute foundation</title>
+  <meta name="description" content="DINAH is a zero-dependency, unsafe-free Rust foundation: runtime, memory, compute, ECS, simulation, networking and storage — every claim measured, tested or explicitly marked as missing. v0.1.0 on crates.io.">
+  <meta property="og:title" content="DINAH — the runtime that shows its work">
+  <meta property="og:description" content="Zero-dependency, unsafe-free Rust runtime & compute foundation. v0.1.0 on crates.io.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://api.fontshare.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@500,700,800&f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+  <a class="skip-link" href="#main" data-i18n="skip">Skip to content</a>
+  <div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
+
+  <header class="site-header" id="siteHeader">
+    <div class="container header-inner">
+      <a class="wordmark" href="./" aria-label="DINAH home">
+        <span class="dot" aria-hidden="true"></span>DINAH
+      </a>
+      <nav class="site-nav" aria-label="Primary">
+        <a href="#modules" data-i18n-nav="modules">Modules</a>
+        <a href="#architecture" data-i18n-nav="architecture">Architecture</a>
+        <a href="#benchmarks" data-i18n-nav="benchmarks">Benchmarks</a>
+        <a href="#limits" data-i18n-nav="limits">Limits</a>
+        <a href="#roadmap" data-i18n-nav="roadmap">Roadmap</a>
+        <a href="#blog" data-i18n-nav="blog">Blog</a>
+      </nav>
+      <div class="header-actions">
+        <button type="button" class="icon-btn mobile-nav-btn" id="mobileNavBtn" aria-label="Open menu" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+        </button>
+        <div class="lang-toggle" role="group" aria-label="Language">
+          <button type="button" data-lang="en" aria-pressed="true">EN</button>
+          <button type="button" data-lang="es" aria-pressed="false">ES</button>
+        </div>
+        <button type="button" class="icon-btn" id="themeToggle" aria-label="Switch to dark mode">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+        <a class="icon-btn" href="https://github.com/lecodev-26/dinah" aria-label="GitHub repository" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.55 0-.27-.01-1.17-.02-2.12-3.2.7-3.87-1.36-3.87-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.69 1.25 3.35.96.1-.75.4-1.25.72-1.54-2.55-.29-5.23-1.28-5.23-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.15 1.18a10.9 10.9 0 0 1 5.74 0c2.18-1.49 3.14-1.18 3.14-1.18.63 1.59.23 2.76.12 3.05.74.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.66.41.36.78 1.05.78 2.12 0 1.54-.01 2.77-.01 3.15 0 .3.2.66.8.55A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"/></svg>
+        </a>
+      </div>
+    </div>
+    <nav class="mobile-nav" id="mobileNav" aria-label="Mobile">
+      <a href="#modules" data-i18n-nav="modules">Modules</a>
+      <a href="#architecture" data-i18n-nav="architecture">Architecture</a>
+      <a href="#benchmarks" data-i18n-nav="benchmarks">Benchmarks</a>
+      <a href="#limits" data-i18n-nav="limits">Limits</a>
+      <a href="#roadmap" data-i18n-nav="roadmap">Roadmap</a>
+      <a href="#blog" data-i18n-nav="blog">Blog</a>
+    </nav>
+  </header>
+
+  <main id="main">
+
+    <!-- ============ HERO ============ -->
+    <section class="hero">
+      <div class="container hero-grid">
+        <div>
+          <p class="kicker">v0.1.0 · now on crates.io</p>
+          <h1 data-i18n-html="heroTitle">The runtime that <em>shows its work</em>.</h1>
+          <p class="hero-lede" data-i18n="heroLede">DINAH is a Rust-first, zero-dependency foundation for deterministic applications — runtime, memory, compute, ECS, simulation, networking and storage, built with contracts, tested boundaries and measured evidence.</p>
+          <div class="hero-ctas">
+            <a class="btn btn-solid" href="https://crates.io/crates/dinah" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+              <span data-i18n="ctaCrates">View on crates.io</span>
+            </a>
+            <a class="btn btn-ghost" href="https://github.com/lecodev-26/dinah" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.55 0-.27-.01-1.17-.02-2.12-3.2.7-3.87-1.36-3.87-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.69 1.25 3.35.96.1-.75.4-1.25.72-1.54-2.55-.29-5.23-1.28-5.23-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.15 1.18a10.9 10.9 0 0 1 5.74 0c2.18-1.49 3.14-1.18 3.14-1.18.63 1.59.23 2.76.12 3.05.74.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.66.41.36.78 1.05.78 2.12 0 1.54-.01 2.77-.01 3.15 0 .3.2.66.8.55A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"/></svg>
+              <span data-i18n="ctaGithub">Source on GitHub</span>
+            </a>
+          </div>
+          <div class="hero-badges">
+            <span class="badge"><b>0</b> dependencies</span>
+            <span class="badge"><b>0</b> unsafe blocks</span>
+            <span class="badge"><b>293</b> tests</span>
+            <span class="badge">MIT / Apache-2.0</span>
+          </div>
+        </div>
+        <div class="terminal-wrap">
+          <div class="terminal" aria-label="Terminal example">
+            <div class="terminal-bar">
+              <span class="tdot" aria-hidden="true"></span><span class="tdot" aria-hidden="true"></span><span class="tdot" aria-hidden="true"></span>
+              <span class="terminal-title">dinah — bash</span>
+            </div>
+            <div class="terminal-body" id="terminalBody" aria-hidden="true"></div>
+          </div>
+          <button type="button" class="terminal-copy" id="copyCmd">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            copy
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ STATS ============ -->
+    <section class="stats" aria-label="Project statistics">
+      <div class="container stats-grid">
+        <div class="stat"><div class="stat-value"><span data-count="293">0</span></div><div class="stat-label" data-i18n="statTests">passing tests, incl. doc-tests</div></div>
+        <div class="stat"><div class="stat-value"><span data-count="0">0</span></div><div class="stat-label" data-i18n="statDeps">runtime dependencies</div></div>
+        <div class="stat"><div class="stat-value"><span data-count="0">0</span></div><div class="stat-label" data-i18n="statUnsafe">unsafe blocks in the crate</div></div>
+        <div class="stat"><div class="stat-value"><span data-count="90.9" data-decimals="1">0</span><span class="unit">%</span></div><div class="stat-label" data-i18n="statCoverage">line coverage enforced in CI</div></div>
+        <div class="stat"><div class="stat-value"><span data-count="5">0</span></div><div class="stat-label" data-i18n="statPlatforms">platforms benchmarked in CI</div></div>
+        <div class="stat"><div class="stat-value"><span data-count="287">0</span></div><div class="stat-label" data-i18n="statChecklist">checklist points, 279 closed</div></div>
+      </div>
+    </section>
+
+    <!-- ============ MODULES ============ -->
+    <section class="section" id="modules">
+      <div class="container">
+        <div class="section-head reveal">
+          <h2 data-i18n="modulesTitle">Eight modules, one contract each.</h2>
+          <p data-i18n="modulesLede">Every module owns a single responsibility and publishes an explicit, documented contract. No hidden schedulers, no implicit parallelism, no surprise allocations.</p>
+        </div>
+        <div class="modules-grid" id="modulesGrid">
+          <a class="mod-card reveal" href="https://github.com/lecodev-26/dinah/blob/main/docs/core.md" target="_blank" rel="noopener">
+            <div class="mod-name"><span>core</span><span class="status">stable</span></div>
+            <p class="mod-desc" data-i18n-html="modCore">Shared types and errors. No policy, no kernels — the vocabulary every other module agrees on.</p>
+          </a>
+          <a class="mod-card reveal" href="https://github.com/lecodev-26/dinah/blob/main/docs/runtime.md" target="_blank" rel="noopener">
+            <div class="mod-name"><span>runtime</span><span class="status">stable</span></div>
+            <p class="mod-desc" data-i18n-html="modRuntime">Call-bounded scheduler and <code>Shared<T></code> synchronization. Work is submitted explicitly and joined before the call returns.</p>
+          </a>
+          <a class="mod-card reveal" href="https://github.com/lecodev-26/dinah/blob/main/docs/memory-model.md" target="_blank" rel="noopener">
+            <div class="mod-name"><span>memory</span><span class="status">stable</span></div>
+            <p class="mod-desc" data-i18n-html="modMemory">Bounded <code>Buffer<T></code> and two-column <code>SoaBuffer</code>. Fallible reservations, no implicit growth, no unsafe.</p>
+          </a>
+          <a class="mod-card mod-card--wide reveal" href="https://github.com/lecodev-26/dinah/blob/main/docs/compute.md" target="_blank" rel="noopener">
+            <div class="mod-name"><span>compute</span><span class="status">stable</span></div>
+            <p class="mod-desc" data-i18n-html="modCompute">Sequential <code>for_each</code>, <code>map</code>, <code>try_reduce</code>, explicit batches, opt-in parallel iteration and composable pipelines — sequential by default, parallel only when you ask.</p>
+          </a>
+          <a class="mod-card mod-card--wide reveal" href="https://github.com/lecodev-26/dinah/blob/main/docs/ecs.md" target="_blank" rel="noopener">
+            <div class="mod-name"><span>ecs</span><span class="status status--foundation">growing</span></div>
+            <p class="mod-desc" data-i18n-html="modEcs">Generational <code>Entity</code> handles, single-owner <code>World</code>, typed sparse-set storage. Component queries and safe parallel systems land in v0.2.</p>
+          </a>
+          <a class="mod-card reveal" href="https://github.com/lecodev-26/dinah/blob/main/docs/simulation.md" target="_blank" rel="noopener">
+            <div class="mod-name"><span>simulation</span><span class="status">stable</span></div>
+            <p class="mod-desc" data-i18n-html="modSimulation">Fixed-step clock, deterministic step contract, replay tests and five bounded models — from ASCII physics to flocking.</p>
+          </a>
+          <a class="mod-card reveal" href="https://github.com/lecodev-26/dinah/blob/main/docs/network.md" target="_blank" rel="noopener">
+            <div class="mod-name"><span>networking</span><span class="status status--foundation">foundation</span></div>
+            <p class="mod-desc" data-i18n-html="modNetworking">Blocking TCP wrappers, client-side prediction and reconciliation, a deterministic tick simulator. Wire codec and framing are v0.2 work.</p>
+          </a>
+          <a class="mod-card reveal" href="https://github.com/lecodev-26/dinah/blob/main/docs/storage.md" target="_blank" rel="noopener">
+            <div class="mod-name"><span>storage</span><span class="status">stable</span></div>
+            <p class="mod-desc" data-i18n-html="modStorage">Append-only journal with CRC-32 corruption detection: complete corruption fails, an interrupted final write is recovered.</p>
+          </a>
+          <a class="mod-card mod-card--capstone reveal" href="https://github.com/lecodev-26/dinah/blob/main/docs/cli.md" target="_blank" rel="noopener">
+            <div class="mod-name"><span>cli</span><span class="status">stable</span></div>
+            <p class="mod-desc" data-i18n-html="modCli">Manifest-driven projects: init, run, task, doctor and benchmark — with JSON output for scripts and opt-in task execution.</p>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ARCHITECTURE ============ -->
+    <section class="section" id="architecture" style="background: var(--color-surface-2); border-block: 1px solid var(--color-divider);">
+      <div class="container arch-grid">
+        <div class="reveal">
+          <div class="section-head" style="margin-bottom: var(--space-6);">
+            <h2 data-i18n="archTitle">Explicit by construction.</h2>
+          </div>
+          <div class="arch-notes">
+            <div class="arch-note">
+              <h3 data-i18n="archNote1H">No hidden scheduler</h3>
+              <p data-i18n="archNote1P">Runtime workers are scoped and joined before any call returns. Nothing runs in the background because you imported a module.</p>
+            </div>
+            <div class="arch-note">
+              <h3 data-i18n="archNote2H">Parallelism is opt-in</h3>
+              <p data-i18n="archNote2P">Sequential is the default path. Parallel iteration exists, is measured, and is documented as slower for light kernels.</p>
+            </div>
+            <div class="arch-note">
+              <h3 data-i18n="archNote3H">Safety without escape hatches</h3>
+              <p data-i18n="archNote3P">The whole crate forbids unsafe code. The C ABI exposes only fixed-width scalar queries — no pointers, no buffers, no callbacks.</p>
+            </div>
+          </div>
+        </div>
+        <div class="reveal">
+          <svg class="arch-svg" viewBox="0 0 520 400" role="img" aria-label="Layered architecture diagram of DINAH">
+            <g>
+              <rect class="layer-box" x="10" y="10" width="500" height="58"/>
+              <text class="layer-label" x="30" y="36">application</text>
+              <text class="layer-sub" x="30" y="54">your deterministic domain — games, simulators, engines</text>
+            </g>
+            <g>
+              <rect class="layer-box" x="10" y="78" width="242" height="58"/>
+              <text class="layer-label" x="30" y="104">simulation</text>
+              <text class="layer-sub" x="30" y="122">fixed-step clock · replay</text>
+            </g>
+            <g>
+              <rect class="layer-box" x="268" y="78" width="242" height="58"/>
+              <text class="layer-label" x="288" y="104">networking</text>
+              <text class="layer-sub" x="288" y="122">TCP · prediction · simulator</text>
+            </g>
+            <g>
+              <rect class="layer-box" x="10" y="146" width="242" height="58"/>
+              <text class="layer-label" x="30" y="172">ecs</text>
+              <text class="layer-sub" x="30" y="190">world · entities · storage</text>
+            </g>
+            <g>
+              <rect class="layer-box" x="268" y="146" width="242" height="58"/>
+              <text class="layer-label" x="288" y="172">compute</text>
+              <text class="layer-sub" x="288" y="190">sequential · parallel · pipelines</text>
+            </g>
+            <g>
+              <rect class="layer-box" x="10" y="214" width="242" height="58"/>
+              <text class="layer-label" x="30" y="240">storage</text>
+              <text class="layer-sub" x="30" y="258">journal · CRC-32 replay</text>
+            </g>
+            <g>
+              <rect class="layer-box" x="268" y="214" width="242" height="58"/>
+              <text class="layer-label" x="288" y="240">runtime</text>
+              <text class="layer-sub" x="288" y="258">scheduler · shared state</text>
+            </g>
+            <g>
+              <rect class="layer-box" x="10" y="282" width="500" height="58"/>
+              <text class="layer-label" x="30" y="308">memory</text>
+              <text class="layer-sub" x="30" y="326">bounded buffers · soa · fallible reservations</text>
+            </g>
+            <g>
+              <rect class="layer-box layer-core" x="10" y="350" width="500" height="42"/>
+              <text class="layer-label core-label" x="30" y="376">core</text>
+              <text class="layer-sub" x="110" y="376">shared types & errors — the contract vocabulary</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ BENCHMARKS ============ -->
+    <section class="section" id="benchmarks">
+      <div class="container">
+        <div class="section-head reveal">
+          <h2 data-i18n="benchTitle">Measured, not promised.</h2>
+          <p data-i18n="benchLede">Real medians from the CI benchmark runs, archived per commit with environment metadata. Microbenchmarks on specific machines — never marketing numbers.</p>
+        </div>
+        <div class="bench-cards">
+          <div class="bench-card reveal">
+            <h3 data-i18n="bench1H">SoA batch extension</h3>
+            <p class="bench-what" data-i18n="bench1W">ns per inserted row — naive push loop vs. validated batch, Linux x86-64</p>
+            <div class="bar-row">
+              <div class="bar-label"><span>64 rows · naive</span><span class="val">6,109</span></div>
+              <div class="bar-track"><div class="bar-fill bar-fill--muted" data-width="100"></div></div>
+            </div>
+            <div class="bar-row">
+              <div class="bar-label"><span data-i18n="bench1Batch">64 rows · batch</span><span class="val">2,031</span></div>
+              <div class="bar-track"><div class="bar-fill" data-width="33"></div></div>
+            </div>
+            <div class="bar-row">
+              <div class="bar-label"><span data-i18n="bench1Naive2">1,024 rows · naive</span><span class="val">2,495</span></div>
+              <div class="bar-track"><div class="bar-fill bar-fill--muted" data-width="41"></div></div>
+            </div>
+            <div class="bar-row">
+              <div class="bar-label"><span data-i18n="bench1Batch2">1,024 rows · batch</span><span class="val">0.548</span></div>
+              <div class="bar-track"><div class="bar-fill" data-width="1"></div></div>
+            </div>
+            <p class="bench-note" data-i18n="bench1Note">Batch validation checks the whole batch once instead of per row. Raw data: artifacts/benchmarks/memory-soa-batch-2026-10-11.txt</p>
+          </div>
+          <div class="bench-card reveal">
+            <h3 data-i18n="bench2H">Deterministic scheduler</h3>
+            <p class="bench-what" data-i18n="bench2W">scheduler vs. persistent worker pool, relative — parity is the design goal</p>
+            <div class="bar-row">
+              <div class="bar-label"><span data-i18n="bench2Noop">no-op lifecycle</span><span class="val">0.92×–1.07×</span></div>
+              <div class="bar-track"><div class="bar-fill" data-width="50"></div></div>
+            </div>
+            <div class="bar-row">
+              <div class="bar-label"><span data-i18n="bench2Cpu">CPU-heavy steady state</span><span class="val">0.90×–1.11×</span></div>
+              <div class="bar-track"><div class="bar-fill" data-width="50"></div></div>
+            </div>
+            <p class="bench-note" data-i18n="bench2Note">Per-call dispatch costs more than a persistent pool for no-op tasks — measured and documented instead of hidden. Lightweight parallel kernels stay sequential on purpose: 2 workers measured 4–10× slower than the scalar loop at 262k elements.</p>
+          </div>
+          <div class="bench-card reveal">
+            <h3 data-i18n="bench3H">Simulation step</h3>
+            <p class="bench-what" data-i18n="bench3W">median ns per clock advance, five CI platforms</p>
+            <div class="bar-row">
+              <div class="bar-label"><span>macOS ARM64</span><span class="val">2,395</span></div>
+              <div class="bar-track"><div class="bar-fill" data-width="23"></div></div>
+            </div>
+            <div class="bar-row">
+              <div class="bar-label"><span>Linux ARM64</span><span class="val">5,855</span></div>
+              <div class="bar-track"><div class="bar-fill" data-width="56"></div></div>
+            </div>
+            <div class="bar-row">
+              <div class="bar-label"><span>Linux x86-64</span><span class="val">7,801</span></div>
+              <div class="bar-track"><div class="bar-fill" data-width="74"></div></div>
+            </div>
+            <div class="bar-row">
+              <div class="bar-label"><span>Windows x86-64</span><span class="val">7,836</span></div>
+              <div class="bar-track"><div class="bar-fill" data-width="75"></div></div>
+            </div>
+            <div class="bar-row">
+              <div class="bar-label"><span>macOS x86-64</span><span class="val">10,488</span></div>
+              <div class="bar-track"><div class="bar-fill" data-width="100"></div></div>
+            </div>
+            <p class="bench-note" data-i18n="bench3Note">Construction included; not the isolated steady-state tick cost. Seven suites total: runtime, memory, compute, ECS, simulation, networking, storage.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ LIMITS ============ -->
+    <section class="section limits" id="limits">
+      <div class="container">
+        <div class="section-head reveal">
+          <h2 data-i18n="limitsTitle">What DINAH is not.</h2>
+          <p data-i18n="limitsLede">Most readmes list features. This one also lists the missing ones — the same honest limits you will find in the documentation and the security review.</p>
+        </div>
+        <div class="limits-grid">
+          <div class="limit-card reveal">
+            <span class="limit-no">01</span>
+            <div><h3 data-i18n="limit1H">Not a physics or CFD engine</h3><p data-i18n="limit1P">The simulation models are bounded educational starting points — explicit limits, no general-purpose claims.</p></div>
+          </div>
+          <div class="limit-card reveal">
+            <span class="limit-no">02</span>
+            <div><h3 data-i18n="limit2H">No SIMD</h3><p data-i18n="limit2P">SIMD candidates were researched and measured; none justified the complexity for a production kernel yet. Scalar stays the reference implementation.</p></div>
+          </div>
+          <div class="limit-card reveal">
+            <span class="limit-no">03</span>
+            <div><h3 data-i18n="limit3H">Networking without a wire codec</h3><p data-i18n="limit3P">Blocking TCP exists; framing, the v1 encoder/decoder, auth and TLS are designed and scheduled for v0.2.</p></div>
+          </div>
+          <div class="limit-card reveal">
+            <span class="limit-no">04</span>
+            <div><h3 data-i18n="limit4H">ECS queries still pending</h3><p data-i18n="limit4P">Individual component access and storage are solid; combined queries and safe parallel systems are the top v0.2 priority.</p></div>
+          </div>
+          <div class="limit-card reveal">
+            <span class="limit-no">05</span>
+            <div><h3 data-i18n="limit5H">No fuzzing yet</h3><p data-i18n="limit5P">Corruption and robustness suites use a deterministic adversarial corpus — an explicit first barrier, not coverage-guided fuzzing.</p></div>
+          </div>
+          <div class="limit-card reveal">
+            <span class="limit-no">06</span>
+            <div><h3 data-i18n="limit6H">Pre-alpha, semver 0.x</h3><p data-i18n="limit6P">The v0.1 API surface is frozen, but 0.x permits breaking changes. Adopt with that in mind.</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ROADMAP ============ -->
+    <section class="section" id="roadmap">
+      <div class="container">
+        <div class="section-head reveal">
+          <h2 data-i18n="roadmapTitle">Where this goes.</h2>
+          <p data-i18n="roadmapLede">The v0.2 design is approved and recorded in the repository — priorities come from measured gaps in the frozen v0.1 contract, not from feature envy.</p>
+        </div>
+        <div class="timeline reveal">
+          <div class="tl-item tl-item--done">
+            <span class="tl-date">2026-10-19 · RELEASED</span>
+            <h3 data-i18n="tl1H">v0.1.0 — the honest foundation</h3>
+            <p data-i18n="tl1P">Frozen public API, 287-point checklist closed (279 complete, 8 deferred by design), five-platform CI benchmarks, 90.9% line coverage enforced, published on crates.io.</p>
+          </div>
+          <div class="tl-item">
+            <span class="tl-date">NEXT · DESIGN APPROVED</span>
+            <h3 data-i18n="tl2H">v0.2 — close the real gaps</h3>
+            <ul class="tl-list">
+              <li data-i18n="tl2A">Networking wire format: v1 framing, encoder/decoder, structured versioned events over TCP</li>
+              <li data-i18n="tl2B">ECS component queries and safe parallel system execution, driven by validated access declarations</li>
+              <li data-i18n="tl2C">Storage transactions and concurrency control for the journal</li>
+              <li data-i18n="tl2D">Full TOML manifest parser and optional caller-owned lifecycle helpers</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ BLOG ============ -->
+    <section class="section section-tight" id="blog" style="background: var(--color-surface-2); border-block: 1px solid var(--color-divider);">
+      <div class="container">
+        <div class="section-head reveal">
+          <h2 data-i18n="blogTitle">Writing, not marketing.</h2>
+        </div>
+        <div class="blog-grid">
+          <a class="post-card reveal" href="announcing-0-1-0.html">
+            <div class="post-card-art" aria-hidden="true">
+              <svg viewBox="0 0 200 160" fill="none">
+                <rect x="20" y="30" width="160" height="100" rx="8" stroke="var(--color-accent)" stroke-width="2.5"/>
+                <circle cx="38" cy="48" r="3.5" fill="var(--color-accent)"/>
+                <circle cx="50" cy="48" r="3.5" fill="var(--color-accent)" opacity="0.6"/>
+                <circle cx="62" cy="48" r="3.5" fill="var(--color-accent)" opacity="0.35"/>
+                <text x="38" y="88" font-family="JetBrains Mono, monospace" font-size="15" fill="var(--color-accent)">>_</text>
+                <text x="38" y="112" font-family="JetBrains Mono, monospace" font-size="10" fill="var(--color-text-faint)">0.1.0</text>
+                <path d="M150 118 L162 118 L156 110 Z" fill="var(--color-accent)"/>
+              </svg>
+            </div>
+            <div class="post-card-body">
+              <div class="post-meta"><span>2026-10-19</span><span>·</span><span data-i18n="post1Read">4 min read</span></div>
+              <h3 data-i18n="post1Title">Announcing dinah 0.1.0</h3>
+              <p data-i18n="post1Excerpt">Zero dependencies, zero unsafe blocks, 293 tests and one rule: every claim is measured, tested, or marked as not implemented. The story of a release that took honesty seriously.</p>
+              <span class="post-read" data-i18n="post1Cta">Read the announcement →</span>
+            </div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a class="wordmark" href="./"><span class="dot" aria-hidden="true"></span>DINAH</a>
+          <p data-i18n="footerBlurb">A Rust-first modular runtime and high-performance compute foundation. Hand-built documentation, measured evidence, no unverifiable claims.</p>
+        </div>
+        <div class="footer-col">
+          <h4 data-i18n="footerProject">Project</h4>
+          <ul>
+            <li><a href="https://github.com/lecodev-26/dinah" target="_blank" rel="noopener">GitHub</a></li>
+            <li><a href="https://crates.io/crates/dinah" target="_blank" rel="noopener">crates.io</a></li>
+            <li><a href="https://docs.rs/dinah" target="_blank" rel="noopener">docs.rs</a></li>
+            <li><a href="https://github.com/lecodev-26/dinah/releases" target="_blank" rel="noopener">Releases</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4 data-i18n="footerDocs">Documentation</h4>
+          <ul>
+            <li><a href="https://github.com/lecodev-26/dinah/blob/main/docs/index.md" target="_blank" rel="noopener">Docs index</a></li>
+            <li><a href="https://github.com/lecodev-26/dinah/blob/main/docs/performance-baseline.md" target="_blank" rel="noopener">Performance baseline</a></li>
+            <li><a href="https://github.com/lecodev-26/dinah/blob/main/docs/security-review.md" target="_blank" rel="noopener">Security review</a></li>
+            <li><a href="https://github.com/lecodev-26/dinah/blob/main/roadmap2.md" target="_blank" rel="noopener">Roadmap v0.2</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4 data-i18n="footerCommunity">Community</h4>
+          <ul>
+            <li><a href="https://github.com/lecodev-26/dinah/issues" target="_blank" rel="noopener">Issues</a></li>
+            <li><a href="https://github.com/lecodev-26/dinah/blob/main/CHANGELOG.md" target="_blank" rel="noopener">Changelog</a></li>
+            <li><a href="https://github.com/lecodev-26/dinah/tree/main/examples" target="_blank" rel="noopener">Examples</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 DINAH · MIT OR Apache-2.0</span>
+        <span data-i18n="footerNote">hand-crafted page — no frameworks, no build step</span>
+      </div>
+    </div>
+  </footer>
+
+  <div id="toaster" hidden></div>
+
+  <script src="assets/main.js" defer></script>
+  <script type="importmap">
+  {
+    "imports": {
+      "react": "https://esm.sh/react@18",
+      "react/jsx-runtime": "https://esm.sh/react@18/jsx-runtime",
+      "react-dom": "https://esm.sh/react-dom@18",
+      "react-dom/client": "https://esm.sh/react-dom@18/client",
+      "sonner": "https://esm.sh/sonner@2?external=react,react-dom"
+    }
+  }
+  </script>
+  <script type="module" src="assets/toaster.js"></script>
+</body>
+</html>

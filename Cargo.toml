@@ -15,6 +15,7 @@ exclude = [
     ".github",
     "artifacts",
     "assets",
+    "website",
     "scripts",
     "puntos.md",
     "puntos2.md",
