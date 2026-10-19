@@ -12,7 +12,8 @@ All checks verified locally on the release commit (2026-10-19) and re-verified b
 |---|---|
 | `cargo fmt --all -- --check` | clean |
 | `cargo clippy --workspace --all-targets --all-features -- -D warnings` | clean |
-| `cargo test --workspace --all-features` | all suites green (185+ unit + integration/determinism/contract/robustness) |
+| `cargo test --workspace --all-features` | all suites green — 293 tests total (285 unit/integration/determinism/contract/robustness + 8 doc-tests), 0 failures |
+| `cargo run --example <each>` | all 8 examples executed successfully (exit 0) |
 | `cargo test --workspace --doc` | green |
 | Benchmark suite (7 benches) | executed successfully on the release commit |
 | `cargo package --list` | inspected: sources, tests, benches, examples, docs, README, CHANGELOG, licenses; no CI artifacts, no assets |

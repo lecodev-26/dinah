@@ -20,7 +20,8 @@ Evidencia disponible al cerrar v0.1:
 
 - Cinco plataformas con benchmarks archivados en CI (Runtime, Memory, Compute, ECS, Simulation, Networking, Storage) y ejecución local completa en el commit de release.
 - Scheduler determinista en paridad con el pool de workers (0,922×–1,073× lifecycle no-op; 0,898×–1,112× CPU-heavy steady-state) con cargas sintéticas.
-- SIMT optimizado (~1,49× sobre ejecución secuencial en el diseño medido) y buffers SoA ordenados estables (1,18–1,31× vs `Vec`).
+- Observaciones documentadas en `docs/performance-baseline.md`: el arranque/despacho por llamada es más caro que el pool persistente para tareas no-op; los cambios de reutilización del vector de lote y de canales por worker se midieron con resultados mixtos por runner (sin mejora consistente demostrable).
+- Cinco plataformas con medianas archivadas para reloj/paso de simulación, recorrido mutable y búsquedas lineales (tabla del README).
 - Lo que NO existe: profiling con workload representativo, medición de allocations/copias en hotpaths, cache misses, ni comparación emparejada de un cambio de producción. Los puntos 033/084/085/100/103/165/204 quedaron APLAZADO precisamente por esto y se retoman aquí como puntos 312–321.
 
 ## 3. Limitaciones v0.1 heredadas

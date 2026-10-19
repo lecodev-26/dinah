@@ -23,7 +23,7 @@ First tagged release. This is the v0.1 milestone: the supported surface is froze
 - Public documentation now has a guided index and more precise descriptions of implemented networking, native ABI smoke-test, simulation-model, and example scope.
 - The Memory example index entry now describes the bounded `Buffer<T>` behavior it actually demonstrates instead of claiming that it demonstrates `SoaBuffer`.
 - README snapshot dates and the Networking benchmark checklist evidence were refreshed against the current repository state.
-- Package metadata for crates.io: verified MSRV (`rust-version = 1.95`, required by `AtomicU64::try_update` and the `wide` benchmark dev-dependency), README, keywords, categories, and repository-only files excluded from the published archive.
+- Package metadata for crates.io: verified MSRV (`rust-version = "1.95"`, required by `AtomicU64::try_update` in the library; the `wide` benchmark dev-dependency would only require 1.89 and is not shipped), README, keywords, categories, and repository-only files excluded from the published archive.
 - The v0.1 public API surface and architecture boundaries are frozen and documented in `docs/public-api-review.md` and `docs/integration-matrix.md`.
 
 ### Release verification (v0.1.0)
@@ -44,9 +44,7 @@ Evidence recorded on the release commit before tagging:
 
 ## Unreleased
 
-### Added
-
-- Initial release-readiness checklist documenting the evidence required before publishing `v0.1.0`.
+No changes recorded yet for the v0.2 cycle; new work will be documented here and moved to a dated `[0.2.0]` section at release time. See `roadmap2.md` and `puntos2.md` for the planned scope.
 
 ### Validation policy
 
