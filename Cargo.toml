@@ -2,9 +2,25 @@
 name = "dinah"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.95"
 description = "Rust-first modular runtime and high-performance compute foundation"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/lecodev-26/dinah"
+readme = "README.md"
+keywords = ["runtime", "ecs", "scheduler", "simulation", "concurrency"]
+categories = ["concurrency", "data-structures", "simulation"]
+
+# Repository-only assets that must not ship inside the published crate.
+exclude = [
+    ".github",
+    "artifacts",
+    "assets",
+    "scripts",
+    "puntos.md",
+    "puntos2.md",
+    "roadmap.md",
+    "roadmap2.md",
+]
 
 [lib]
 path = "src/lib.rs"

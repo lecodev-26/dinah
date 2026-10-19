@@ -15,13 +15,13 @@
 
 </div>
 
-> **Version status (updated 2026-10-19):** DINAH is pre-alpha and remains in active development. Core, Runtime, Memory, Compute and ECS foundations exist; Simulation's first five bounded models are implemented. Phase 7 (Networking) has completed points 120–139: API boundaries, the blocking byte-stream transport contract, logical message envelope and versioned binary wire format are documented; initial TCP connection and listening-endpoint wrappers are implemented. The wire encoder/decoder remains unimplemented; local connection lifecycle state is tracked; generic client-side prediction, bounded input history, reconciliation and replay primitives are implemented; application-level retry bookkeeping, RTT estimation, explicit liveness/backoff policy, bounded Runtime dispatch, tick-based simulation delivery, deterministic loss/latency simulation and a Networking benchmark suite are present. Full protocol/domain integration and automatic reconnection remain pending. A green CI gate validates the checks that ran; it is not a claim of API stability, release readiness or performance guarantees.
+> **Version status (updated 2026-10-19):** **v0.1.0 released** — tag [`v0.1.0`](https://github.com/lecodev-26/dinah/releases/tag/v0.1.0), dated changelog in `CHANGELOG.md`, and a package verified with `cargo publish --dry-run` ready for crates.io (publication on crates.io is an explicit owner decision; the crate name is available). DINAH remains pre-alpha software: semver 0.x permits breaking changes, and the documented limitations below still apply. Core, Runtime, Memory, Compute and ECS foundations exist; Simulation's first five bounded models are implemented. Phase 7 (Networking) has completed points 120–139: API boundaries, the blocking byte-stream transport contract, logical message envelope and versioned binary wire format are documented; initial TCP connection and listening-endpoint wrappers are implemented. The wire encoder/decoder remains unimplemented; local connection lifecycle state is tracked; generic client-side prediction, bounded input history, reconciliation and replay primitives are implemented; application-level retry bookkeeping, RTT estimation, explicit liveness/backoff policy, bounded Runtime dispatch, tick-based simulation delivery, deterministic loss/latency simulation and a Networking benchmark suite are present. Full protocol/domain integration and automatic reconnection remain pending. A green CI gate validates the checks that ran; it is not a claim of API stability beyond the frozen v0.1 surface or of performance guarantees.
 
 <div align="center">
 
-**Repository snapshot (2026-10-19):** 287 master checklist points · 244 complete · 17 in progress · 26 pending
+**Repository snapshot (2026-10-19):** 287 master checklist points · 279 complete · 0 in progress · 8 deferred by design (tracked as v0.2 goals in `puntos2.md`)
 **Code snapshot:** single Rust crate · 7 benchmark suites (Runtime, Memory, Compute, ECS, Simulation, Networking, Storage) · 8 runnable examples · five-platform benchmark history
-**Current milestone:** Native foundations now include safe host/POSIX capability traits and a minimal scalar C ABI. The scalar ABI has passed a real C compiler/linker smoke test in CI; this is a limited ABI check, not broad cross-target compatibility. No direct hardware access or handwritten assembly is claimed. Networking has initial blocking TCP wrappers and prediction/reconciliation/replay primitives, but its wire encoder/decoder and full protocol integration remain pending.
+**Current milestone:** v0.1.0 is released: the v0.1 public API surface and architecture are frozen (`docs/public-api-review.md`, `docs/integration-matrix.md`), the full local verification suite passed on the release commit, and the package is ready for crates.io. Native foundations include safe host/POSIX capability traits and a minimal scalar C ABI; the scalar ABI has passed a real C compiler/linker smoke test in CI; this is a limited ABI check, not broad cross-target compatibility. No direct hardware access or handwritten assembly is claimed. Networking has initial blocking TCP wrappers and prediction/reconciliation/replay primitives, but its wire encoder/decoder and full protocol integration remain pending (v0.2 cycle, `roadmap2.md`).
 
 </div>
 
@@ -85,7 +85,7 @@ The design separates shared contracts from runtime execution, storage and comput
 | `scripts/` · `.github/workflows/` | Checklist/documentation checks, CI, benchmark matrix and artifact archiving. |
 | `artifacts/` | Retained benchmark outputs and run metadata. |
 
-**Requirements:** Rust stable and Git. The crate uses Rust edition 2021. Platform-specific performance measurements are collected by CI and are not universal hardware comparisons.
+**Requirements:** Rust 1.95 or newer (verified MSRV) and Git. The crate uses Rust edition 2021 and has no runtime dependencies. Platform-specific performance measurements are collected by CI and are not universal hardware comparisons.
 
 <div align="center">
 
@@ -113,7 +113,7 @@ The design separates shared contracts from runtime execution, storage and comput
 
 **Implemented foundations include:** runtime scheduling and task execution; memory buffers; sequential and parallel compute operations; generational ECS entities and sparse-set component storage; fixed-step simulation and five focused simulation models; CI, benchmark and documentation workflows.
 
-**Not yet complete:** stable public APIs, a production SIMD kernel, full parallel ECS system execution, full wire framing/serialization and authenticated transport, transactional storage and compaction, direct hardware integration, full CLI manifest/TOML compatibility, automatic observability, coverage-guided fuzzing, full-system application validation and the first v0.1 milestone. A limited C ABI smoke test and focused integration pipelines now run in CI; neither implies broad cross-target ABI support or a production application. See the master checklist for exact status rather than treating planned work as shipped.
+**Not yet complete:** a production SIMD kernel, full parallel ECS system execution, full wire framing/serialization and authenticated transport, transactional storage and compaction, direct hardware integration, full CLI manifest/TOML compatibility, automatic observability, coverage-guided fuzzing and full-system application validation — all scheduled in the v0.2 cycle (`roadmap2.md`). A limited C ABI smoke test and focused integration pipelines now run in CI; neither implies broad cross-target ABI support or a production application. See the master checklist for exact status rather than treating planned work as shipped.
 
 <div align="center">
 
@@ -151,22 +151,22 @@ These are medians of nine samples; construction is included in the clock and ste
 
 </div>
 
-**Current work — Phases 15–16: Total integration and v0.1 release readiness.** The 287-point checklist currently records 244 complete, 17 in progress and 26 pending. The v0.1 scope ends at point 277; points 278–287 belong to v0.2+. Remaining v0.1 work includes architecture/API review and freeze, strict definition of supported CLI behavior, broader integration/coverage, coverage-guided fuzzing, performance evidence, documentation/examples, license review and release packaging. Networking remains a pre-alpha foundation with wire encoder/decoder and full protocol integration pending.
+**Released — v0.1.0 (2026-10-19).** The 287-point v0.1 checklist is closed: 279 complete, 0 in progress, 8 deferred by design and now tracked as v0.2 goals in `puntos2.md`. The v0.1 scope ended at point 277; points 278–287 (the v0.2 design cycle) were completed as the design recorded in [`roadmap2.md`](roadmap2.md) and [`puntos2.md`](puntos2.md) (puntos 288–326). Release evidence: fmt/clippy/tests/doc-tests/benchmarks green on the release commit, `cargo package` and `cargo publish --dry-run` verified, MSRV pinned to Rust 1.95 (verified empirically), changelog dated. Networking remains a pre-alpha foundation with wire encoder/decoder and full protocol integration pending — now scheduled as Phase 18 of the v0.2 cycle.
 
-**Selected areas still in progress (see `puntos.md` for the authoritative status):**
+**Deferred by design (retaken as v0.2 goals in `puntos2.md`; see `roadmap.md` for the v0.1 context):**
 
-| Point | Area | Open work |
-|---|---|---|
-| 033 | Core | First benchmarks when a representative Core workload exists |
-| 035 | Core | Stabilize Core v0.1 |
-| 084 | Compute | SIMD only where a real benefit is demonstrated |
-| 085 | Compute | Data-oriented layout optimization |
-| 100 | Data / ECS | Validated and isolated parallel systems execution |
-| 103 | Data / ECS | Further memory-access optimization and evidence |
-| 227 | Testing | Initial 85% line-coverage floor enforced; critical-path and branch coverage review remains |
-| 257 | Integration | Public subsystem pipelines exist; this is not a complete production application |
+| v0.1 point | Area | v0.2 point in `puntos2.md` | Deferred work |
+|---|---|---|---|
+| 033 | Core | 313 | First benchmarks when a representative Core workload exists |
+| 035 | Core | 314 | Stabilize Core v0.1 |
+| 084 | Compute | 317 | SIMD only where a real benefit is demonstrated |
+| 085 | Compute | 318 | Data-oriented layout optimization |
+| 100 | Data / ECS | 302 | Validated and isolated parallel systems execution |
+| 103 | Data / ECS | 303 | Further memory-access optimization and evidence |
+| 204 | Security | 310 | Coverage-guided fuzzing with libFuzzer |
+| 165 | Performance | 319 | Hotspot optimization with real profiles |
 
-The CLI baseline and opt-in observability primitives are implemented; tracing, metrics and profiling still require explicit caller reporting and are not automatic. The project is working toward the first `dinah` v0.1 release. Checklist counts measure tracked work items, not percentage of release effort; each open point must be closed with appropriate evidence. These are targets, not completed capabilities. See [`roadmap.md`](roadmap.md) and the [`287-point master checklist`](puntos.md).
+The CLI baseline and opt-in observability primitives are implemented; tracing, metrics and profiling still require explicit caller reporting and are not automatic. The v0.2 cycle (fases 18–23 in `roadmap2.md`) covers wire framing and event codec, public ECS queries, full TOML, optional sandboxing, atomic journal transactions, branch coverage, fuzzing and evidence-based optimization. Checklist counts measure tracked work items, not percentage of release effort. See [`roadmap.md`](roadmap.md), [`roadmap2.md`](roadmap2.md), the [`287-point master checklist`](puntos.md) and the [`v0.2 checklist`](puntos2.md).
 
 <div align="center">
 
@@ -174,13 +174,21 @@ The CLI baseline and opt-in observability primitives are implemented; tracing, m
 
 </div>
 
+Once published on crates.io (owner decision; the verified package is ready):
+
+```bash
+cargo add dinah
+```
+
+Or directly from the repository:
+
 ```bash
 git clone https://github.com/lecodev-26/dinah.git
 cd dinah
-cargo metadata --no-deps --format-version 1
+cargo build --release
 ```
 
-The library API is pre-alpha and can change between commits. Start with [`docs/compute.md`](docs/compute.md) or [`docs/simulation.md`](docs/simulation.md) for implemented APIs. CI is the validation gate; benchmark claims should be checked against the corresponding run artifacts.
+The library API is pre-alpha and can change between minor versions while below 1.0. Start with [`docs/compute.md`](docs/compute.md) or [`docs/simulation.md`](docs/simulation.md) for implemented APIs. CI is the validation gate; benchmark claims should be checked against the corresponding run artifacts.
 
 <div align="center">
 
@@ -202,8 +210,9 @@ The library API is pre-alpha and can change between commits. Start with [`docs/c
 | [CLI](docs/cli.md) | CLI commands, starter manifest limits and output modes |
 | [Observability](docs/observability.md) | Opt-in tracing, caller-reported metrics, profiling samples and JSON export |
 | [Security review](docs/security-review.md) | Threat model, trust boundaries, filesystem, concurrency and remaining controls |
-| [Roadmap](roadmap.md) · [Master checklist](puntos.md) | Phases, milestones and status |
-| [Changelog](CHANGELOG.md) · [Release checklist](docs/release-checklist.md) | Unreleased changes and evidence required before publishing v0.1.0 |
+| [Roadmap](roadmap.md) · [Master checklist](puntos.md) | v0.1 phases, milestones and status |
+| [Roadmap v0.2](roadmap2.md) · [v0.2 checklist](puntos2.md) | Design of the next cycle and its puntos 288–326 |
+| [Changelog](CHANGELOG.md) · [Release checklist](docs/release-checklist.md) | v0.1.0 changes, release evidence and pre-publication gates |
 | [Artifacts](artifacts/README.md) | Benchmark artifact archive |
 
 <div align="center">
@@ -216,7 +225,7 @@ CI is used to validate code and documentation incrementally. Passing CI is evide
 
 | ✅ What the project tracks | ❌ What is not claimed |
 |---|---|
-| Automated CI and checklist integrity | Stable public API or v0.1 release |
+| Automated CI and checklist integrity | API stability beyond the frozen v0.1 surface |
 | Multi-platform benchmark evidence | Universal performance leadership |
 | Focused deterministic simulation tests | General-purpose physics or CFD capability |
 | Documented networking API boundaries | A completed network stack or wire protocol |

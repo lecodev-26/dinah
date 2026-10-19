@@ -56,3 +56,14 @@ This pass compared the root exports and representative public signatures in `src
 - [ ] Review final generated rustdoc and package contents on the exact release candidate commit.
 
 This review advances roadmap point 261 but deliberately leaves it open: the supported v0.1 surface and compatibility policy have not yet been approved, and architecture point 262 remains a separate review.
+
+## v0.1 freeze decision (2026-10-19)
+
+The v0.1 public API surface is frozen on the v0.1.0 release commit. Decisions recorded:
+
+1. **Supported surface.** The ten modules inventoried above (Runtime, ECS, Memory, Compute, Network, Storage, Native FFI, observability, simulation models, and the dinah CLI with starter manifest subset) are the supported v0.1 contract. The inventory of signatures and limits in this document is the authoritative list.
+2. **Compatibility policy.** SemVer 2.0 within 0.x: breaking changes bump the minor version and must be listed in the v0.2 migration guide (punto 306 of `puntos2.md`). No API is removed without a deprecation note in `CHANGELOG.md` for at least one minor release.
+3. **Explicit exclusions from the v0.1 contract** (documented limitations, not promises): ECS component queries and parallel systems (metadatos + scheduler determinista only), network wire framing/auth/event codec (reliable TCP + simulator only), full TOML parsing in the CLI (starter subset only), task sandboxing (opt-in explicit execution, unsandboxed), and branch coverage/fuzzing guarantees (line coverage ≥85 % in CI only).
+4. **Known sharp edges kept for v0.1** (from the review above): nested scheduler result values, panic/partial-mutation semantics on system errors, borrowed ownership patterns, public-field structs, and the ECS `expect` tied to `TypeId` — all documented here and stable until v0.2 revisits them.
+5. **MSRV.** `rust-version = "1.95"`, verified empirically: the workspace fails to compile on Rust 1.94 and passes all tests on Rust 1.95 (`AtomicU64::try_update` is the binding feature).
+6. The v0.2 design that may evolve this surface lives in `roadmap2.md` with its checklist in `puntos2.md` (puntos 288+).

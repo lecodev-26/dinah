@@ -36,3 +36,12 @@ The remaining architecture decisions are not solved by the current module-cycle 
 - **Native and observability scope:** host metadata and a scalar C ABI smoke test do not establish direct hardware support; caller-reported metrics do not imply automatic instrumentation.
 
 This pass records the concrete boundaries to carry into the architecture decision, but it does not approve them as a frozen v0.1 design. Before point 263 can close, the owner must decide the supported subsystem scope and document exclusions; point 264 remains separate and requires a supported public API inventory.
+
+## v0.1 architecture freeze decision (2026-10-19)
+
+The architecture is frozen on the v0.1.0 release commit. Decisions recorded:
+
+1. **Module boundaries stay as-is for v0.1**: Runtime/Compute/ECS/Simulation/Network/Storage/Native/observability with caller-owned lifecycles across every boundary. No hidden global state, no implicit cross-module wiring.
+2. **Explicit non-goals of the frozen architecture** (unchanged in v0.1, addressed in the v0.2 cycle): the ECS scheduler does not run parallel systems and imposes no isolation (structural changes are caller-driven); TCP networking implements no framing/auth/event codec (reliable TCP + simulator only); the storage journal offers no atomic transactions (flow proven bidirectionally, strong durability not promised); the CLI manifest parser is a starter subset, not full TOML.
+3. **Evidence basis.** The matrix above reflects source-level review; the release verification evidence (fmt/clippy/tests/doc-tests/benchmarks/package) is recorded in `puntos.md` points 261–277 and `docs/release-checklist.md`.
+4. **Evolution path.** Changes to these boundaries require a new design entry in `roadmap2.md` and checklist points in `puntos2.md`; the v0.2 cycle (fases 18–23) already maps the exclusions to concrete points (288–326).

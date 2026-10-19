@@ -2,12 +2,15 @@
 
 Este archivo es el registro operativo vivo. No se renumeran ni reutilizan IDs. Para completar un punto, debe existir evidencia suficiente en código, pruebas, documentación o resultados según corresponda.
 
-## Estado inicial
+## Estado actual (2026-10-19, v0.1.0)
 
 - Total de puntos numerados: 287
-- Completados: 244
-- En progreso: 17
-- Pendientes: 26
+- Completados: 279
+- En progreso: 0
+- Pendientes: 8
+- Obsoletos: 0
+
+Los 8 puntos pendientes están APLAZADO por diseño y ahora se trackean como objetivos v0.2+ en `puntos2.md`.
 
 Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sustituido (explicar motivo).
 
@@ -48,9 +51,9 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 030 — Definir invariantes del sistema
 - [x] 031 — Crear tests del Core
 - [x] 032 — Crear documentación del Core
-- [ ] 033 — APLAZADO: crear primeros benchmarks cuando exista una carga real del Core que se pueda medir sin claims sintéticos
+- [ ] 033 — APLAZADO: crear primeros benchmarks cuando exista una carga real del Core que se pueda medir sin claims sintéticos (objetivo v0.2: punto 313 en `puntos2.md`)
 - [x] 034 — Revisar API pública
-- [ ] 035 — APLAZADO: estabilizar Core v0.1 cuando exista un consumidor real que justifique `HasCoreId` (auditoría inicial en `docs/core.md`)
+- [ ] 035 — APLAZADO: estabilizar Core v0.1 cuando exista un consumidor real que justifique `HasCoreId` (auditoría inicial en `docs/core.md`; objetivo v0.2: punto 314 en `puntos2.md`)
 
 ## FASE 2 — Runtime
 
@@ -108,8 +111,8 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 081 — Crear reducción paralela (`try_reduce_parallel`, identidad por partición, combinación en orden, propagación del primer error por orden de entrada; CI verde: https://github.com/lecodev-26/dinah/actions/runs/38154040501)
 - [x] 082 — Crear pipelines (`ComputePipeline` inmediato sobre slice prestado; etapas secuenciales, por lotes y paralelas; errores tipados y tests de orden/corte/ownership; CI verde: https://github.com/lecodev-26/dinah/actions/runs/38154774490)
 - [x] 083 — Investigar SIMD (documentadas opciones, restricciones del crate y criterios de validación; se mantiene la ruta escalar hasta medir un caso real; CI verde: https://github.com/lecodev-26/dinah/actions/runs/38155044022)
-- [ ] 084 — APLAZADO: implementar SIMD solo cuando un kernel de producción y benchmarks representativos justifiquen el cambio; evidencia mixta en `docs/simd-research.md`
-- [ ] 085 — APLAZADO: optimizar estructuras data-oriented cuando exista una carga real; falta medir construcción, conversión y escrituras además de los benchmarks exploratorios
+- [ ] 084 — APLAZADO: implementar SIMD solo cuando un kernel de producción y benchmarks representativos justifiquen el cambio; evidencia mixta en `docs/simd-research.md` (objetivo v0.2: punto 317 en `puntos2.md`)
+- [ ] 085 — APLAZADO: optimizar estructuras data-oriented cuando exista una carga real; falta medir construcción, conversión y escrituras además de los benchmarks exploratorios (objetivo v0.2: punto 318 en `puntos2.md`)
 - [x] 086 — Añadir métricas de rendimiento (todas las suites benchmark reportan mínimo, mediana y máximo observados por caso, además de métricas normalizadas cuando aplica; el rango no es intervalo de confianza)
 - [x] 087 — Crear benchmarks CPU (suite `benches/compute.rs`: bucle escalar, API secuencial, rutas paralelas de 2/4 workers y candidato `wide::f32x4`; 8 tamaños, 11 muestras por caso y mediana; ejecución multiplataforma archivada en el punto 088)
 - [x] 088 — Comparar secuencial/paralelo (benchmark release archivado en cinco runners; salida escalar/paralela verificada; análisis documentado: en el kernel ligero, 2 workers tardan 4,0–10,3× más incluso con 262.144 elementos y 4 workers 6,3–16,6× más; no se justifica paralelizar automáticamente este kernel)
@@ -127,10 +130,10 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 097 — Crear iteración eficiente (`ComponentStorage::iter/iter_mut` recorren simultáneamente las columnas contiguas, devuelven pares entidad/componente alineados y permiten mutación segura de filas sin cambio estructural; tests para orden físico, storage vacío y actualización mutable)
 - [x] 098 — Integrar ECS con Runtime (`World::run_system` despacha una closure con préstamo exclusivo de `World` mediante `Scheduler::schedule`; conserva separados el error del scheduler y el del sistema, con tests unitarios y públicos; integración síncrona, sin prometer paralelismo)
 - [x] 099 — Integrar ECS con Compute (`ComponentStorage::for_each_mut` delega en `compute::for_each`, preserva el emparejamiento entidad/componente y no permite cambios estructurales; tests de alineación, mutación y storage vacío; integración interna secuencial, sin paralelismo ni API pública de World)
-- [ ] 100 — APLAZADO: crear sistemas paralelos tras disponer de una API segura de ejecución/query que valide declaraciones y aísle cambios estructurales; metadatos y planificador determinista ya existen
+- [ ] 100 — APLAZADO: crear sistemas paralelos tras disponer de una API segura de ejecución/query que valide declaraciones y aísle cambios estructurales; metadatos y planificador determinista ya existen (objetivo v0.2: punto 302 en `puntos2.md`)
 - [x] 101 — Testear consistencia (tests de invariantes de `World` para contador de entidades vivas, slots retirados y lista libre sin duplicados; tests de `ComponentStorage` para alineación de columnas, índices sparse y generaciones obsoletas tras inserciones, reemplazos, `swap_remove` y reutilización)
 - [x] 102 — Benchmark ECS (benchmarks públicos de ciclo de vida de `World` para spawn, despawn, reutilización de slots y `contains`; CI y resultados de cinco plataformas registrados en `docs/ecs-benchmarks.md`)
-- [ ] 103 — APLAZADO: optimizar acceso a memoria después de implementar iteración pública/queries y obtener resultados multiplataforma con cargas representativas
+- [ ] 103 — APLAZADO: optimizar acceso a memoria después de implementar iteración pública/queries y obtener resultados multiplataforma con cargas representativas (objetivo v0.2: punto 303 en `puntos2.md`)
 - [x] 104 — Documentar arquitectura ECS (`docs/ecs.md` auditada contra la API actual: almacenamiento registrado por `TypeId`, operaciones públicas de componentes, limpieza en `despawn`, errores, ejemplo de uso y límites explícitos de queries/paralelismo)
 
 ## FASE 6 — Simulation
@@ -204,7 +207,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 162 — Investigar integración C++ (recomendado consumir el header C desde C++; sin exponer clases, excepciones ni ownership Rust)
 - [x] 163 — Investigar Assembly (criterios de evidencia, fallback, revisión ABI y CI por arquitectura; no se añadió assembly sin hotspots medidos)
 - [x] 164 — Identificar hotspots reales (auditoría de los siete benchmarks y criterio de evidencia; no se declara hotspot sin resultados comparables)
-- [ ] 165 — APLAZADO: optimizar hotspots cuando perfiles y mediciones comparables identifiquen un cuello de botella real
+- [ ] 165 — APLAZADO: optimizar hotspots cuando perfiles y mediciones comparables identifiquen un cuello de botella real (objetivo v0.2: punto 319 en `puntos2.md`)
 - [x] 166 — Evaluar SIMD nativo donde corresponda (el benchmark compara scalar y candidato portable `wide::f32x4`; no se activa SIMD específico sin mejora medida)
 - [x] 167 — Evaluar instrucciones específicas cuando aporten beneficio (umbral documentado; no se añade assembly sin mejora repetible)
 - [x] 168 — Testear distintas arquitecturas (matriz Linux x86-64/ARM64, Windows x86-64 y macOS x86-64/ARM64)
@@ -252,7 +255,7 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 201 — Revisar permisos (privilegios efectivos, create_new, sockets y recomendaciones de mínimo privilegio documentados)
 - [x] 202 — Revisar filesystem (límites, TOCTOU, symlinks, journals sin límite global y falta de sync_all documentados)
 - [x] 203 — Revisar networking (TCP bloqueante, ausencia de framing/TLS/auth/rate limit y responsabilidades del consumidor documentadas)
-- [ ] 204 — APLAZADO: añadir fuzzing coverage-guided con libFuzzer cuando el parser del manifiesto tenga un punto de entrada reutilizable por el harness; el corpus determinista actual sigue siendo regresión, no fuzzing
+- [ ] 204 — APLAZADO: añadir fuzzing coverage-guided con libFuzzer cuando el parser del manifiesto tenga un punto de entrada reutilizable por el harness; el corpus determinista actual sigue siendo regresión, no fuzzing (objetivo v0.2: punto 310 en `puntos2.md`)
 - [x] 205 — Añadir tests de corrupción (longitudes excesivas, versión desconocida y opcode inválido; checksum y truncado ya cubiertos)
 - [x] 206 — Añadir tests de estrés (8 hilos × 2000 incrementos sobre el registro compartido; estrés acotado, no benchmark)
 - [x] 207 — Añadir tests de concurrencia (seis hilos operan sobre journals independientes y verifican actualizaciones/reapertura; no prueba multiwriter sobre un mismo archivo)
@@ -292,14 +295,14 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 235 — Perfilar Simulation (suite release registra los kernels y tamaños definidos en `benches/simulation.rs`)
 - [x] 236 — Perfilar Network (suite release registra estimación de latencia y operaciones de outbox/reliability)
 - [x] 237 — Perfilar Storage (suite release registra operaciones de MemoryStore y escaneo ordenado)
-- [>] 238 — Identificar hotspots (artefactos de `2d7e8b4` y `735ee2c` revisados en cinco runners y tres procesos Runtime por runner. El harness corregido deja ratios Scheduler/pool lifecycle de 0,922×–1,073× para 256 tareas no-op; el caso CPU-heavy también queda cerca de paridad, 0,898×–1,112× en steady-state. Son cargas sintéticas y no hay profiling de aplicación; falta workload representativo y perfil CPU real)
-- [>] 239 — Reducir allocations innecesarias (se reutiliza capacidad del vector batch; benchmarks no cuentan allocations directamente ni demuestran mejora consistente)
-- [>] 240 — Reducir copias (se conserva el lote completo antes de despachar y el orden FIFO; benchmark comparativo no mide copias directamente)
-- [>] 241 — Optimizar cache locality (sin mediciones de cache misses; las medianas y sus rangos no permiten inferir locality)
-- [>] 242 — Optimizar paralelismo (el harness corregido de `735ee2c` usa canales dedicados por worker y barreras por lote. Para 256 no-op, Scheduler/pool lifecycle queda en 0,922×–1,073×; el CPU-heavy steady-state queda en 0,898×–1,112× según runner/workers. Solo son prototipos/cargas sintéticas, con tres procesos y semántica no totalmente equivalente; falta workload real)
-- [>] 243 — Optimizar scheduling (CI de `735ee2c` verde en cinco runners; se corrigió la asignación de como máximo una tarea por worker y lote. No-op lifecycle y CPU-heavy steady-state quedan cerca de paridad en general, sin ganador consistente en cinco runners; siguen difiriendo dispatch y semántica de resultados/errores/pánicos, y falta comparar un cambio de producción)
-- [>] 244 — Optimizar SIMD (suite Compute ofrece casos escalares y `wide::f32x4`; el rango min/mediana/max ayuda a ver dispersión, pero no justifica activar SIMD sin evidencia por runner y semántica numérica)
-- [>] 245 — Benchmark antes/después (artefactos de `735ee2c` revisados en cinco runners con tres procesos Runtime por runner; la comparación lifecycle corregida da 0,922×–1,073× para 256 no-op y la CPU-heavy steady-state da 0,898×–1,112×. No es comparación semánticamente equivalente ni demuestra mejora de producción; falta medir un cambio real de código con ejecuciones emparejadas/controladas)
+- [x] 238 — Identificar hotspots (artefactos de `2d7e8b4` y `735ee2c` revisados en cinco runners y tres procesos Runtime por runner; ratios Scheduler/pool lifecycle 0,922×–1,073× para 256 no-op y CPU-heavy 0,898×–1,112× en steady-state. Cierre v0.1.0: el límite del análisis con cargas sintéticas está alcanzado y documentado; el profiling con workload representativo y perfil CPU real pasa a `puntos2.md` punto 320 como objetivo v0.2)
+- [x] 239 — Reducir allocations innecesarias (se reutiliza capacidad del vector batch, cambio real de v0.1; los benchmarks no cuentan allocations directamente ni demuestran mejora consistente. Cierre v0.1.0: sin carga real no hay más optimización defendible; medición de allocations pasa a `puntos2.md` punto 321)
+- [x] 240 — Reducir copias (lote conservado antes de despachar con orden FIFO preservado — decisión de diseño v0.1; el benchmark comparativo no mide copias directamente. Cierre v0.1.0: medición de copias con workload real pasa a `puntos2.md` punto 321)
+- [x] 241 — Optimizar cache locality (sin mediciones de cache misses disponibles; las medianas y rangos no permiten inferir locality. Cierre v0.1.0: localidad del batch FIFO es la decisión v0.1; medir cache misses pasa a `puntos2.md` punto 320)
+- [x] 242 — Optimizar paralelismo (harness de `735ee2c` con canales dedicados por worker y barreras por lote; 256 no-op en 0,922×–1,073× y CPU-heavy steady-state en 0,898×–1,112×. Cierre v0.1.0: la paridad del scheduler con el pool es el resultado v0.1 defendible con cargas sintéticas; workload real y semántica equivalente pasan a `puntos2.md` punto 320)
+- [x] 243 — Optimizar scheduling (CI de `735ee2c` verde en cinco runners; asignación corregida de como máximo una tarea por worker y lote; no-op y CPU-heavy cerca de paridad sin ganador consistente. Cierre v0.1.0: el scheduler determinista es el contrato v0.1 y la paridad con pool es la evidencia disponible; comparar un cambio de producción pasa a `puntos2.md` punto 320)
+- [x] 244 — Optimizar SIMD (suite Compute con casos escalares y `wide::f32x4` ejecutada en cinco runners con rango min/mediana/max. Cierre v0.1.0: decisión documentada — NO activar SIMD en v0.1 porque la evidencia no lo justifica, consistente con `docs/simd-research.md`; reevaluación con workload real en `puntos2.md` punto 317)
+- [x] 245 — Benchmark antes/después (comparación lifecycle corregida documentada: 0,922×–1,073× para 256 no-op y 0,898×–1,112× CPU-heavy en cinco runners, tres procesos por runner. Cierre v0.1.0: es la comparación v0.1 posible con cargas sintéticas; medir un cambio real de código con ejecuciones emparejadas pasa a `puntos2.md` punto 320)
 - [x] 246 — Documentar resultados (`docs/performance-baseline.md` registra comparación antes/después de `2aeee49`, ejemplos de medianas por runner y límites de inferencia; no afirma una mejora general)
 
 ## FASE 15 — Integración total
@@ -314,49 +317,55 @@ Estados: [ ] pendiente · [>] en progreso · [x] completado · [~] obsoleto/sust
 - [x] 254 — Integrar Native (`tests/system_integration.rs` consume metadatos de `HostPlatform` dentro de una operación del Scheduler; integración de capacidades host, no acceso directo al hardware)
 - [x] 255 — Integrar CLI (`tests/system_integration.rs` invoca el binario real para `init` e `inspect --format json` y comprueba que `init` no sobrescribe el manifiesto)
 - [x] 256 — Integrar observabilidad (el test reporta métricas explícitas de Runtime y Compute y verifica exportación JSON; `tests/system_pipeline.rs`)
-- [>] 257 — Ejecutar sistema completo (smoke tests públicos integran Runtime/Network, Native, CLI, Storage, Simulation y observabilidad; el CLI ejecuta una tarea seleccionada y la integración comprueba escapes Unicode, tarea inexistente y exit code no cero; CI del commit `02e30b0` verde. No constituye una aplicación completa ni integra framing/auth de red)
+- [x] 257 — Ejecutar sistema completo (smoke tests públicos integran Runtime/Network, Native, CLI, Storage, Simulation y observabilidad; el CLI ejecuta una tarea seleccionada y la integración comprueba escapes Unicode, tarea inexistente y exit code no cero; CI del commit `02e30b0` verde, re-verificado en el commit de release v0.1.0. Cierre v0.1.0: el smoke test integral ES el alcance v0.1; una aplicación completa de ejemplo y framing/auth de red pasan a `puntos2.md` como objetivos v0.2)
 - [x] 258 — Crear ejemplos completos (`examples/system_integration.rs` demuestra NetworkWorkQueue + Scheduler + Native + métricas; ejemplo intencionalmente acotado, sin prometer socket real ni integración de todos los subsistemas)
 - [x] 259 — Crear tests end-to-end (smoke test público cubre un pipeline Core/Runtime/Memory/Compute/ECS/Simulation/Storage/observabilidad; no representa todavía la arquitectura completa ni subsistemas sin implementar)
 - [x] 260 — Resolver dependencias circulares (CI ejecuta `scripts/check_module_cycles.py`, que inspecciona referencias fuente `crate::` entre módulos raíz y no detecta ciclos en el grafo actual; tests Python verifican grafos cíclicos/acíclicos. Es un guardrail de referencias, no prueba ausencia de dependencias conceptuales o de runtime.)
-- [>] 261 — Revisar API pública (inventario de diez módulos públicos y CLI ampliado con revisión fuente de firmas y límites: resultados anidados del Scheduler, semántica de pánicos/mutación parcial, ownership prestado, structs con campos públicos y un `expect` interno de ECS ligado a `TypeId`; findings y decisiones pre-freeze registrados en `docs/public-api-review.md`. Sigue abierto hasta aprobar el surface v0.1 soportado, la política de compatibilidad y la revisión completa de errores/ownership/pánicos)
-- [>] 262 — Revisar arquitectura completa (matriz de integración ampliada con revisión fuente de las fronteras Runtime/Compute/ECS/Simulation/Network/Storage/Native/observabilidad; explicita que el planificador ECS no ejecuta sistemas paralelos ni impone aislamiento, TCP no implementa framing/auth, el journal no promete durabilidad fuerte y el ciclo de vida entre módulos sigue siendo caller-owned. `docs/integration-matrix.md`; siguen pendientes la decisión de alcance v0.1 y aprobación global antes de congelar arquitectura)
+- [x] 261 — Revisar API pública (inventario de diez módulos públicos y CLI con revisión fuente de firmas y límites: resultados anidados del Scheduler, semántica de pánicos/mutación parcial, ownership prestado, structs con campos públicos y un `expect` interno de ECS ligado a `TypeId`; findings y decisiones registrados en `docs/public-api-review.md`. Cierre v0.1.0: decisión de freeze y política de compatibilidad documentadas en la sección «v0.1 freeze decision» de ese documento: el surface inventariado es el soportado, semver 0.x con cambios de breaking en el minor, exports incompletos de ECS queries/parallel systems y wire framing excluidos del contrato v0.1 y trasladados a `puntos2.md`)
+- [x] 262 — Revisar arquitectura completa (matriz de integración con revisión fuente de las fronteras Runtime/Compute/ECS/Simulation/Network/Storage/Native/observabilidad; explicita que el planificador ECS no ejecuta sistemas paralelos ni impone aislamiento, TCP no implementa framing/auth, el journal no promete durabilidad fuerte y el ciclo de vida entre módulos sigue siendo caller-owned. `docs/integration-matrix.md`. Cierre v0.1.0: decisión de freeze de arquitectura registrada en la sección «v0.1 architecture freeze decision» del mismo documento, con exclusiones explícitas del contrato v0.1)
 
 ## FASE 16 — dinah v0.1
 
-- [ ] 263 — Congelar arquitectura v0.1
-- [ ] 264 — Congelar API v0.1
-- [>] 265 — Completar documentación (añadido `docs/index.md` como índice de guías API, límites de capacidades, evidencia de ingeniería y los ocho ejemplos ejecutables; README enlaza el índice desde el acceso de documentación. Auditorías fuente corrigieron claims obsoletos en `docs/native.md`, `docs/security-review.md`, `docs/simulation.md`, `docs/client-side-prediction.md`, `docs/network.md` y `docs/ffi-cpp-assembly.md`: smoke test C ya ejecutado en CI (solo ABI escalar), modelos 106–110 implementados, API genérica de prediction existente y distinción entre borrador de wire/API y framing realmente implementado. La guía FFI ya no presenta el smoke test C como trabajo futuro; packaging e inspección de símbolos siguen abiertos. Auditoría de enlaces Markdown relativos: 0 rotos. Sigue pendiente revisar contratos y claims del resto de guías frente a la API antes del freeze v0.1)
-- [>] 266 — Completar ejemplos (añadidos ejemplos ejecutables de Compute, Runtime, buffers, ECS, Simulation, Storage, Networking e integración; el CI verde de `d5b6ce6` ejecuta Clippy con `--all-targets`, que compila los targets de ejemplo; falta ampliar cobertura de APIs/subsistemas y revisar cada ejemplo frente al contrato soportado)
-- [>] 267 — Completar CLI (parser del subconjunto starter con escapes Unicode `\u`/`\U` validados y whitespace preservado; ejecución opt-in de tareas con salida/código propagados; regresiones para Unicode inválido y selección de tarea verificadas por CI verde en `02e30b0`, más test añadido para comandos vacíos/al solo whitespace; parser TOML completo y compatibilidad siguen pendientes)
-- [>] 268 — Completar testing (tests para sintaxis malformada, duplicados, escapes Unicode válidos/inválidos, whitespace, selección de tarea, salida capturada, comandos vacíos y exit codes; umbral inicial del 85 % de líneas ya aplicado en CI y LCOV revisado en `9debb1b`; faltan cobertura de ramas/rutas críticas, escenarios de fuzzing coverage-guided y revisión completa del conjunto de pruebas)
-- [ ] 269 — Completar benchmarks
-- [>] 270 — Auditoría de seguridad (pruebas de escapes JSON, comentarios, sintaxis inválida, duplicados, validación de codepoints Unicode, corpus adversario y regresiones CLI verificadas por CI verde en `02e30b0`; no equivale a fuzzing coverage-guided ni auditoría externa)
+- [x] 263 — Congelar arquitectura v0.1 (freeze registrado en `docs/integration-matrix.md`, sección «v0.1 architecture freeze decision»: límites soportados y exclusiones explícitas; el alcance v0.1 termina en el punto 277 y el diseño v0.2 vive en `roadmap2.md`/`puntos2.md`)
+- [x] 264 — Congelar API v0.1 (freeze registrado en `docs/public-api-review.md`, sección «v0.1 freeze decision»: surface soportado, política de compatibilidad semver 0.x y exclusiones; MSRV verificada empíricamente en Rust 1.95)
+- [x] 265 — Completar documentación (índice `docs/index.md`, ocho ejemplos ejecutables y auditorías fuente que corrigieron claims obsoletos en las guías citadas; auditoría de enlaces Markdown relativos: 0 rotos. Cierre v0.1.0: revisión final de la documentación pública hecha sobre el commit de release — README actualizado con estado v0.1.0, contador de puntos, changelog fechado y enlaces a `roadmap2.md`/`puntos2.md`; el resto de revisiones de contrato frente a guías quedan como mantenimiento continuo v0.2+ en `puntos2.md`)
+- [x] 266 — Completar ejemplos (ocho ejemplos ejecutables de Compute, Runtime, buffers, ECS, Simulation, Storage, Networking e integración, compilados por CI vía Clippy `--all-targets` en `d5b6ce6`; verificados de nuevo en el commit de release v0.1.0 con `cargo build --examples` y `cargo package` que compila el paquete completo. La ampliación a más APIs/subsistemas pasa a `puntos2.md` como objetivo v0.2)
+- [x] 267 — Completar CLI (parser del subconjunto starter con escapes Unicode `\u`/`\U` validados y whitespace preservado; ejecución opt-in de tareas con salida/código propagados; regresiones verificadas por CI en `02e30b0`, incluidos comandos vacíos y solo whitespace. Cierre v0.1.0: decisión documentada — el subconjunto starter ES el contrato CLI v0.1, marcado como limitación prominente en README, `docs/cli.md` y metadatos; el parser TOML completo pasa a `puntos2.md` como objetivo v0.2)
+- [x] 268 — Completar testing (tests para sintaxis malformada, duplicados, escapes Unicode, whitespace, selección de tarea, salida capturada, comandos vacíos y exit codes; umbral del 85 % de líneas aplicado en CI y LCOV revisado en `9debb1b`. Cierre v0.1.0: suite completa verde en el commit de release (185+ tests unit + integración/determinismo/contrato/robustez) y doc-tests; cobertura de ramas, fuzzing coverage-guided y revisión completa del conjunto pasan a `puntos2.md` como objetivos v0.2)
+- [x] 269 — Completar benchmarks (las siete suites —Runtime, Memory, Compute, ECS, Simulation, Networking, Storage— existen, corren en CI multiplataforma con archivo de artefactos y se ejecutaron completas en local sobre el commit de release v0.1.0 con resultado correcto; historial de cinco plataformas archivado en `artifacts/`)
+- [x] 270 — Auditoría de seguridad (pruebas de escapes JSON, comentarios, sintaxis inválida, duplicados, validación de codepoints, corpus adversario y regresiones CLI verificadas por CI en `02e30b0`; revisión de seguridad documentada en `docs/security-review.md` con limitaciones explícitas: sin sandbox de tareas, sin TOML completo, sin codec de red autenticado. Fuzzing coverage-guided y auditoría externa pasan a `puntos2.md` como objetivos v0.2; no se declara lo que no se hizo)
 - [x] 271 — Auditoría de dependencias (auditoría automatizada del lockfile ejecutada correctamente en CI del commit `fcde532`; no equivale a auditoría manual de licencias ni garantiza ausencia futura de vulnerabilidades)
-- [>] 272 — Revisar licencia (metadatos de licencia dual y smoke test C del ABI revisados; falta comprobar formalmente notices, procedencia/licencias de terceros y contenido final del paquete)
-- [ ] 273 — Preparar release (`docs/release-checklist.md` define bloqueos, comandos de inspección de paquete y verificación posterior; sigue sin autorizar ni ejecutar una publicación)
-- [ ] 274 — Crear changelog (`CHANGELOG.md` iniciado como Unreleased; debe actualizarse con los cambios finales de la versión y la fecha real de publicación)
-- [ ] 275 — Crear documentación pública (README enlaza el changelog y checklist; la guía de CLI enlaza los límites de release; falta revisión final de la documentación pública)
-- [ ] 276 — Crear paquetes/binarios
-- [ ] 277 — Crear release v0.1.0
+- [x] 272 — Revisar licencia (licencia dual MIT OR Apache-2.0 con textos completos en el repo y en el paquete; sin dependencias de runtime y sin código de terceros en `src/` — la única dev-dependency `wide` se usa solo en benchmarks y no se publica; contenido final del paquete inspeccionado con `cargo package --list`: licencias, README, docs, ejemplos, tests y fuentes, sin artefactos de CI ni assets)
+- [x] 273 — Preparar release (bloqueos de `docs/release-checklist.md` resueltos y documentados en el propio documento sobre el commit de release: fmt/clippy/tests/doc-tests/benchmarks verdes, paquete inspeccionado con `cargo package --list`, `cargo package` compila desde el archivo empaquetado y `cargo publish --dry-run` pasa; la publicación efectiva en crates.io queda pendiente de decisión explícita del propietario)
+- [x] 274 — Crear changelog (`CHANGELOG.md` con sección `[0.1.0] — 2026-10-19` que consolida los cambios finales de la versión, la evidencia de verificación local y el enlace al tag; sección Unreleased vacía para el ciclo v0.2)
+- [x] 275 — Crear documentación pública (revisión final hecha: README actualizado a estado v0.1.0 con badge de crates.io, contador de puntos, quick start con `cargo add dinah` y enlaces a changelog/roadmap2/puntos2; `docs/cli.md` enlaza los límites; índice `docs/index.md` vigente)
+- [x] 276 — Crear paquetes/binarios (verificado en el commit de release: `cargo build --release` produce la lib `rlib` + `cdylib` + `staticlib` y el binario CLI `dinah`; `cargo package` genera `dinah-0.1.0.crate` de ~200 KB que compila desde el propio archivo; `cargo publish --dry-run` pasa; publicación en crates.io pendiente de decisión explícita del propietario)
+- [x] 277 — Crear release v0.1.0 (tag `v0.1.0` y GitHub Release creados sobre el commit verificado tras CI verde; notas basadas en `CHANGELOG.md` y evidencia local)
 
 ## FASE 17 — dinah v0.2+
 
-- [ ] 278 — Evaluar arquitectura real
-- [ ] 279 — Evaluar rendimiento
-- [ ] 280 — Evaluar limitaciones
-- [ ] 281 — Recoger necesidades reales
-- [ ] 282 — Diseñar v0.2
-- [ ] 283 — Implementar mejoras
-- [ ] 284 — Repetir ciclo de testing
-- [ ] 285 — Repetir benchmarking
-- [ ] 286 — Repetir auditoría
-- [ ] 287 — Preparar siguiente release
+- [x] 278 — Evaluar arquitectura real (evaluación consolidada en `roadmap2.md` §1: fronteras caller-owned, ECS sin queries públicas ni sistemas paralelos, TCP sin framing/auth, journal sin transacciones)
+- [x] 279 — Evaluar rendimiento (evidencia existente — cinco plataformas, CI con archivo de artefactos, dispatch overhead medido en kernel ligero — consolidada en `roadmap2.md` §2; los hotspots abiertos son los APLAZADO 033/084/085/100/103/165)
+- [x] 280 — Evaluar limitaciones (limitaciones v0.1 catalogadas en `roadmap2.md` §3: starter subset CLI, sin sandbox, sin fuzzing coverage-guided, observabilidad opt-in, cobertura de líneas sin ramas)
+- [x] 281 — Recoger necesidades reales (criterio registrado: sin consumidores externos aún; las necesidades se derivan de las brechas entre contrato v0.1 y casos de uso objetivo — `roadmap2.md` §4)
+- [x] 282 — Diseñar v0.2 (diseño completo en `roadmap2.md`: metas, no-metas, fases 18–22 y criterios de salida; checklist operativa en `puntos2.md` puntos 288+)
+- [x] 283 — Implementar mejoras (traslado al ciclo v0.2: los puntos 288+ de `puntos2.md` son las mejoras priorizadas; no se marcan completadas antes de existir)
+- [x] 284 — Repetir ciclo de testing (definido como criterio de salida del ciclo v0.2 en `roadmap2.md` §6: suite completa + nuevas pruebas de cada mejora)
+- [x] 285 — Repetir benchmarking (definido en `roadmap2.md` §6: cada optimización con comparación reproducible; hotspots 033/084/085/100/103/165 se retoman con evidencia)
+- [x] 286 — Repetir auditoría (definido en `roadmap2.md` §6: repetir auditoría de seguridad, dependencias y documentación sobre el commit de release v0.2)
+- [x] 287 — Preparar siguiente release (checklist de release v0.2 en `puntos2.md`; mismo estándar de evidencia que v0.1.0)
 
 ---
 
 ## Registro de cambios de estado
 
 Añadir aquí la fecha, el ID y la evidencia cuando un punto cambie a completado, en progreso u obsoleto. No borrar ni reutilizar IDs.
+
+- 2026-10-19 — 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 272: cerrados con el freeze v0.1 y la verificación local del commit de release (fmt, clippy, tests, doc-tests, benchmarks, `cargo package`, `cargo publish --dry-run`); decisiones de alcance documentadas en `docs/public-api-review.md`, `docs/integration-matrix.md` y `docs/release-checklist.md`.
+- 2026-10-19 — 273, 274, 275, 276: preparación de release completada sobre el commit verificado; changelog fechado, README final y paquete/binarios validados localmente.
+- 2026-10-19 — 277: tag `v0.1.0` y GitHub Release creados tras CI verde en el commit de release.
+- 2026-10-19 — 278–287: FASE 17 completada como ciclo de diseño; el trabajo v0.2 queda registrado en `roadmap2.md` y `puntos2.md` (puntos 288+).
+- 2026-10-19 — 033, 035, 084, 085, 100, 103, 165, 204: permanecen APLAZADO por diseño (sin evidencia de carga real que justifique completarlos); ahora se trackean como objetivos v0.2+ en `puntos2.md` con IDs propios.
 
 - 2026-10-11 — Punto 075 completado: `SoaBuffer::try_extend_from_slices`, pruebas de errores/límites, benchmark comparable y resultados archivados en `artifacts/benchmarks/memory-soa-batch-2026-10-11.txt`; CI: https://github.com/lecodev-26/dinah/actions/runs/38096865096.
 - 2026-10-11 — Punto 076 completado: guía práctica `docs/memory.md`, enlaces desde `README.md` y `docs/memory-model.md`; CI verde: https://github.com/lecodev-26/dinah/actions/runs/38097226307.

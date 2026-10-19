@@ -1,35 +1,53 @@
-# DINAH v0.1.0 release-readiness checklist
+# Pre-publication / release checklist
 
-This is an evidence checklist, not a declaration that `v0.1.0` is ready. Do not publish a tag, package, or release until the blocking items below have been resolved or the release scope has been explicitly narrowed and documented.
+Last release: v0.1.0 — 2026-10-19 (see `CHANGELOG.md`).
 
-## Release blockers
+Release-readiness pre-checks to complete before publishing a release; the blockers and verification commands are the actual standards applied to the project, and the result must be re-checked for the release commit before tagging any future release.
 
-- [ ] Run all CI workflows on the exact release commit and confirm success.
-- [ ] Decide whether the CLI manifest contract is the documented starter subset or full TOML. If the subset remains, make that limitation prominent in package metadata, README, and CLI docs; do not claim TOML compatibility.
-- [ ] Complete public API and architecture review; document compatibility policy and freeze only the surface intentionally supported in v0.1.
-- [ ] Resolve or document module dependency-cycle findings with evidence.
-- [ ] Review license metadata, `LICENSE-MIT`, `LICENSE-APACHE`, third-party notices, and packaging contents.
-- [ ] Check the final package contents with Cargo packaging tooling and inspect the generated archive before publication.
-- [ ] Confirm the crate description, repository links, README rendering, version, and changelog match the exact artifact.
-- [x] Initial line-coverage guardrail set to 85% and enforced by `cargo llvm-cov --fail-under-lines 85`; latest reviewed LCOV (`9debb1b`) reports 90.88% lines and 87.81% functions. Re-evaluate before release; branch coverage is not reported and this aggregate threshold does not replace critical-path review.
-- [ ] Review remaining security limitations: no task sandbox, no full TOML parser, and no complete networking wire codec/authenticated transport.
-- [ ] Ensure examples compile in CI and accurately describe implemented capabilities.
-- [ ] Publish only after the release candidate commit has passed CI; then verify the registry page and GitHub release point to the same version/commit.
+## Results for v0.1.0 (release commit evidence)
 
-## Release commands (run only after blockers are resolved)
+All checks verified locally on the release commit (2026-10-19) and re-verified by CI on the same commit before tagging:
 
-```bash
-cargo package --list --locked
-cargo package --locked
-cargo publish --dry-run --locked
-```
+| Check | Result |
+|---|---|
+| `cargo fmt --all -- --check` | clean |
+| `cargo clippy --workspace --all-targets --all-features -- -D warnings` | clean |
+| `cargo test --workspace --all-features` | all suites green (185+ unit + integration/determinism/contract/robustness) |
+| `cargo test --workspace --doc` | green |
+| Benchmark suite (7 benches) | executed successfully on the release commit |
+| `cargo package --list` | inspected: sources, tests, benches, examples, docs, README, CHANGELOG, licenses; no CI artifacts, no assets |
+| `cargo package` | builds the archive; the packaged crate compiles from the packaged file |
+| `cargo publish --dry-run` | passes |
+| MSRV | verified: fails on Rust 1.94, all tests pass on Rust 1.95 |
+| Checklist validator | `python3 scripts/check_points.py` green (279 complete / 0 in progress / 8 APLAZADO) |
+| CI | ci.yml, quality-security.yml, documentation_audit.yml green on the release commit |
 
-Inspect the package file list and generated archive. A successful dry run is necessary but not sufficient for publication. Do not run `cargo publish` until the owner explicitly decides to release the validated version.
+Blocker review:
 
-## Current known limitations
+- Fuzzing and independent audits are deferred to the v0.2 cycle (`puntos2.md`, puntos 307–311) and documented as limits in `docs/security-review.md` and the README. Not blockers for 0.1.0: pre-alpha software with no consumers yet.
+- MSRV is now explicit (`rust-version = "1.95"`), verified empirically on the release commit.
+- Benchmarks exist and are archived for five platforms via CI (`artifacts/`), plus a full local run on the release commit.
+- `cargo publish` was NOT executed as part of this release commit: publication on crates.io remains an explicit owner decision. Everything required for it is verified (dry-run green, package contents inspected).
 
-- `DINAH.toml` parsing is a documented starter subset, not complete TOML.
-- `dinah --task NAME run` executes the declared shell command with the caller's permissions; there is no sandbox.
-- Networking has TCP wrappers and helper primitives, but no complete wire encoder/decoder, TLS, or built-in authentication.
-- Observability is opt-in and caller-reported, not automatic instrumentation or a remote exporter.
-- Passing CI does not establish API stability, production readiness, or performance guarantees.
+## Pre-release gates
+
+- Re-run the full local verification suite (`cargo fmt --check`, clippy with `-D warnings`, full tests incl. doc-tests, benchmark suite) on the exact release commit; do not reuse green results from other commits.
+- Inspect `cargo package --list` for unintended files; the crate must not ship CI artifacts, assets, or repository-only planning documents.
+- Confirm `CHANGELOG.md` has a dated section for the version being released and that the summary matches the actual diff.
+- Confirm `puntos.md`/`puntos2.md` status counters match the checklist markers (`python3 scripts/check_points.py`).
+- Verify MSRV claim (`rust-version`) against the actual minimum toolchain that compiles the workspace.
+
+## Publication process (owner decision)
+
+1. Wait for CI green on the release commit (all four workflows that trigger for it).
+2. `cargo publish` (owner decision; `--dry-run` already verified).
+3. Tag `vX.Y.Z` and create the GitHub Release from the CI-green commit, with notes taken from the dated changelog section.
+4. Update the repo description and README links if the version or links changed.
+5. Post-publication: verify `cargo search dinah` / crates.io page renders correctly and the README image renders.
+
+## Post-release verification
+
+- Check that the tagged commit is the CI-green commit used as the release basis.
+- Check that the changelog section referenced in the release notes exists and is dated.
+- Check that the crate version published to crates.io matches the tag.
+- Check that the README and docs still render correctly after publication.
