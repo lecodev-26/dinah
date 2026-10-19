@@ -176,21 +176,23 @@ def phase_dashboard(phases, complete, deferred, total, theme):
     return "".join(parts)
 
 
-def module_grid(theme):
+def module_grid(phases, theme):
+    """Module cards derived from the FASE data in puntos.md (1:1 phase map)."""
     t = LIGHT if theme == "light" else DARK
-    cards = [
-        ("01", "CORE", "13 of 15 points", "2 deferred"),
-        ("02", "RUNTIME", "complete", "v0.1.0"),
-        ("03", "MEMORY", "complete", "v0.1.0"),
-        ("04", "COMPUTE", "12 of 14 points", "2 deferred"),
-        ("05", "DATA / ECS", "12 of 14 points", "2 deferred"),
-        ("06", "SIMULATION", "complete", "v0.1.0"),
-        ("07", "NETWORKING", "complete", "v0.1.0"),
-        ("08", "STORAGE", "complete", "v0.1.0"),
-        ("09", "NATIVE / HARDWARE", "12 of 13 points", "1 deferred"),
-        ("10", "CLI", "complete", "v0.1.0"),
-        ("11", "OBSERVABILITY", "complete", "v0.1.0"),
-        ("12", "SECURITY & QUALITY", "15 of 16 points", "1 deferred"),
+    by_num = {ph["num"]: ph for ph in phases}
+    MODULES = [
+        ("01", "CORE", "1", "HasCoreId consumer in v0.2"),
+        ("02", "RUNTIME", "2", "v0.1.0 scope complete"),
+        ("03", "MEMORY", "3", "v0.1.0 scope complete"),
+        ("04", "COMPUTE", "4", "SIMD deferred by evidence"),
+        ("05", "DATA / ECS", "5", "queries/parallel systems in v0.2"),
+        ("06", "SIMULATION", "6", "v0.1.0 scope complete"),
+        ("07", "NETWORKING", "7", "foundations; wire codec pending (v0.2)"),
+        ("08", "STORAGE", "8", "v0.1.0 scope complete"),
+        ("09", "NATIVE / HARDWARE", "9", "scalar C ABI only"),
+        ("10", "CLI", "10", "starter manifest subset"),
+        ("11", "OBSERVABILITY", "11", "opt-in by design"),
+        ("12", "SECURITY & QUALITY", "12", "fuzzing in v0.2"),
     ]
     W, H = 1280, 570
     margin, gap = 40, 15
@@ -201,7 +203,8 @@ def module_grid(theme):
         f'<style>.pu{{animation:pu 1.8s ease-in-out infinite}}@keyframes pu{{50%{{opacity:.3}}}}{REDUCED}</style>',
         f'<rect width="{W}" height="{H}" rx="28" fill="{t["bg"]}"/>',
     ]
-    for i, (num, name, status, note) in enumerate(cards):
+    for i, (num, name, phase_num, note) in enumerate(MODULES):
+        ph = by_num[phase_num]
         col, row = i % 4, i // 4
         x = margin + col * (cw + gap)
         y = margin + row * (ch + vgap)
@@ -212,7 +215,8 @@ def module_grid(theme):
         parts.append(
             f'<text x="{x + 20}" y="{y + 60}" fill="{t["dark"]}" style="font-family:{FONT};font-size:17px;font-weight:700">{esc(name)}</text>'
         )
-        complete = status == "complete"
+        complete = ph["complete"] == ph["total"]
+        status = "complete" if complete else f'{ph["complete"]} of {ph["total"]} points'
         dot = t["accent"] if complete else t["inprog"]
         parts.append(
             f'<circle class="pu" cx="{x + 26}" cy="{y + 86}" r="5" fill="{dot}"/>'
@@ -233,8 +237,8 @@ def main():
     outputs = {
         "assets/light/versions.svg": phase_dashboard(phases, complete, deferred, total, "light"),
         "assets/dark/versions.svg": phase_dashboard(phases, complete, deferred, total, "dark"),
-        "assets/light/flow.svg": module_grid("light"),
-        "assets/dark/flow.svg": module_grid("dark"),
+        "assets/light/flow.svg": module_grid(phases, "light"),
+        "assets/dark/flow.svg": module_grid(phases, "dark"),
         "assets/light/h-overview.svg": header_card("OVERVIEW", "light"),
         "assets/dark/h-overview.svg": header_card("OVERVIEW", "dark"),
         "assets/light/h-docs.svg": header_card("DOCUMENTATION", "light"),

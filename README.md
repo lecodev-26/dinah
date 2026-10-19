@@ -1,15 +1,15 @@
 <div align="center">
 
 <p align="center">
-  <img src="assets/logo.png" alt="DINAH logo" width="132" />&nbsp;&nbsp;&nbsp;
-  <img src="assets/silueta_naranja_transparente.png" alt="Silueta naranja de DINAH" width="180" />
+  <img src="https://github.com/lecodev-26/dinah/raw/main/assets/logo.png" alt="DINAH logo" width="132" />&nbsp;&nbsp;&nbsp;
+  <img src="https://github.com/lecodev-26/dinah/raw/main/assets/silueta_naranja_transparente.png" alt="Silueta naranja de DINAH" width="180" />
 </p>
 
-<img src="assets/banner.jpg" alt="DINAH: modular Rust runtime, compute and simulation foundation" width="100%">
+<img src="https://github.com/lecodev-26/dinah/raw/main/assets/banner.jpg" alt="DINAH: modular Rust runtime, compute and simulation foundation" width="100%">
 
 [![CI](https://github.com/lecodev-26/dinah/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/lecodev-26/dinah/actions/workflows/ci.yml) [![Benchmarks](https://github.com/lecodev-26/dinah/actions/workflows/benchmarks.yml/badge.svg?branch=main)](https://github.com/lecodev-26/dinah/actions/workflows/benchmarks.yml) [![Documentation audit](https://github.com/lecodev-26/dinah/actions/workflows/documentation-audit.yml/badge.svg?branch=main)](https://github.com/lecodev-26/dinah/actions/workflows/documentation-audit.yml) [![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-e87524.svg)](https://github.com/lecodev-26/dinah/blob/main/LICENSE-MIT)
 
-<a href="roadmap.md"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/dark/b-rel.svg"><img src="assets/light/b-rel.svg" alt="Roadmap" width="104"></picture></a>&nbsp;<a href="puntos.md"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/dark/b-sec.svg"><img src="assets/light/b-sec.svg" alt="Master checklist" width="154"></picture></a>&nbsp;<a href="docs/index.md"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/dark/b-docs.svg"><img src="assets/light/b-docs.svg" alt="Documentation" width="151"></picture></a>&nbsp;<a href="artifacts/README.md"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/dark/b-arena.svg"><img src="assets/light/b-arena.svg" alt="Benchmark artifacts" width="171"></picture></a>
+<a href="roadmap.md"><picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/lecodev-26/dinah/raw/main/assets/dark/b-rel.svg"><img src="https://github.com/lecodev-26/dinah/raw/main/assets/light/b-rel.svg" alt="Roadmap" width="104"></picture></a>&nbsp;<a href="puntos.md"><picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/lecodev-26/dinah/raw/main/assets/dark/b-sec.svg"><img src="https://github.com/lecodev-26/dinah/raw/main/assets/light/b-sec.svg" alt="Master checklist" width="154"></picture></a>&nbsp;<a href="docs/index.md"><picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/lecodev-26/dinah/raw/main/assets/dark/b-docs.svg"><img src="https://github.com/lecodev-26/dinah/raw/main/assets/light/b-docs.svg" alt="Documentation" width="151"></picture></a>&nbsp;<a href="artifacts/README.md"><picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/lecodev-26/dinah/raw/main/assets/dark/b-arena.svg"><img src="https://github.com/lecodev-26/dinah/raw/main/assets/light/b-arena.svg" alt="Benchmark artifacts" width="171"></picture></a>
 
 **A modular Rust foundation for runtime execution, compute, data-oriented systems and simulation.**<br>A plain-language overview of DINAH's architecture, current implementation and roadmap.
 
@@ -27,7 +27,7 @@
 
 <div align="center">
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="assets/dark/h-overview.svg"><img src="assets/light/h-overview.svg" alt="DINAH overview" width="100%"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/lecodev-26/dinah/raw/main/assets/dark/h-overview.svg"><img src="https://github.com/lecodev-26/dinah/raw/main/assets/light/h-overview.svg" alt="DINAH overview" width="100%"></picture>
 
 </div>
 
@@ -41,13 +41,13 @@ DINAH is **not a finished general-purpose runtime or a game engine**. The roadma
 
 <div align="center">
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="assets/dark/h-how.svg"><img src="assets/light/h-how.svg" alt="How DINAH is structured" width="100%"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/lecodev-26/dinah/raw/main/assets/dark/h-how.svg"><img src="https://github.com/lecodev-26/dinah/raw/main/assets/light/h-how.svg" alt="How DINAH is structured" width="100%"></picture>
 
 </div>
 
 <div align="center">
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="assets/dark/flow.svg"><img src="assets/light/flow.svg" alt="DINAH module status at v0.1.0: 12 subsystems with checklist completion and deferred points" width="100%"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/lecodev-26/dinah/raw/main/assets/dark/flow.svg"><img src="https://github.com/lecodev-26/dinah/raw/main/assets/light/flow.svg" alt="DINAH module status at v0.1.0: 12 subsystems with checklist completion and deferred points" width="100%"></picture>
 
 </div>
 
@@ -55,7 +55,7 @@ The design separates shared contracts from runtime execution, storage and comput
 
 <div align="center">
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="assets/dark/h-principles.svg"><img src="assets/light/h-principles.svg" alt="DINAH design principles" width="100%"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/lecodev-26/dinah/raw/main/assets/dark/h-principles.svg"><img src="https://github.com/lecodev-26/dinah/raw/main/assets/light/h-principles.svg" alt="DINAH design principles" width="100%"></picture>
 
 </div>
 
@@ -68,7 +68,7 @@ The design separates shared contracts from runtime execution, storage and comput
 
 <div align="center">
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="assets/dark/h-layout.svg"><img src="assets/light/h-layout.svg" alt="DINAH repository layout" width="100%"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/lecodev-26/dinah/raw/main/assets/dark/h-layout.svg"><img src="https://github.com/lecodev-26/dinah/raw/main/assets/light/h-layout.svg" alt="DINAH repository layout" width="100%"></picture>
 
 </div>
 
@@ -89,7 +89,7 @@ The design separates shared contracts from runtime execution, storage and comput
 
 <div align="center">
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="assets/dark/h-crypto.svg"><img src="assets/light/h-crypto.svg" alt="DINAH modules" width="100%"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/lecodev-26/dinah/raw/main/assets/dark/h-crypto.svg"><img src="https://github.com/lecodev-26/dinah/raw/main/assets/light/h-crypto.svg" alt="DINAH modules" width="100%"></picture>
 
 </div>
 
@@ -107,7 +107,7 @@ The design separates shared contracts from runtime execution, storage and comput
 
 <div align="center">
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="assets/dark/h-status.svg"><img src="assets/light/h-status.svg" alt="Implementation status" width="100%"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/lecodev-26/dinah/raw/main/assets/dark/h-status.svg"><img src="https://github.com/lecodev-26/dinah/raw/main/assets/light/h-status.svg" alt="Implementation status" width="100%"></picture>
 
 </div>
 
@@ -117,7 +117,7 @@ The design separates shared contracts from runtime execution, storage and comput
 
 <div align="center">
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="assets/dark/h-bench.svg"><img src="assets/light/h-bench.svg" alt="DINAH benchmarks" width="100%"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/lecodev-26/dinah/raw/main/assets/dark/h-bench.svg"><img src="https://github.com/lecodev-26/dinah/raw/main/assets/light/h-bench.svg" alt="DINAH benchmarks" width="100%"></picture>
 
 </div>
 
@@ -125,7 +125,7 @@ DINAH tracks median timings for the simulation clock, simulation step, mutable e
 
 <div align="center">
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="assets/dark/bars.svg"><img src="assets/light/bars.svg" alt="Benchmark comparison graphic" width="100%"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/lecodev-26/dinah/raw/main/assets/dark/bars.svg"><img src="https://github.com/lecodev-26/dinah/raw/main/assets/light/bars.svg" alt="Benchmark comparison graphic" width="100%"></picture>
 
 </div>
 
@@ -141,13 +141,13 @@ These are medians of nine samples; construction is included in the clock and ste
 
 <div align="center">
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="assets/dark/h-versions.svg"><img src="assets/light/h-versions.svg" alt="DINAH roadmap phases" width="100%"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/lecodev-26/dinah/raw/main/assets/dark/h-versions.svg"><img src="https://github.com/lecodev-26/dinah/raw/main/assets/light/h-versions.svg" alt="DINAH roadmap phases" width="100%"></picture>
 
 </div>
 
 <div align="center">
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="assets/dark/versions.svg"><img src="assets/light/versions.svg" alt="dinah v0.1.0 phase dashboard: 279 of 287 checklist points complete, 8 deferred by design" width="100%"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/lecodev-26/dinah/raw/main/assets/dark/versions.svg"><img src="https://github.com/lecodev-26/dinah/raw/main/assets/light/versions.svg" alt="dinah v0.1.0 phase dashboard: 279 of 287 checklist points complete, 8 deferred by design" width="100%"></picture>
 
 </div>
 
@@ -170,7 +170,7 @@ The CLI baseline and opt-in observability primitives are implemented; tracing, m
 
 <div align="center">
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="assets/dark/h-quick.svg"><img src="assets/light/h-quick.svg" alt="DINAH quick start" width="100%"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/lecodev-26/dinah/raw/main/assets/dark/h-quick.svg"><img src="https://github.com/lecodev-26/dinah/raw/main/assets/light/h-quick.svg" alt="DINAH quick start" width="100%"></picture>
 
 </div>
 
@@ -192,7 +192,7 @@ The library API is pre-alpha and can change between minor versions while below 1
 
 <div align="center">
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="assets/dark/h-docs.svg"><img src="assets/light/h-docs.svg" alt="DINAH documentation" width="100%"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/lecodev-26/dinah/raw/main/assets/dark/h-docs.svg"><img src="https://github.com/lecodev-26/dinah/raw/main/assets/light/h-docs.svg" alt="DINAH documentation" width="100%"></picture>
 
 </div>
 
@@ -217,7 +217,7 @@ The library API is pre-alpha and can change between minor versions while below 1
 
 <div align="center">
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="assets/dark/h-assurance.svg"><img src="assets/light/h-assurance.svg" alt="Validation and engineering assurance" width="100%"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/lecodev-26/dinah/raw/main/assets/dark/h-assurance.svg"><img src="https://github.com/lecodev-26/dinah/raw/main/assets/light/h-assurance.svg" alt="Validation and engineering assurance" width="100%"></picture>
 
 </div>
 
@@ -233,7 +233,7 @@ CI is used to validate code and documentation incrementally. Passing CI is evide
 
 <div align="center">
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="assets/dark/h-license.svg"><img src="assets/light/h-license.svg" alt="License" width="100%"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/lecodev-26/dinah/raw/main/assets/dark/h-license.svg"><img src="https://github.com/lecodev-26/dinah/raw/main/assets/light/h-license.svg" alt="License" width="100%"></picture>
 
 </div>
 
